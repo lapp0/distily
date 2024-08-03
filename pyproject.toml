@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "distily"
+version = "0.1.0"
+description = "Distily: Language Model Distillation Toolkit and Library"
+authors = ["Andrew Lapp <andrew@github.rew.la>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+transformers = "^4.43.3"
+datasets = "^2.20.0"
+tqdm = "^4.66.4"
+torch = "^2.4.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
