@@ -122,6 +122,7 @@ from . import args as distily_args
 from . import distillation_trainer
 from . import metrics as distily_metrics
 
+import copy
 import datasets
 import torch
 from transformers import AutoModel, AutoModelForCausalLM, AutoConfig, AutoTokenizer, DataCollatorForLanguageModeling
@@ -152,7 +153,7 @@ def get_teacher_model_tokenizer(teacher_model_args):
     return model, tokenizer
 
 
-def get_student_model(student_model_args, teacher_model_args, teacher_vocab_size):
+def get_student_model(student_model_args, teacher_config):
     if student_model_args.student_model_name_or_path:
         model = AutoModelForCausalLM.from_pretrained(
             student_model_args.student_model_name_or_path,
@@ -160,15 +161,16 @@ def get_student_model(student_model_args, teacher_model_args, teacher_vocab_size
         )
 
     else:
-        config_uri = student_model_args.student_config_name_or_path or teacher_model_args.teacher_model_name_or_path
-
-        config = AutoConfig.from_pretrained(config_uri)
+        if student_model_args.student_config_name_or_path:
+            config = AutoConfig.from_pretrained(student_model_args.student_config_name_or_path)
+        else:
+            config = copy.copy(teacher_config)
 
         if student_model_args.student_model_config:
             config.update(student_model_args.student_model_config)
 
         # Force student to have vocabulary size as teacher
-        config.vocab_size = teacher_vocab_size
+        config.vocab_size = teacher_config.vocab_size
 
         # TODO: remove hack
         config.attn_implementation = "flash_attention_2"
@@ -190,7 +192,8 @@ def run():
     training_args, student_model_args, teacher_model_args = distily_args.get_args()
 
     teacher_model, tokenizer = get_teacher_model_tokenizer(teacher_model_args)
-    student_model = get_student_model(student_model_args, teacher_model_args, teacher_model.vocab_size)
+
+    student_model = get_student_model(student_model_args, teacher_model.config)
 
     # TODO: don't hardcode dataset
     #train_dataset = get_train_dataset(dataset_args)
@@ -207,7 +210,6 @@ def run():
     test_dataset = tokenized_dataset["test"]
     # TODO: don't hardcode this
     training_args.extra_evaluators = distily_metrics.get_all_metric_evaluators(tokenizer)
-
 
     trainer = distillation_trainer.DistillationTrainer(
         student_model=student_model,

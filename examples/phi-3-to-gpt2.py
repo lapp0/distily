@@ -8,11 +8,16 @@ from distily import distillation_trainer
 
 
 def run():
-    student_model_args = StudentModelArguments(student_config_name_or_path="gpt2", student_model_as_bitnet=True)
     teacher_model_args = TeacherModelArguments(teacher_model_name_or_path="microsoft/Phi-3-mini-4k-instruct")
-
     teacher_model, tokenizer = get_teacher_model_tokenizer(teacher_model_args)
-    student_model = get_student_model(student_model_args, teacher_model_args)
+
+    student_model_args = StudentModelArguments(
+        student_config_name_or_path="gpt2",
+        student_model_as_bitnet=True,
+        student_model_config={"hidden_size": teacher_model.config.hidden_size},
+    )
+
+    student_model = get_student_model(student_model_args, teacher_model_args, teacher_model.vocab_size)
 
     # TODO: don't hardcode dataset
     #train_dataset = get_train_dataset(dataset_args)
