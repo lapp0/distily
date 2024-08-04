@@ -124,7 +124,7 @@ from . import metrics as distily_metrics
 
 import datasets
 import torch
-from transformers import AutoModelForCausalLM, AutoConfig, AutoTokenizer, DataCollatorForLanguageModeling
+from transformers import AutoModel, AutoModelForCausalLM, AutoConfig, AutoTokenizer, DataCollatorForLanguageModeling
 
 
 def get_teacher_model_tokenizer(teacher_model_args):
@@ -147,11 +147,9 @@ def get_teacher_model_tokenizer(teacher_model_args):
 def get_student_model(student_model_args, teacher_model_args):
     if student_model_args.student_model_as_bitnet:
         from mmfreelm.models import HGRNBitForCausalLM, HGRNBitConfig
-        model_cls = HGRNBitForCausalLM
-    else:
-        model_cls = AutoModelForCausalLM
 
     if student_model_args.student_model_name_or_path:
+        model_cls = HGRNBitForCausalLM if student_model_args.student_model_as_bitnet else AutoModelForCausalLM
         return model_cls.from_pretrained(student_model_args.student_model_name_or_path)
     else:
         config_uri = student_model_args.student_model_name_or_path or teacher_model_args.teacher_model_name_or_path
@@ -162,7 +160,7 @@ def get_student_model(student_model_args, teacher_model_args):
             config = HGRNBitConfig(config)
         config.attn_implementation = "flash_attention_2"
         config._attn_implementation = "flash_attention_2"
-        return AutoModelForCausalLM.from_config(config).to(dtype=torch.bfloat16)
+        return AutoModel.from_config(config).to(dtype=torch.bfloat16)
 
 
 def run():
