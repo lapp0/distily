@@ -160,7 +160,9 @@ def get_student_model(student_model_args, teacher_model_args):
             config = HGRNBitConfig(config)
         config.attn_implementation = "flash_attention_2"
         config._attn_implementation = "flash_attention_2"
-        return HGRNBitForCausalLM.from_config(config).to(dtype=torch.bfloat16)
+        config.device="cuda"
+        config.dtype=torch.bfloat16
+        return AutoModel.from_config(config).to(dtype=torch.bfloat16)
 
 
 def run():
