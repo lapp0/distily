@@ -205,6 +205,7 @@ def run():
         lambda x: tokenizer(x["text"], truncation=True, padding="max_length", max_length=tokenizer.model_max_length),
         batched=True,
         batch_size=10000,
+        num_proc=8,
     )
     train_dataset = tokenized_dataset["train"]
     test_dataset = tokenized_dataset["test"]
@@ -223,7 +224,7 @@ def run():
     )
 
     if True: #TODO: args.eval_and_log_teacher_metrics
-        trainer.log_teacher_metrics()  # TODO: _and_log_
+        trainer.log_teacher_metrics()  # TODO: eval_and_log_teacher_metrics()
 
     trainer.train()
 

@@ -11,13 +11,10 @@ class PerplexityEvalCallback(TrainerCallback):
         self.tokenizer = tokenizer
         self.max_length = max_length
         self.batch_size = batch_size
-        self.dataset_column = dataset_column
 
-    def do_eval(self, model):
-        predictions = [example[self.dataset_column] for example in self.dataset]
-
-        # Tokenize input
-        encodings = self.tokenizer(
+        # preprocess / tokenize
+        predictions = [example[dataset_column] for example in self.dataset]
+        self.encodings = self.tokenizer(
             predictions,
             padding=True,
             truncation=True,
@@ -25,8 +22,9 @@ class PerplexityEvalCallback(TrainerCallback):
             return_tensors="pt"
         )
 
-        input_ids = encodings["input_ids"].to(model.device)
-        attention_mask = encodings["attention_mask"].to(model.device)
+    def do_eval(self, model):
+        input_ids = self.encodings["input_ids"].to(model.device)
+        attention_mask = self.encodings["attention_mask"].to(model.device)
 
         loss_fct = CrossEntropyLoss(reduction="none")
         total_loss = 0.0

@@ -3,6 +3,8 @@ Training tool
 # TODO
 
 ## Priorities
+- [ ] add base model eval to model card
+- [ ] add distilled model full metrics table to model card
 - [ ] add tooling to convert to 1.58b safetensors file
 - [ ] distill phi-3-mini to 1.58b
 - [ ] add eval tool for MMLU / MATH /  etc
@@ -130,8 +132,7 @@ python3 -m distily.cli \
     --save_steps 2000 \
     --push_to_hub True \
     --report_to tensorboard \
-    --eval_on_start True \
-    --teacher_load_in_8bit True
+    --eval_on_start True
 ```
 
 </details>

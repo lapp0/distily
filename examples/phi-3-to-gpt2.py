@@ -12,9 +12,8 @@ def run():
     teacher_model, tokenizer = get_teacher_model_tokenizer(teacher_model_args)
 
     student_model_args = StudentModelArguments(
-        student_config_name_or_path="gpt2",
         student_model_as_bitnet=True,
-        student_model_config={"hidden_size": teacher_model.config.hidden_size},
+        student_model_config={"num_hidden_layers": 20},  # distill 32 layers -> 20 layers
     )
 
     student_model = get_student_model(student_model_args, teacher_model_args, teacher_model.vocab_size)
@@ -40,9 +39,9 @@ def run():
     test_dataset = tokenized_dataset["test"]
 
     training_args = DistillationTrainingArguments(
-        output_dir="phi-3-mini-4k-instruct_distily_striped_activations",
-        hub_model_id="lapp0/phi-3-mini-4k-instruct_distily_striped_activations",
-        per_device_train_batch_size=1,  # set low for rtx 4090
+        output_dir="phi-3-mini-4k-instruct_20_layers_bitnet_distily",
+        hub_model_id="lapp0/phi-3-mini-4k-instruct_20_layers_bitnet_distily",
+        per_device_train_batch_size=1,
         eval_strategy="steps",
         eval_steps=2000,
         logging_steps=4,
@@ -67,7 +66,7 @@ def run():
         data_collator=DataCollatorForLanguageModeling(tokenizer, mlm=False),
         train_dataset=train_dataset,
         eval_dataset=test_dataset,
-        activation_loss_pairs=[(32, 12), (30, 11), (16, 8), (8, 4), (4, 3), (2, 2), (1, 1), (0, 0)],
+        activation_loss_pairs=[(32, 20), (28, 18), (20, 12), (8, 4), (2, 2), (1, 1), (0, 0)],
     )
 
     trainer.train()
