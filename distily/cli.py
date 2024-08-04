@@ -201,7 +201,7 @@ def run():
     train_dataset = tokenized_dataset["train"]
     test_dataset = tokenized_dataset["test"]
     # TODO: don't hardcode this
-    training_args.extra_metric_evaluators = distily_metrics.get_all_metric_evaluators(tokenizer)
+    training_args.extra_evaluators = distily_metrics.get_all_metric_evaluators(tokenizer)
 
 
     trainer = distillation_trainer.DistillationTrainer(
