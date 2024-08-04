@@ -176,7 +176,9 @@ def get_student_model(student_model_args, teacher_config):
         model = AutoModelForCausalLM.from_config(
             config=config,
             attn_implementation="flash_attention_2",
-        ).to(dtype=torch.bfloat16).to(device="cuda")
+            torch_dtype=torch.bfloat16,
+            device_map="cuda"
+        )
 
     if student_model_args.student_model_as_bitnet:
         with torch.no_grad():
