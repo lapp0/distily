@@ -41,7 +41,10 @@ class TeacherModelArguments:
 @dataclass
 class DistillationTrainingArguments(TrainingArguments):
     # TODO:
+    # clean
+    eval_and_log_teacher_metrics: bool = False
 
+    # TODO: add
     # Activation loss pairs
     # extra metric evaluators
     pass

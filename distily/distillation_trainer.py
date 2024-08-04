@@ -155,7 +155,7 @@ class DistillationTrainer(Trainer):
             **kwargs
         )
 
-    def log_teacher_metrics(self):
+    def eval_and_log_teacher_metrics(self):
         """TODO: This doesn't work properly!"""
         base_model_results = {}
         with torch.no_grad():

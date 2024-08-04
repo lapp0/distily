@@ -223,8 +223,8 @@ def run():
         activation_loss_pairs=True,  # TODO
     )
 
-    if True: #TODO: args.eval_and_log_teacher_metrics
-        trainer.log_teacher_metrics()  # TODO: eval_and_log_teacher_metrics()
+    if training_args.eval_and_log_teacher_metrics:
+        trainer.eval_and_log_teacher_metrics()
 
     trainer.train()
 
