@@ -138,11 +138,14 @@ def get_teacher_model_tokenizer(teacher_model_args):
         torch_dtype=torch.bfloat16,
         load_in_8bit=teacher_model_args.teacher_load_in_8bit,
         load_in_4bit=teacher_model_args.teacher_load_in_4bit,
+        device_map="cuda"
     )
     # freeze (maybe redundant)
     model.eval()
     for p in model.parameters():
         p.requires_grad = False
+
+    model = model.to(device="cuda")
 
     tokenizer = AutoTokenizer.from_pretrained(teacher_model_args.teacher_model_name_or_path)
     if tokenizer.pad_token_id is None:
@@ -171,16 +174,13 @@ def get_student_model(student_model_args, teacher_model_args):
         config._attn_implementation = "flash_attention_2"
 
         # TODO: remove .to(...) hack
-        model = AutoModelForCausalLM.from_config(config).to(dtype=torch.bfloat16)
+        model = AutoModelForCausalLM.from_config(config).to(dtype=torch.bfloat16).to(device="cuda")
 
     if student_model_args.student_model_as_bitnet:
         with torch.no_grad():
             # TODO: use a different method which is better supported, an official third party library
             convert_to_bitnet(model, copy_weights=False)
             model.model_tags = ["bitnet", "1.58b"]
-
-    # TODO: apply model dtype, flash attention, and device based on args
-    model = model.cuda()
 
     return model
 
