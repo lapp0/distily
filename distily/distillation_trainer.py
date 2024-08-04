@@ -138,7 +138,7 @@ class DistillationTrainer(Trainer):
         if metric_key_prefix == "eval":
             self.model.eval()
             with torch.no_grad():
-                for evaluator_name, evaluator in self.extra_evaluators.items():
+                for evaluator_name, evaluator in self.args.extra_evaluators.items():
                     metrics[f"eval_{evaluator_name}"] = float(evaluator(self.model))
             self.model.train()
 
@@ -157,3 +157,12 @@ class DistillationTrainer(Trainer):
             tags=(tags or []) + ["Distily"],
             **kwargs
         )
+
+    def log_teacher_metrics(self):
+        """TODO: This doesn't work properly!"""
+        base_model_results = {}
+        with torch.no_grad():
+            for evaluator_name, evaluator in self.args.extra_evaluators.items():
+                base_model_results[f"eval_{evaluator_name}"] = evaluator(self.teacher_model)
+        base_model_results["epoch"] = 0
+        self.log(base_model_results)
