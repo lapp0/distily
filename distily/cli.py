@@ -189,8 +189,8 @@ def run():
     student_model = get_student_model(student_model_args, teacher_model_args)
 
     # TODO: apply model dtype, flash attention, and device based on args
-    teacher_model = teacher_model.cuda()
-    student_model = student_model.cuda()
+    teacher_model = teacher_model.to(device="cuda")
+    student_model = student_model.to(device="cuda")
 
     # TODO: don't hardcode dataset
     #train_dataset = get_train_dataset(dataset_args)

@@ -13,10 +13,10 @@ Training tool
 - [x] eval step
 - [x] convert loss to one or many of these metrics https://github.com/DD-DuDa/BitDistiller/blob/master/train/mytrainer.py
 - [x] experiment with loss based on hidden states
-- [ ] gpt2-distily
+- [x] gpt2-distily
 - [ ] phi-3-mini-instruct-distily
-- [ ] convert command line args to be available via dataclasses like in llama_autotuner
-- [ ] package
+- [x] convert command line args to be available via dataclasses like in llama_autotuner
+- [x] package
 
 ## Publish
 - [ ] evaluate results with logit distillation vs hidden state distillation
@@ -30,6 +30,9 @@ Training tool
 - [X] model card - verify tags
 - [ ] model card - ensure original model and new model metrics included
 - [ ] use vllm for teacher output, serialize
+
+## Optimize
+- [ ] ability to distill models using 8-bit backward pass
 
 # Install
 
@@ -67,6 +70,32 @@ python3 -m distily.cli \
     --report_to tensorboard \
     --eval_on_start True
 ```
+
+<details>
+
+```
+python3 -m distily.cli \
+    --teacher_model_name_or_path microsoft/Phi-3-mini-4k-instruct \
+    --student_model_as_bitnet True \
+    --output_dir gpt2_distily \
+    --hub_model_id "lapp0/gpt2_distily" \
+    --per_device_train_batch_size 16 \
+    --eval_strategy steps \
+    --eval_steps 2000 \
+    --logging_steps 4 \
+    --num_train_epochs 1 \
+    --lr_scheduler_type cosine \
+    --learning_rate 5e-5 \
+    --max_grad_norm 64.0 \
+    --gradient_checkpointing True \
+    --optim paged_adamw_32bit \
+    --save_steps 2000 \
+    --push_to_hub True \
+    --report_to tensorboard \
+    --eval_on_start True
+```
+
+</details>
 
 ## Python
 
