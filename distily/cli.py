@@ -146,7 +146,7 @@ def get_teacher_model_tokenizer(teacher_model_args):
 
 def get_student_model(student_model_args, teacher_model_args):
     if student_model_args.student_model_as_bitnet:
-        from mmfreelm.models import HGRNBitForCausalLM
+        from mmfreelm.models import HGRNBitForCausalLM, HGRNBitConfig
         model_cls = HGRNBitForCausalLM
     else:
         model_cls = AutoModelForCausalLM
@@ -158,9 +158,11 @@ def get_student_model(student_model_args, teacher_model_args):
         config = AutoConfig.from_pretrained(config_uri)
         if student_model_args.student_model_config:
             config.update(student_model_args.student_model_config)
+        if student_model_args.student_model_as_bitnet:
+            config = HGRNBitConfig(config)
         config.attn_implementation = "flash_attention_2"
         config._attn_implementation = "flash_attention_2"
-        return model_cls.from_config(config).to(dtype=torch.bfloat16)
+        return AutoModelForCausalLM.from_config(config).to(dtype=torch.bfloat16)
 
 
 def run():
