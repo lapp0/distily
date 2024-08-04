@@ -32,11 +32,6 @@ pip install -U git+https://github.com/lapp0/distily
 ```
 
 ## Bitnet
-To train 1.58b bitnet models, you must install [matmulfreellm](https://github.com/ridgerchu/matmulfreellm) via
-```
-pip install -U git+https://github.com/ridgerchu/matmulfreellm
-```
-
 Bitnet models are trained in an unquantized dtype. If a bitnet model is loaded for training, forward passes are quantized to 1.58b, backwards passes are in the default torch dtype (usually bf16 or fp16).
 
 To compress the model, and reduce vram for inference you must use [BitBlas](https://github.com/microsoft/BitBLAS)
@@ -56,7 +51,7 @@ python3 -m distily.cli \
     --logging_steps 4 \
     --num_train_epochs 1 \
     --lr_scheduler_type cosine \
-    --learning_rate 1e-4 \
+    --learning_rate 5e-5 \
     --max_grad_norm 64.0 \
     --gradient_checkpointing True \
     --optim paged_adamw_32bit \
