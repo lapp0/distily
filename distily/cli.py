@@ -151,17 +151,20 @@ def get_student_model(student_model_args, teacher_model_args):
     if student_model_args.student_model_name_or_path:
         model_cls = HGRNBitForCausalLM if student_model_args.student_model_as_bitnet else AutoModelForCausalLM
         return model_cls.from_pretrained(student_model_args.student_model_name_or_path)
+
     else:
         config_uri = student_model_args.student_model_name_or_path or teacher_model_args.teacher_model_name_or_path
-        config = AutoConfig.from_pretrained(config_uri)
+
+        if student_model_args.student_model_as_bitnet:
+            config = HGRNBitConfig.from_pretrained(config_uri)
+        else:
+            config = AutoConfig.from_pretrained(config_uri)
+
         if student_model_args.student_model_config:
             config.update(student_model_args.student_model_config)
-        if student_model_args.student_model_as_bitnet:
-            config = HGRNBitConfig(config)
+
         config.attn_implementation = "flash_attention_2"
         config._attn_implementation = "flash_attention_2"
-        config.device="cuda"
-        config.dtype=torch.bfloat16
         return AutoModel.from_config(config).to(dtype=torch.bfloat16)
 
 

@@ -28,7 +28,7 @@ Training tool
 
 Install Distily:
 ```
-pip install git+https://github.com/lapp0/distily
+pip install -U git+https://github.com/lapp0/distily
 ```
 
 ## Bitnet
@@ -41,19 +41,22 @@ Bitnet models are trained in an unquantized dtype. If a bitnet model is loaded f
 
 To compress the model, and reduce vram for inference you must use [BitBlas](https://github.com/microsoft/BitBLAS)
 
-# Example
+# Usage
 
+
+## CLI
 ```
 python3 -m distily.cli \
     --teacher_model_name_or_path gpt2 \
-	--student_model_as_bitnet True \
-    --hub_model_id lapp0/gpt2_distily \
-	--per_device_train_batch_size 16 \
-	--eval_strategy steps \
-	--eval_steps 2000 \
-	--logging_steps 4 \
-	--num_train_epochs 1 \
-	--lr_scheduler_type cosine \
+    --student_model_as_bitnet True \
+    --output_dir gpt2_distily \
+    --hub_model_id "lapp0/gpt2_distily" \
+    --per_device_train_batch_size 16 \
+    --eval_strategy steps \
+    --eval_steps 2000 \
+    --logging_steps 4 \
+    --num_train_epochs 1 \
+    --lr_scheduler_type cosine \
     --learning_rate 1e-4 \
     --max_grad_norm 64.0 \
     --gradient_checkpointing True \
@@ -63,6 +66,10 @@ python3 -m distily.cli \
     --report_to tensorboard \
     --eval_on_start True
 ```
+
+## Python
+
+TODO
 
 # Modules
 - `distill_bitnet.py` (runner)
