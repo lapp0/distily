@@ -174,6 +174,7 @@ def get_student_model(student_model_args, teacher_model_args):
         with torch.no_grad():
             # TODO: use a different method which is better supported, an official third party library
             convert_to_bitnet(model, copy_weights=False)
+            model.model_tags = ["bitnet", "1.58b"]
 
     return model
 
