@@ -138,7 +138,6 @@ def get_teacher_model_tokenizer(teacher_model_args):
         torch_dtype=torch.bfloat16,
         load_in_8bit=teacher_model_args.teacher_load_in_8bit,
         load_in_4bit=teacher_model_args.teacher_load_in_4bit,
-        device="cuda"
     )
     # freeze (maybe redundant)
     model.eval()
@@ -191,9 +190,6 @@ def run():
 
     teacher_model, tokenizer = get_teacher_model_tokenizer(teacher_model_args)
     student_model = get_student_model(student_model_args, teacher_model_args)
-
-    #teacher_model = teacher_model.to(device="cuda")
-    student_model = student_model.to(device="cuda")
 
     # TODO: don't hardcode dataset
     #train_dataset = get_train_dataset(dataset_args)
