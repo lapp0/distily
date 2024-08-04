@@ -200,8 +200,9 @@ def run():
     tokenized_dataset = dataset.map(
         lambda x: tokenizer(x["text"], truncation=True, padding="max_length", max_length=tokenizer.model_max_length),
         batched=True,
-        num_proc=64,
+        num_proc=255,
         batch_size=64,
+        load_from_cache_file=True,
     )
     train_dataset = tokenized_dataset["train"]
     test_dataset = tokenized_dataset["test"]
