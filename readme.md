@@ -107,28 +107,7 @@ python3 -m distily.cli \
 
 
 (Trained on 1 x RTX 4090)
-```
-python3 -m distily.cli \
-    --teacher_model_name_or_path microsoft/Phi-3-mini-4k-instruct \
-    --student_model_as_bitnet True \
-    --output_dir gpt2_distily \
-    --hub_model_id "lapp0/phi-3-mini-4k-instruct_distily" \
-    --per_device_train_batch_size 16 \
-    --eval_strategy steps \
-    --eval_steps 2000 \
-    --logging_steps 4 \
-    --num_train_epochs 1 \
-    --lr_scheduler_type cosine \
-    --learning_rate 5e-5 \
-    --max_grad_norm 64.0 \
-    --gradient_checkpointing True \
-    --optim paged_adamw_32bit \
-    --save_steps 2000 \
-    --push_to_hub True \
-    --report_to tensorboard \
-    --eval_on_start True \
-    --teacher_load_in_8bit True
-```
+link to examples
 
 </details>
 

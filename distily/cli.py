@@ -152,7 +152,7 @@ def get_teacher_model_tokenizer(teacher_model_args):
     return model, tokenizer
 
 
-def get_student_model(student_model_args, teacher_model_args):
+def get_student_model(student_model_args, teacher_model_args, teacher_vocab_size):
     if student_model_args.student_model_name_or_path:
         model = AutoModelForCausalLM.from_pretrained(
             student_model_args.student_model_name_or_path,
@@ -166,6 +166,9 @@ def get_student_model(student_model_args, teacher_model_args):
 
         if student_model_args.student_model_config:
             config.update(student_model_args.student_model_config)
+
+        # Force student to have vocabulary size as teacher
+        config.vocab_size = teacher_vocab_size
 
         # TODO: remove hack
         config.attn_implementation = "flash_attention_2"
@@ -187,7 +190,7 @@ def run():
     training_args, student_model_args, teacher_model_args = distily_args.get_args()
 
     teacher_model, tokenizer = get_teacher_model_tokenizer(teacher_model_args)
-    student_model = get_student_model(student_model_args, teacher_model_args)
+    student_model = get_student_model(student_model_args, teacher_model_args, teacher_model.vocab_size)
 
     # TODO: don't hardcode dataset
     #train_dataset = get_train_dataset(dataset_args)
@@ -199,7 +202,6 @@ def run():
         lambda x: tokenizer(x["text"], truncation=True, padding="max_length", max_length=tokenizer.model_max_length),
         batched=True,
         batch_size=10000,
-        load_from_cache_file=True,
     )
     train_dataset = tokenized_dataset["train"]
     test_dataset = tokenized_dataset["test"]

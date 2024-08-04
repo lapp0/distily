@@ -18,12 +18,18 @@ def run():
     #train_dataset = get_train_dataset(dataset_args)
     #test_dataset = get_test_dataset(dataset_args)
     #extra_metrics = get_ppl_eval_datasets(dataset_args)
-    dataset = datasets.load_dataset("wikimedia/wikipedia", "20231101.en", split="train[:1000000]")
+    dataset = datasets.load_dataset("wikimedia/wikipedia", "20231101.en", split="train[:10000]")
     dataset = dataset.train_test_split(test_size=0.01)
     tokenized_dataset = dataset.map(
-        lambda x: tokenizer(x["text"], truncation=True, padding="max_length", max_length=tokenizer.model_max_length),
+        lambda x: tokenizer(
+            x["text"],
+            truncation=True,
+            padding="max_length",
+            max_length=1024  # set lower for rtx 4090
+        ),
         batched=True,
         batch_size=10000,
+        num_proc=8,
     )
     train_dataset = tokenized_dataset["train"]
     test_dataset = tokenized_dataset["test"]
@@ -31,7 +37,7 @@ def run():
     training_args = DistillationTrainingArguments(
         output_dir="phi-3-mini-4k-instruct_distily_striped_activations",
         hub_model_id="lapp0/phi-3-mini-4k-instruct_distily_striped_activations",
-        per_device_train_batch_size=16,
+        per_device_train_batch_size=1,  # set low for rtx 4090
         eval_strategy="steps",
         eval_steps=2000,
         logging_steps=4,

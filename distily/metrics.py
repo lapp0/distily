@@ -62,15 +62,15 @@ class PerplexityEvalCallback(TrainerCallback):
 def get_all_metric_evaluators(tokenizer):
     return {
         "enwikippl": PerplexityEvalCallback(
-            dataset=load_dataset("wikimedia/wikipedia", "20231101.en", split="train[-1000:]", load_from_cache_file=True),
+            dataset=load_dataset("wikimedia/wikipedia", "20231101.en", split="train[-1000:]"),
             tokenizer=tokenizer,
         ).do_eval,
         "frwikippl": PerplexityEvalCallback(
-            dataset=load_dataset("wikimedia/wikipedia", "20231101.fr", split="train[-1000:]", load_from_cache_file=True),
+            dataset=load_dataset("wikimedia/wikipedia", "20231101.fr", split="train[-1000:]"),
             tokenizer=tokenizer,
         ).do_eval,
         "zhwikippl": PerplexityEvalCallback(
-            dataset=load_dataset("wikimedia/wikipedia", "20231101.zh", split="train[-1000:]", load_from_cache_file=True),
+            dataset=load_dataset("wikimedia/wikipedia", "20231101.zh", split="train[-1000:]"),
             tokenizer=tokenizer,
         ).do_eval,
     }
