@@ -9,7 +9,7 @@ from distily import distillation_trainer
 
 def run():
     student_model_args = StudentModelArguments(student_config_name_or_path="gpt2", student_model_as_bitnet=True)
-    teacher_model_args = TeacherModelArguments(teacher_config_name_or_path="microsoft/Phi-3-mini-4k-instruct")
+    teacher_model_args = TeacherModelArguments(teacher_model_name_or_path="microsoft/Phi-3-mini-4k-instruct")
 
     teacher_model, tokenizer = get_teacher_model_tokenizer(teacher_model_args)
     student_model = get_student_model(student_model_args, teacher_model_args)
@@ -24,12 +24,28 @@ def run():
         lambda x: tokenizer(x["text"], truncation=True, padding="max_length", max_length=tokenizer.model_max_length),
         batched=True,
         batch_size=10000,
-        load_from_cache_file=True,
     )
     train_dataset = tokenized_dataset["train"]
     test_dataset = tokenized_dataset["test"]
 
-    training_args = DistillationTrainingArguments()
+    training_args = DistillationTrainingArguments(
+        output_dir="phi-3-mini-4k-instruct_distily_striped_activations",
+        hub_model_id="lapp0/phi-3-mini-4k-instruct_distily_striped_activations",
+        per_device_train_batch_size=16,
+        eval_strategy="steps",
+        eval_steps=2000,
+        logging_steps=4,
+        num_train_epochs=1,
+        lr_scheduler_type="cosine",
+        learning_rate=5e-5,
+        max_grad_norm=64.0,
+        gradient_checkpointing=True,
+        optim="paged_adamw_32bit",
+        save_steps=2000,
+        push_to_hub=True,
+        report_to="tensorboard",
+        eval_on_start=True,
+    )
     training_args.extra_evaluators = metrics.get_all_metric_evaluators(tokenizer)
 
     trainer = distillation_trainer.DistillationTrainer(
