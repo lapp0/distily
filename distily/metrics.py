@@ -5,6 +5,7 @@ from torch.nn import CrossEntropyLoss
 from tqdm import tqdm
 
 
+# TODO: Respect eval batch size for `batch_size` argument
 class PerplexityEvalCallback(TrainerCallback):
     def __init__(self, dataset, tokenizer, batch_size=1, max_length=1024, dataset_column="text"):
         self.dataset = dataset

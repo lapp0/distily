@@ -88,6 +88,7 @@ python3 -m distily.cli \
     --output_dir phi-3-mini-4k-instruct_distily \
     --hub_model_id "lapp0/phi-3-mini-4k-instruct_distily" \
     --per_device_train_batch_size 1 \
+    --per_device_eval_batch_size 1 \
     --eval_strategy steps \
     --eval_steps 2000 \
     --logging_steps 4 \
@@ -150,6 +151,10 @@ link to examples
 ## Python
 
 TODO
+
+# Hardware Requirements
+Requires memory sufficient for
+
 
 # Modules
 - `distill_bitnet.py` (runner)

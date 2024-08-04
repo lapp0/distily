@@ -137,9 +137,10 @@ class DistillationTrainer(Trainer):
             self.model.eval()
             with torch.no_grad():
                 for evaluator_name, evaluator in self.args.extra_evaluators.items():
-                    metrics[f"eval_{evaluator_name}"] = float(evaluator(self.model))
-                    gc.collect()
-                    torch.cuda.empty_cache()
+                    metrics[f"eval_{evaluator_name}"] = float(evaluator(
+                        self.model,
+                        self.args.per_device_eval_batch_size
+                    ))
             self.model.train()
 
             self.log(metrics)
@@ -163,6 +164,9 @@ class DistillationTrainer(Trainer):
         base_model_results = {}
         with torch.no_grad():
             for evaluator_name, evaluator in self.args.extra_evaluators.items():
-                base_model_results[f"eval_{evaluator_name}"] = evaluator(self.teacher_model)
+                base_model_results[f"eval_{evaluator_name}"] = float(evaluator(
+                    self.teacher_model,
+                    self.args.per_device_eval_batch_size
+                ))
         base_model_results["epoch"] = 0
         self.log(base_model_results)
