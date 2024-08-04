@@ -153,7 +153,12 @@ link to examples
 TODO
 
 # Hardware Requirements
-Requires memory sufficient for
+
+TODO: expand
+
+Requires memory sufficient for loading both teacher and student model, forward pass on both, backprop on student.
+
+bitnet models require at least bf16 or fp16 memory allocation during training.
 
 
 # Modules

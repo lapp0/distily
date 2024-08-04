@@ -172,12 +172,11 @@ def get_student_model(student_model_args, teacher_config):
         # Force student to have vocabulary size as teacher
         config.vocab_size = teacher_config.vocab_size
 
-        # TODO: remove hack
-        config.attn_implementation = "flash_attention_2"
-        config._attn_implementation = "flash_attention_2"
-
         # TODO: remove .to(...) hack
-        model = AutoModelForCausalLM.from_config(config).to(dtype=torch.bfloat16).to(device="cuda")
+        model = AutoModelForCausalLM.from_config(
+            config=config,
+            attn_implementation="flash_attention_2",
+        ).to(dtype=torch.bfloat16).to(device="cuda")
 
     if student_model_args.student_model_as_bitnet:
         with torch.no_grad():
@@ -200,7 +199,7 @@ def run():
     #test_dataset = get_test_dataset(dataset_args)
     #extra_metrics = get_ppl_eval_datasets(dataset_args)
     dataset = datasets.load_dataset("wikimedia/wikipedia", "20231101.en", split="train[:1000000]")
-    dataset = dataset.train_test_split(test_size=0.01)
+    dataset = dataset.train_test_split(test_size=0.001)
     tokenized_dataset = dataset.map(
         lambda x: tokenizer(x["text"], truncation=True, padding="max_length", max_length=tokenizer.model_max_length),
         batched=True,
