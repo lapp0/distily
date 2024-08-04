@@ -118,7 +118,10 @@ def run(dataset_name, teacher_uri):
         trainer.push_to_hub()
 """
 
-import distily
+import distily.args
+import distily.distillation_trainer
+import distily.metrics
+
 import datasets
 import torch
 from transformers import AutoModelForCausalLM, AutoConfig, AutoTokenizer, DataCollatorForLanguageModeling
@@ -183,7 +186,7 @@ def run():
     test_dataset = tokenized_dataset["test"]
     extra_metric_evaluators = distily.metrics.get_all_metric_evaluators(tokenizer)
 
-    trainer = distily.DistillationTrainer(
+    trainer = distily.distillation_trainer.DistillationTrainer(
         student_model=student_model,
         teacher_model=teacher_model,
         tokenizer=tokenizer,
