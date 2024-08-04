@@ -127,6 +127,10 @@ import torch
 from transformers import AutoModel, AutoModelForCausalLM, AutoConfig, AutoTokenizer, DataCollatorForLanguageModeling
 
 
+# TODO: REMOVE THIS
+from .tinyllama_bitnet_utils import convert_to_bitnet
+
+
 def get_teacher_model_tokenizer(teacher_model_args):
     model = AutoModelForCausalLM.from_pretrained(
         teacher_model_args.teacher_model_name_or_path,
@@ -145,27 +149,33 @@ def get_teacher_model_tokenizer(teacher_model_args):
 
 
 def get_student_model(student_model_args, teacher_model_args):
-    if student_model_args.student_model_as_bitnet:
-        from mmfreelm.models import HGRNBitForCausalLM, HGRNBitConfig
-
     if student_model_args.student_model_name_or_path:
-        model_cls = HGRNBitForCausalLM if student_model_args.student_model_as_bitnet else AutoModelForCausalLM
-        return model_cls.from_pretrained(student_model_args.student_model_name_or_path)
+        model = AutoModelForCausalLM.from_pretrained(
+            student_model_args.student_model_name_or_path,
+            torch_dtype=torch.bfloat16,
+        )
 
     else:
         config_uri = student_model_args.student_model_name_or_path or teacher_model_args.teacher_model_name_or_path
 
-        if student_model_args.student_model_as_bitnet:
-            config = HGRNBitConfig.from_pretrained(config_uri)
-        else:
-            config = AutoConfig.from_pretrained(config_uri)
+        config = AutoConfig.from_pretrained(config_uri)
 
         if student_model_args.student_model_config:
             config.update(student_model_args.student_model_config)
 
+        # TODO: remove hack
         config.attn_implementation = "flash_attention_2"
         config._attn_implementation = "flash_attention_2"
-        return AutoModel.from_config(config).to(dtype=torch.bfloat16)
+
+        # TODO: remove .to(...) hack
+        model = AutoModelForCausalLM.from_config(config).to(dtype=torch.bfloat16)
+
+    if student_model_args.student_model_as_bitnet:
+        with torch.no_grad():
+            # TODO: use a different method which is better supported, an official third party library
+            convert_to_bitnet(model, copy_weights=False)
+
+    return model
 
 
 def run():
@@ -174,6 +184,7 @@ def run():
     teacher_model, tokenizer = get_teacher_model_tokenizer(teacher_model_args)
     student_model = get_student_model(student_model_args, teacher_model_args)
 
+    # TODO: apply model dtype, flash attention, and device based on args
     teacher_model = teacher_model.cuda()
     student_model = student_model.cuda()
 
@@ -181,7 +192,7 @@ def run():
     #train_dataset = get_train_dataset(dataset_args)
     #test_dataset = get_test_dataset(dataset_args)
     #extra_metrics = get_ppl_eval_datasets(dataset_args)
-    dataset = datasets.load_dataset("wikimedia/wikipedia", "20231101.en", split="train[:5000000]")
+    dataset = datasets.load_dataset("wikimedia/wikipedia", "20231101.en", split="train[:5000]")
     dataset = dataset.train_test_split(test_size=0.01)
     tokenized_dataset = dataset.map(
         lambda x: tokenizer(x["text"], truncation=True, padding="max_length", max_length=tokenizer.model_max_length),
@@ -189,7 +200,9 @@ def run():
     )
     train_dataset = tokenized_dataset["train"]
     test_dataset = tokenized_dataset["test"]
-    extra_metric_evaluators = distily_metrics.get_all_metric_evaluators(tokenizer)
+    # TODO: don't hardcode this
+    training_args.extra_metric_evaluators = distily_metrics.get_all_metric_evaluators(tokenizer)
+
 
     trainer = distillation_trainer.DistillationTrainer(
         student_model=student_model,
@@ -199,7 +212,6 @@ def run():
         data_collator=DataCollatorForLanguageModeling(tokenizer, mlm=False),
         train_dataset=train_dataset,
         eval_dataset=test_dataset,
-        extra_evaluators=extra_metric_evaluators,  # TODO
         activation_loss_pairs=True,  # TODO
     )
 

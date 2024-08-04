@@ -64,7 +64,6 @@ class DistillationTrainer(Trainer):
         tokenizer,
         loss_fn: Optional[str] = None,
         activation_loss_pairs: Union[None, List[int], bool] = None,
-        extra_evaluators=None,
         *args,
         **kwargs
     ):
@@ -89,8 +88,6 @@ class DistillationTrainer(Trainer):
             self.activation_loss_pairs = [(i, i) for i in range(student_model.config.num_hidden_layers)]
         else:
             self.activation_loss_pairs = self.activation_loss_pairs
-
-        self.extra_evaluators = extra_evaluators or {}
 
         self.log_trainer_details()
 

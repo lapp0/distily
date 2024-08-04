@@ -43,7 +43,6 @@ To compress the model, and reduce vram for inference you must use [BitBlas](http
 
 # Usage
 
-
 ## CLI
 ```
 python3 -m distily.cli \
