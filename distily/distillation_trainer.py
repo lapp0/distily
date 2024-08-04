@@ -138,7 +138,7 @@ class DistillationTrainer(Trainer):
             with torch.no_grad():
                 for evaluator_name, evaluator in self.args.extra_evaluators.items():
                     metrics[f"eval_{evaluator_name}"] = float(evaluator(self.model))
-                    gc.collect_garbage()
+                    gc.collect()
                     torch.cuda.empty_cache()
             self.model.train()
 
