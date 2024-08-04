@@ -159,7 +159,7 @@ def get_student_model(student_model_args, teacher_model_args):
         )
 
     else:
-        config_uri = student_model_args.student_model_name_or_path or teacher_model_args.teacher_model_name_or_path
+        config_uri = student_model_args.student_config_name_or_path or teacher_model_args.teacher_model_name_or_path
 
         config = AutoConfig.from_pretrained(config_uri)
 
@@ -220,8 +220,8 @@ def run():
         activation_loss_pairs=True,  # TODO
     )
 
-    if True: #args.log_teacher_metrics
-        trainer.log_teacher_metrics()
+    if True: #TODO: args.eval_and_log_teacher_metrics
+        trainer.log_teacher_metrics()  # TODO: _and_log_
 
     trainer.train()
 

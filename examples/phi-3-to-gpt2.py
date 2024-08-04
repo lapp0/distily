@@ -1,0 +1,53 @@
+import datasets
+from transformers import DataCollatorForLanguageModeling
+
+from distily.cli import get_teacher_model_tokenizer, get_student_model
+from distily.args import StudentModelArguments, TeacherModelArguments, DistillationTrainingArguments
+from distily import metrics
+from distily import distillation_trainer
+
+
+def run():
+    student_model_args = StudentModelArguments(student_config_name_or_path="gpt2", student_model_as_bitnet=True)
+    teacher_model_args = TeacherModelArguments(teacher_config_name_or_path="microsoft/Phi-3-mini-4k-instruct")
+
+    teacher_model, tokenizer = get_teacher_model_tokenizer(teacher_model_args)
+    student_model = get_student_model(student_model_args, teacher_model_args)
+
+    # TODO: don't hardcode dataset
+    #train_dataset = get_train_dataset(dataset_args)
+    #test_dataset = get_test_dataset(dataset_args)
+    #extra_metrics = get_ppl_eval_datasets(dataset_args)
+    dataset = datasets.load_dataset("wikimedia/wikipedia", "20231101.en", split="train[:1000000]")
+    dataset = dataset.train_test_split(test_size=0.01)
+    tokenized_dataset = dataset.map(
+        lambda x: tokenizer(x["text"], truncation=True, padding="max_length", max_length=tokenizer.model_max_length),
+        batched=True,
+        batch_size=10000,
+        load_from_cache_file=True,
+    )
+    train_dataset = tokenized_dataset["train"]
+    test_dataset = tokenized_dataset["test"]
+
+    training_args = DistillationTrainingArguments()
+    training_args.extra_evaluators = metrics.get_all_metric_evaluators(tokenizer)
+
+    trainer = distillation_trainer.DistillationTrainer(
+        student_model=student_model,
+        teacher_model=teacher_model,
+        tokenizer=tokenizer,
+        args=training_args,
+        data_collator=DataCollatorForLanguageModeling(tokenizer, mlm=False),
+        train_dataset=train_dataset,
+        eval_dataset=test_dataset,
+        activation_loss_pairs=[(32, 12), (30, 11), (16, 8), (8, 4), (4, 3), (2, 2), (1, 1), (0, 0)],
+    )
+
+    trainer.train()
+
+    if training_args.push_to_hub:
+        trainer.push_to_hub()
+
+
+if __name__ == "__main__":
+    run()

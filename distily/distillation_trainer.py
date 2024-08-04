@@ -87,7 +87,7 @@ class DistillationTrainer(Trainer):
             assert student_model.config.num_hidden_layers == teacher_model.config.num_hidden_layers  # TODO: explicit error
             self.activation_loss_pairs = [(i, i) for i in range(student_model.config.num_hidden_layers)]
         else:
-            self.activation_loss_pairs = self.activation_loss_pairs
+            self.activation_loss_pairs = activation_loss_pairs
 
         self.log_trainer_details()
 

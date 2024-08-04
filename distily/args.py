@@ -9,6 +9,10 @@ class StudentModelArguments:
         default=None,
         metadata={"help": "Student model URI or path to finetune. If unset, student is randomly initialized."}
     )
+    student_config_name_or_path: typing.Optional[str] = field(
+        default=None,
+        metadata={"help": "Student config URI. If unset, student config is derived from teacher config."}
+    )
     student_model_config: typing.Optional[dict] = field(
         default=None,
         metadata={"help": "Config dict of student model. Unset parameters default to set models config."}
