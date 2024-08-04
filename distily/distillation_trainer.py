@@ -3,6 +3,7 @@ from transformers import Trainer
 import torch
 from torch.nn import functional as F
 import logging
+import gc
 
 
 def mse_loss(student_features, teacher_features):
@@ -137,6 +138,8 @@ class DistillationTrainer(Trainer):
             with torch.no_grad():
                 for evaluator_name, evaluator in self.args.extra_evaluators.items():
                     metrics[f"eval_{evaluator_name}"] = float(evaluator(self.model))
+                    gc.collect_garbage()
+                    torch.cuda.empty_cache()
             self.model.train()
 
             self.log(metrics)

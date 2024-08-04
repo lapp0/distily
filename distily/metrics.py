@@ -6,7 +6,7 @@ from tqdm import tqdm
 
 
 class PerplexityEvalCallback(TrainerCallback):
-    def __init__(self, dataset, tokenizer, batch_size=16, max_length=1024, dataset_column="text"):
+    def __init__(self, dataset, tokenizer, batch_size=1, max_length=1024, dataset_column="text"):
         self.dataset = dataset
         self.tokenizer = tokenizer
         self.max_length = max_length
