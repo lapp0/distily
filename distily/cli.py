@@ -144,8 +144,6 @@ def get_teacher_model_tokenizer(teacher_model_args):
     for p in model.parameters():
         p.requires_grad = False
 
-    model = model.cuda()
-
     tokenizer = AutoTokenizer.from_pretrained(teacher_model_args.teacher_model_name_or_path)
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token_id = tokenizer.eos_token_id
