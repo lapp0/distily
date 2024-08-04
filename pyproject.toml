@@ -4,7 +4,6 @@ version = "0.1.0"
 description = "Distily: Language Model Distillation Toolkit and Library"
 authors = ["Andrew Lapp <andrew@github.rew.la>"]
 license = "MIT"
-readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
