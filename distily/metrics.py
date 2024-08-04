@@ -23,7 +23,7 @@ class PerplexityEvalCallback(TrainerCallback):
             return_tensors="pt"
         )
 
-    def do_eval(self, model):
+    def do_eval(self, model, batch_size):
         input_ids = self.encodings["input_ids"].to(model.device)
         attention_mask = self.encodings["attention_mask"].to(model.device)
 
@@ -32,8 +32,8 @@ class PerplexityEvalCallback(TrainerCallback):
         total_count = 0
 
         with torch.no_grad():
-            for start_index in tqdm(range(0, len(input_ids), self.batch_size)):
-                end_index = start_index + self.batch_size
+            for start_index in tqdm(range(0, len(input_ids), batch_size)):
+                end_index = start_index + batch_size
                 batch_input_ids = input_ids[start_index:end_index]
                 batch_attention_mask = attention_mask[start_index:end_index]
 
