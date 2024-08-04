@@ -118,9 +118,9 @@ def run(dataset_name, teacher_uri):
         trainer.push_to_hub()
 """
 
-import distily.args
-import distily.distillation_trainer
-import distily.metrics
+from . import args as distily_args
+from . import distillation_trainer
+from . import metrics as distily_metrics
 
 import datasets
 import torch
@@ -164,7 +164,7 @@ def get_student_model(student_model_args, teacher_model_args):
 
 
 def run():
-    training_args, student_model_args, teacher_model_args = distily.args.get_args()
+    training_args, student_model_args, teacher_model_args = distily_args.get_args()
 
     teacher_model, tokenizer = get_teacher_model_tokenizer(teacher_model_args)
     student_model = get_student_model(student_model_args, teacher_model_args)
@@ -184,9 +184,9 @@ def run():
     )
     train_dataset = tokenized_dataset["train"]
     test_dataset = tokenized_dataset["test"]
-    extra_metric_evaluators = distily.metrics.get_all_metric_evaluators(tokenizer)
+    extra_metric_evaluators = distily_metrics.get_all_metric_evaluators(tokenizer)
 
-    trainer = distily.distillation_trainer.DistillationTrainer(
+    trainer = distillation_trainer.DistillationTrainer(
         student_model=student_model,
         teacher_model=teacher_model,
         tokenizer=tokenizer,
