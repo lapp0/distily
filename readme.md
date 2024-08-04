@@ -2,6 +2,13 @@ Training tool
 
 # TODO
 
+## Priorities
+- [ ] add tooling to convert to 1.58b safetensors file
+- [ ] distill phi-3-mini to 1.58b
+- [ ] add eval tool for MMLU / MATH /  etc
+- [ ] add ability to transfer / freeze embeddings
+
+
 ## Package
 - [x] eval step
 - [x] convert loss to one or many of these metrics https://github.com/DD-DuDa/BitDistiller/blob/master/train/mytrainer.py
