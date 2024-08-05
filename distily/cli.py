@@ -197,7 +197,7 @@ def run():
     student_model = get_student_model(student_model_args, teacher_model.config)
 
     # TODO: don't hardcode max length
-    max_seq_len = 4096
+    max_seq_len = 1024
 
     # TODO: don't hardcode dataset
     #train_dataset = get_train_dataset(dataset_args)
