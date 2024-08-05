@@ -71,7 +71,7 @@ class DistillationTrainer(Trainer):
         *args,
         **kwargs
     ):
-        super().__init__(*args, model=student_model, tokenizer=tokenizer, args=args, **kwargs)
+        super().__init__(*args, model=student_model, tokenizer=tokenizer, **kwargs)
         self.teacher_model = teacher_model
 
         loss_fn = self.args.loss_fn or "reverse_kl"
