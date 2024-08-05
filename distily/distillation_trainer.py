@@ -1,3 +1,4 @@
+from typing import Callable
 import collections
 import logging
 import os
@@ -43,7 +44,6 @@ The following hyperparameters were used during training:
 {hyperparameters}
 
 ### Model Results
-
 {eval_table}
 
 ### Framework versions
@@ -74,7 +74,7 @@ class DistillationTrainer(transformers.Trainer):
         else:
             raise TypeError(f"invalid loss_fn: `{loss_fn}`")
 
-        if isinstance(self.args.distillation_strategy, distily.DistillationStrategy):
+        if isinstance(self.args.distillation_strategy, distily.distillation_strategy.DistillationStrategy):
             self.distillation_strategy = self.args.distillation_strategy
         elif isinstance(self.args.distillation_strategy, str):
             self.distillation_strategy = distily.distillation_strategy.STRATEGIES[self.args.distillation_strategy]
