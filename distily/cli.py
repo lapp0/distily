@@ -82,15 +82,15 @@ def run():
     #test_dataset = get_test_dataset(dataset_args)
     #extra_metrics = get_ppl_eval_datasets(dataset_args)
     dataset = datasets.load_dataset("wikimedia/wikipedia", "20231101.en", split="train")
-    dataset = dataset.select(range(1000000))
+    dataset = dataset.select(range(1000000)).train_test_split(test_size=0.001)
     tokenized_dataset = dataset.map(
         lambda x: tokenizer(x["text"], truncation=True, padding="max_length", max_length=max_seq_len),
         batched=True,
         batch_size=100,
         num_proc=os.cpu_count() * 3 // 4,
     )
-    train_dataset = tokenized_dataset
-    #test_dataset = tokenized_dataset["test"]
+    train_dataset = tokenized_dataset["train"]
+    test_dataset = tokenized_dataset["test"]
     # TODO: don't hardcode this
     training_args.extra_evaluators = distily.metrics.get_all_metric_evaluators(tokenizer)
 
@@ -101,7 +101,7 @@ def run():
         args=training_args,
         data_collator=DataCollatorForLanguageModeling(tokenizer, mlm=False),
         train_dataset=train_dataset,
-        #eval_dataset=test_dataset,
+        eval_dataset=test_dataset,
     )
 
     trainer.train()

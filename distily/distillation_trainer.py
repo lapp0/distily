@@ -121,16 +121,16 @@ class DistillationTrainer(transformers.Trainer):
         return loss
 
     def evaluate(self, *args, metric_key_prefix="eval", **kwargs):
+        self.model.eval()
         metrics = {}
         if metric_key_prefix == "eval":
-            self.model.eval()
             with torch.no_grad():
                 for evaluator_name, evaluator in self.args.extra_evaluators.items():
                     metrics[f"eval_{evaluator_name}"] = float(evaluator(
                         self.model,
                         self.args.per_device_eval_batch_size
                     ))
-            self.model.train()
+
 
             self.log(metrics)
 
@@ -138,6 +138,7 @@ class DistillationTrainer(transformers.Trainer):
             super().evaluate(*args, **kwargs)
         )
 
+        self.model.train()
         return metrics
 
     def create_model_card(self, *args, **kwargs):
