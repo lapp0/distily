@@ -44,7 +44,7 @@ The following hyperparameters were used during training:
 {hyperparameters}
 
 ### Resource Usage
-Peak GPU Memory: {peakmem_gb}GB
+Peak GPU Memory: {peakmem_gb} GB
 
 ### Model Results
 {eval_table}
@@ -198,12 +198,19 @@ class DistillationTrainer(transformers.Trainer):
 
     @staticmethod
     def _to_markdown_table(lines: List[Dict]) -> str:
-        all_keys = sorted(set(key for row in lines for key in row))
+        all_keys = sorted(
+            set(key for row in lines for key in row),
+            key=lambda s: (s not in ("step", "epoch"), s)
+        )
         header = "| " + " | ".join(all_keys) + " |"
         separator = "| " + " | ".join("---" for _ in all_keys) + " |"
+        sorted_lines = sorted(
+            lines,
+            key=lambda line: (line.isnumeric(), float(line) if line.isnumeric() else line)
+        )
         rows = [
             "| " + " | ".join(str(row.get(key, "")) for key in all_keys) + " |"
-            for row in lines
+            for row in sorted_lines
         ]
         return "\n".join([header, separator] + rows)
 
