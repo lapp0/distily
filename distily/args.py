@@ -44,7 +44,7 @@ class DistillationTrainingArguments(TrainingArguments):
     ##################################
     # Distillation Training parameters
     ##################################
-    eval_and_log_teacher_metrics: bool = False  # TODO: use field
+    eval_and_log_teacher_metrics: bool = True  # TODO: use field
     loss_fn: typing.Union[str] = field(
         default="reverse_kl",
         metadata={"help": "Loss function for distillation"}

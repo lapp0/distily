@@ -130,28 +130,24 @@ class DistillationTrainer(transformers.Trainer):
 
         return metrics
 
-    def create_model_card(self, *args, tags=None, finetuned_from=None, **kwargs):
-        super().create_model_card(
-            *args,
-            tags=(tags or []) + ["Distily"],
-            **kwargs
-        )
+    def create_model_card(self, *args, **kwargs):
+        super().create_model_card(*args, **kwargs)
 
         step_evals = collections.defaultdict(dict)
         for log_line in self.state.log_history:
             extracted_logs = {
                 k: transformers.modelcard._maybe_round(v)
                 for k, v in log_line.items()
-                if k.endswith('_loss') or k.startswith('eval_')
+                if k.startswith('eval_')
             }
             if extracted_logs:
-                step_evals[log_line["step"]].update({
-                    "epoch": log_line.get("epoch"),
+                step_evals[transformers.modelcard._maybe_round(log_line["step"])].update({
+                    "epoch": transformers.modelcard._maybe_round(log_line.get("epoch")),
                     **extracted_logs
                 })
         eval_lines = [{"step": step, **value} for step, value in sorted(step_evals.items())]
 
-        eval_results = eval_lines[-1]
+        eval_results = dict(eval_lines[-1])
         eval_results.pop("step", None)
         eval_results.pop("epoch", None)
 
