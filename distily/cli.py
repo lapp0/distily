@@ -122,6 +122,7 @@ from . import args as distily_args
 from . import distillation_trainer
 from . import metrics as distily_metrics
 
+import os
 import copy
 import datasets
 import torch
@@ -205,7 +206,7 @@ def run():
         lambda x: tokenizer(x["text"], truncation=True, padding="max_length", max_length=tokenizer.model_max_length),
         batched=True,
         batch_size=1000,
-        num_proc=32,
+        num_proc=os.cpu_count(),
     )
     train_dataset = tokenized_dataset["train"]
     test_dataset = tokenized_dataset["test"]

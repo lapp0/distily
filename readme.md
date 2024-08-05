@@ -56,8 +56,8 @@ To compress the model, and reduce vram for inference you must use [BitBlas](http
 ```
 python3 -m distily.cli \
     --teacher_model_name_or_path Qwen/Qwen2-0.5B-Instruct \
-    --output_dir qwen2-0.5-experiments_control \
-    --hub_model_id "lapp0/qwen2-0.5-experiments_control" \
+    --output_dir distily_experiments_control \
+    --hub_model_id "lapp0/distily_experiments_control" \
     --push_to_hub True \
     --report_to tensorboard
 ```
