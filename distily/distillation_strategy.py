@@ -86,7 +86,7 @@ class LogitsStrategy(DistillationStrategy):
     Strategies Loss Inputs:
     - logits of forward pass
     """
-    required_equivalent_config = ["max_position_embeddings"]
+    required_equivalent_config = ["vocab_size"]
     forward_pass_kwargs = {}
 
     @staticmethod
@@ -151,7 +151,7 @@ class LogitsAndActivationsStrategy(DistillationStrategy):
     - logits
     - all layers activations
     """
-    required_equivalent_config = ["max_position_embeddings", "hidden_size", "num_hidden_layers"]
+    required_equivalent_config = ["vocab_size", "hidden_size", "num_hidden_layers"]
     forward_pass_kwargs = {"output_hidden_states": True}
 
     @staticmethod
@@ -169,7 +169,7 @@ class ComprehensiveStrategy(DistillationStrategy):
     - all layers activations
     - all attention blocks attention scores
     """
-    required_equivalent_config = ["max_position_embeddings", "hidden_size", "num_hidden_layers"]
+    required_equivalent_config = ["vocab_size", "hidden_size", "num_hidden_layers"]
     forward_pass_kwargs = {"output_hidden_states": True, "output_attentions": True}
 
     @staticmethod
