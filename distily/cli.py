@@ -100,7 +100,7 @@ def run():
         tokenizer=tokenizer,
         args=training_args,
         data_collator=DataCollatorForLanguageModeling(tokenizer, mlm=False),
-        tprain_dataset=train_dataset,
+        train_dataset=train_dataset,
         #eval_dataset=test_dataset,
     )
 
