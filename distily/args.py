@@ -68,7 +68,7 @@ class DistillationTrainingArguments(TrainingArguments):
     #####################################################
 
     # optimize convergence to final model
-    learning_rate: float = 1e-4
+    learning_rate: float = 1e-3
     max_grad_norm: float = 100.0
     lr_scheduler_type: str = "cosine"
     num_train_epochs: float = 1.0

@@ -131,7 +131,6 @@ class DistillationTrainer(transformers.Trainer):
                         self.args.per_device_eval_batch_size
                     ))
 
-
             self.log(metrics)
 
         metrics.update(
