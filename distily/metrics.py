@@ -39,17 +39,18 @@ class PerplexityEvalCallback(TrainerCallback):
                 shift_logits = logits[..., :-1, :].contiguous()
                 shift_labels = batch_input_ids[..., 1:].contiguous()
 
+                # Ensure logits and labels are of the same shape
+                assert shift_logits.shape[:-1] == shift_labels.shape
+
                 loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
                 mask = batch_attention_mask[..., 1:].contiguous().view(-1)
                 loss = (loss * mask).sum()
 
                 total_loss += loss.item()
-                total_count += mask.sum().item()
+                total_count += torch.sum(mask).item()
 
         avg_loss = total_loss / total_count
-        # Convert avg_loss to a tensor before computing perplexity
-        avg_loss_tensor = torch.tensor(avg_loss)
-        perplexity = torch.exp(avg_loss_tensor).item()
+        perplexity = torch.exp(torch.tensor(avg_loss)).item()
         return perplexity
 
 

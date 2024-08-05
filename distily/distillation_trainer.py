@@ -213,10 +213,10 @@ class DistillationTrainer(transformers.Trainer):
     @staticmethod
     def _to_markdown_table(lines: List[Dict]) -> str:
         all_keys = sorted(
-            set(key.removeprefix("eval_") for row in lines for key in row),
-            key=lambda s: (s == "step", s == "epoch", s)
+            set(key for row in lines for key in row),
+            key=lambda s: (s != "step", s != "epoch", s)
         )
-        header = "| " + " | ".join(all_keys) + " |"
+        header = "| " + " | ".join([k.removeprefix("eval_") for k in all_keys]) + " |"
         separator = "| " + " | ".join("---" for _ in all_keys) + " |"
         sorted_lines = sorted(
             lines,
