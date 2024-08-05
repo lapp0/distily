@@ -49,14 +49,14 @@ class DistillationTrainingArguments(TrainingArguments):
         default="reverse_kl",
         metadata={"help": "Loss function for distillation"}
     )
-    train_embeddings: bool = field(
-        default=True,
-        metadata={"help": "If True, trains new embeddings from scratch. Else, use teachers input / output embeddings"}
-    )
     distillation_strategy: str = field(
         default="logits_activations",
         metadata={"help": "Strategy determining which forward-pass features to incorporate into loss function."}
     )  # TODO: document how to set Activation Loss Pairs
+    train_embeddings: bool = field(
+        default=True,
+        metadata={"help": "If True, trains new embeddings from scratch. Else, use teachers input / output embeddings"}
+    )
 
     # TODO: add extra metric evaluators
 
