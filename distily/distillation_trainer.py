@@ -1,4 +1,4 @@
-from typing import Union, List, Optional, Callable
+import collections
 import logging
 import os
 
@@ -131,7 +131,7 @@ class DistillationTrainer(transformers.Trainer):
             **kwargs
         )
 
-        step_evals = {}
+        step_evals = collections.defaultdict(dict)
         for log_line in self.state.log_history:
             extracted_logs = {
                 k: transformers.modelcard._maybe_round(v)
@@ -158,6 +158,14 @@ class DistillationTrainer(transformers.Trainer):
             f"- Datasets {datasets.__version__}",
         ])
 
+        hyperparameters = transformers.modelcard.extract_hyperparameters_from_trainer(self)
+        hyperparameters = {
+            "distillation_strategy": str(self.args.distillation_strategy),
+            "loss_fn": str(self.args.loss_fn),
+            "train_embeddings": str(self.args.train_embeddings),
+            **hyperparameters
+        }
+
         # TODO: add strategy, loss_fn, other parameters and details
 
         # TODO: add
@@ -176,7 +184,7 @@ class DistillationTrainer(transformers.Trainer):
                 f"- {name}: {transformers.modelcard._maybe_round(value)}"
                 for name, value in eval_results.items()
             ]),
-            hyperparameters="\n".join([f"- {name}: {value}" for name, value in self.hyperparameters.items()]),
+            hyperparameters="\n".join([f"- {name}: {value}" for name, value in hyperparameters.items()]),
             eval_table=transformers.modelcard.make_markdown_table(eval_lines),
             framework_versions=framework_versions
         )

@@ -59,7 +59,10 @@ python3 -m distily.cli \
     --output_dir distily_experiments_control \
     --hub_model_id "lapp0/distily_experiments_control" \
     --push_to_hub True \
-    --report_to tensorboard
+    --report_to tensorboard \
+    --per_device_eval_batch_size 2 \
+    --per_device_train_batch_size 2 \
+    --teacher_load_in_8bit True
 ```
 
 <details>
