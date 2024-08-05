@@ -53,9 +53,12 @@ class DistillationTrainingArguments(TrainingArguments):
         default=True,
         metadata={"help": "If True, trains new embeddings from scratch. Else, use teachers input / output embeddings"}
     )
-    # TODO: add
-    # Activation loss pairs
-    # extra metric evaluators
+    distillation_strategy: str = field(
+        default="logits_activations",
+        metadata={"help": "Strategy determining which forward-pass features to incorporate into loss function."}
+    )  # TODO: document how to set Activation Loss Pairs
+
+    # TODO: add extra metric evaluators
 
     #####################################################
     # TrainingArguments parameters with sane defaults set
@@ -78,7 +81,6 @@ class DistillationTrainingArguments(TrainingArguments):
     eval_strategy: str = "steps"
     eval_steps: int = 2000
     eval_on_start: bool = True
-
 
 
 def get_args():

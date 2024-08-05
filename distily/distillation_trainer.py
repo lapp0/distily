@@ -51,22 +51,12 @@ The following hyperparameters were used during training:
 """
 
 
-
 class DistillationTrainer(transformers.Trainer):
-    loss_fn_map = {
-        "mse": distily.distill_loss.mse_loss,
-        "kl": distily.distill_loss.kl_divergence_loss,
-        "reverse_kl": distily.distill_loss.reverse_kl_divergence_loss,
-        "cakld": distily.distill_loss.cakld_loss,
-        "jsd": distily.distill_loss.jsd_loss
-    }
-
     def __init__(
         self,
         student_model,
         teacher_model,
         tokenizer,
-        activation_loss_pairs: Union[None, List[int], bool] = None,
         *args,
         **kwargs
     ):
@@ -76,7 +66,7 @@ class DistillationTrainer(transformers.Trainer):
         loss_fn = self.args.loss_fn or "reverse_kl"
         if isinstance(self.args.loss_fn, str):
             try:
-                self.loss_fn = self.loss_fn_map[self.args.loss_fn.lower()]
+                self.loss_fn = distily.distill_loss.LOSS_FUNCTIONS[self.args.loss_fn.lower()]
             except KeyError:
                 raise ValueError(f"Unsupported loss function: {self.args.loss_fn}")
         elif isinstance(loss_fn, Callable):
@@ -84,13 +74,12 @@ class DistillationTrainer(transformers.Trainer):
         else:
             raise TypeError(f"invalid loss_fn: `{loss_fn}`")
 
-        if activation_loss_pairs is None or activation_loss_pairs is False:
-            self.activation_loss_pairs = []
-        elif activation_loss_pairs is True:
-            assert student_model.config.num_hidden_layers == teacher_model.config.num_hidden_layers  # TODO: explicit error
-            self.activation_loss_pairs = [(i, i) for i in range(student_model.config.num_hidden_layers)]
+        if isinstance(self.args.distillation_strategy, distily.DistillationStrategy):
+            self.distillation_strategy = self.args.distillation_strategy
+        elif isinstance(self.args.distillation_strategy, str):
+            self.distillation_strategy = distily.distillation_strategy.STRATEGIES[self.args.distillation_strategy]
         else:
-            self.activation_loss_pairs = activation_loss_pairs
+            raise TypeError(f"invalid distillation_strategy: `{self.args.distillation_strategy}`")
 
         self.log_trainer_details()
 
@@ -102,30 +91,13 @@ class DistillationTrainer(transformers.Trainer):
         # activation pair transfers
 
     def compute_loss(self, model, inputs, return_outputs=False):
-        if self.activation_loss_pairs:
-            with torch.no_grad():
-                teacher_output = self.teacher_model(**inputs, output_hidden_states=True)
-            student_output = model(**inputs, output_hidden_states=True)
-
-            logit_loss = self.loss_fn(student_output.logits, teacher_output.logits)
-
-            activation_losses = []
-            for teacher_layer_idx, student_layer_idx in self.activation_loss_pairs:
-                teacher_hidden_state = teacher_output.hidden_states[teacher_layer_idx]
-                student_hidden_state = student_output.hidden_states[student_layer_idx]
-                activation_losses.append(
-                    torch.mean(self.loss_fn(teacher_hidden_state, student_hidden_state))
-                )
-
-            loss = torch.mean(torch.stack(activation_losses)) + torch.mean(logit_loss)
-
-        else:
-            with torch.no_grad():
-                teacher_features = self.teacher_model(**inputs).logits
-            student_features = model(**inputs).logits
-            loss = torch.mean(
-                self.loss_fn(student_features, teacher_features)
-            )
+        loss = torch.tensor(0.0)
+        total_weight = 0
+        for loss_inputs in self.distillation_strategy.get_loss_inputs(self.teacher_model, model):
+            feature_loss = self.loss_fn(loss_inputs.teacher_loss_input, loss_inputs.student_loss_input)
+            loss += loss_inputs.weight * feature_loss
+            total_weight += loss_inputs.weight
+        loss /= total_weight
 
         if return_outputs:
             # TODO: real output

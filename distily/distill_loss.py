@@ -42,3 +42,12 @@ def jsd_loss(student_features, teacher_features, beta_prob=0.5):
 
     kl_loss = kl_loss_f + kl_loss_r
     return kl_loss.mean()
+
+
+LOSS_FNS = {
+    "mse": mse_loss,
+    "kl": kl_divergence_loss,
+    "reverse_kl": reverse_kl_divergence_loss,
+    "cakld": cakld_loss,
+    "jsd": jsd_loss
+}
