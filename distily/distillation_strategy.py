@@ -158,7 +158,7 @@ class LogitsAndActivationsStrategy(DistillationStrategy):
     def features_to_loss_inputs(teacher_output, student_output):
         return (
             ActivationsStrategy.features_to_loss_inputs(teacher_output, student_output) +
-            + LogitsStrategy.features_to_loss_inputs(teacher_output, student_output)
+            LogitsStrategy.features_to_loss_inputs(teacher_output, student_output)
         )
 
 
