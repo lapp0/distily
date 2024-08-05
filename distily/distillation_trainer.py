@@ -194,8 +194,7 @@ class DistillationTrainer(transformers.Trainer):
             eval_table=self._to_markdown_table(eval_lines),
             framework_versions=framework_versions
         )
-        with open(model_card_filepath, "w") as f:
-            f.write(model_card.content)
+        model_card.save(model_card_filepath)
 
     @staticmethod
     def _to_markdown_table(lines: List[Dict]) -> str:
@@ -210,13 +209,13 @@ class DistillationTrainer(transformers.Trainer):
 
     def eval_and_log_teacher_metrics(self):
         """TODO: This doesn't work properly!"""
-        base_model_results = {}
+        teacher_model_results = {}
         with torch.no_grad():
             for evaluator_name, evaluator in self.args.extra_evaluators.items():
-                base_model_results[f"eval_{evaluator_name}"] = float(evaluator(
+                teacher_model_results[f"eval_{evaluator_name}"] = float(evaluator(
                     self.teacher_model,
                     self.args.per_device_eval_batch_size
                 ))
-        base_model_results["epoch"] = "(teacher)"
-        base_model_results["step"] = "(teacher)"
-        self.log(base_model_results)
+        teacher_model_results["epoch"] = "(teacher)"
+        teacher_model_results["step"] = "(teacher)"
+        self.log(teacher_model_results)

@@ -107,13 +107,10 @@ def run():
     if training_args.eval_and_log_teacher_metrics:
         trainer.eval_and_log_teacher_metrics()
 
-    torch.cuda.reset_peak_memory_stats()
     trainer.train()
-    print("PEAK CUDA MEMORY:", torch.cuda.max_memory_allocated() / (1024 ** 3), "GB")
 
     if training_args.push_to_hub:
         trainer.push_to_hub()
-
 
 
 if __name__ == "__main__":
