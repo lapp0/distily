@@ -104,9 +104,6 @@ def run():
         eval_dataset=test_dataset,
     )
 
-    if training_args.eval_and_log_teacher_metrics:
-        trainer.eval_and_log_teacher_metrics()
-
     trainer.train()
 
     if training_args.push_to_hub:

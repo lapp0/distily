@@ -95,6 +95,11 @@ class DistillationTrainer(transformers.Trainer):
 
         self.log_trainer_details()
 
+    def train(self, *args, **kwargs):
+        super().train(*args, **kwargs)
+        if self.args.eval_on_end:
+            self.evaluate()
+
     def log_trainer_details(self):
         logging.info("Student model: `{TODO}`")
         # TODO:

@@ -60,6 +60,9 @@ class DistillationTrainingArguments(TrainingArguments):
 
     # TODO: add extra metric evaluators
 
+    # extra helper specific to this trainer
+    eval_on_end: bool = True
+
     #####################################################
     # TrainingArguments parameters with sane defaults set
     #####################################################
