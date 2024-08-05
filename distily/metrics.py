@@ -7,15 +7,10 @@ from tqdm import tqdm
 
 # TODO: Respect eval batch size for `batch_size` argument
 class PerplexityEvalCallback(TrainerCallback):
-    def __init__(self, dataset, tokenizer, batch_size=1, max_length=1024, dataset_column="text"):
-        self.dataset = dataset
-        self.tokenizer = tokenizer
-        self.max_length = max_length
-        self.batch_size = batch_size
-
+    def __init__(self, dataset, tokenizer, max_length=1024, dataset_column="text"):
         # preprocess / tokenize
-        predictions = [example[dataset_column] for example in self.dataset]
-        self.encodings = self.tokenizer(
+        predictions = [example[dataset_column] for example in dataset]
+        self.encodings = tokenizer(
             predictions,
             padding=True,
             truncation=True,
@@ -61,15 +56,15 @@ class PerplexityEvalCallback(TrainerCallback):
 def get_all_metric_evaluators(tokenizer):
     return {
         "enwikippl": PerplexityEvalCallback(
-            dataset=load_dataset("wikimedia/wikipedia", "20231101.en", split="train")[:-1000],
+            dataset=load_dataset("wikimedia/wikipedia", "20231101.en", split="train").select(range(2000000, 2001000)),
             tokenizer=tokenizer,
         ).do_eval,
         "frwikippl": PerplexityEvalCallback(
-            dataset=load_dataset("wikimedia/wikipedia", "20231101.fr", split="train")[:-1000],
+            dataset=load_dataset("wikimedia/wikipedia", "20231101.fr", split="train").select(range(1000)),
             tokenizer=tokenizer,
         ).do_eval,
         "zhwikippl": PerplexityEvalCallback(
-            dataset=load_dataset("wikimedia/wikipedia", "20231101.zh", split="train")[:-1000],
+            dataset=load_dataset("wikimedia/wikipedia", "20231101.zh", split="train").select(range(1000)),
             tokenizer=tokenizer,
         ).do_eval,
     }
