@@ -47,6 +47,8 @@ The following hyperparameters were used during training:
 Peak GPU Memory: {peakmem_gb} GB
 
 ### Model Results
+`eval_` metrics:
+
 {eval_table}
 
 ### Framework versions
@@ -148,8 +150,13 @@ class DistillationTrainer(transformers.Trainer):
                     "epoch": transformers.modelcard._maybe_round(log_line.get("epoch")),
                     **extracted_logs
                 })
-        if "-1" in step_evals:
-            step_evals["teacher"] = step_evals.pop("-1")
+
+        if self.args.eval_teacher_metrics:
+            step_evals["**teacher eval**"] = {
+                k: transformers.modelcard._maybe_round(v)
+                for k, v in self.eval_teacher_metrics().items()
+            }
+
         eval_lines = [{"step": step, **value} for step, value in sorted(step_evals.items())]
 
         eval_results = dict(eval_lines[-1])
@@ -201,8 +208,8 @@ class DistillationTrainer(transformers.Trainer):
     @staticmethod
     def _to_markdown_table(lines: List[Dict]) -> str:
         all_keys = sorted(
-            set(key for row in lines for key in row),
-            key=lambda s: (s not in ("step", "epoch"), s)
+            set(key.removeprefix("eval_") for row in lines for key in row),
+            key=lambda s: (s == "step", s == "epoch", s)
         )
         header = "| " + " | ".join(all_keys) + " |"
         separator = "| " + " | ".join("---" for _ in all_keys) + " |"
@@ -219,8 +226,7 @@ class DistillationTrainer(transformers.Trainer):
         ]
         return "\n".join([header, separator] + rows)
 
-    def eval_and_log_teacher_metrics(self):
-        """TODO: This doesn't work properly!"""
+    def eval_teacher_metrics(self):
         teacher_model_results = {}
         with torch.no_grad():
             for evaluator_name, evaluator in self.args.extra_evaluators.items():
@@ -228,6 +234,4 @@ class DistillationTrainer(transformers.Trainer):
                     self.teacher_model,
                     self.args.per_device_eval_batch_size
                 ))
-        teacher_model_results["epoch"] = -1
-        teacher_model_results["step"] = -1
-        self.log(teacher_model_results)
+        return teacher_model_results

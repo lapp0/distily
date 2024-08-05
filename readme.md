@@ -5,10 +5,17 @@ Training tool
 ## Priorities
 - [x] add base model eval to model card
 - [x] add distilled model full metrics table to model card
-- [ ] add tooling to convert to 1.58b safetensors file
-- [ ] distill phi-3-mini to 1.58b
-- [ ] add eval tool for MMLU / MATH /  etc
+- [ ] get working qwen2-0.5b run
+- [ ] add eval tool for MMLU / MATH / etc
 - [ ] add ability to transfer / freeze embeddings
+- [ ] fix re-entrant issue
+
+## Necessary for v1.0.0
+- [ ] model card: include metadata for benchmarks to include evaluation results
+- [ ] specify datasets by argument
+- [ ] specify metrics by argument
+- [ ] add tooling to convert to 1.58b safetensors file
+- [ ] distill phi-3-mini to 1.58b, report metrics
 
 ## Clean
 - [x] model card - description of method
@@ -27,7 +34,6 @@ Training tool
 ## Publish
 - [ ] evaluate results with logit distillation vs hidden state distillation
 - [ ] search for optimal hidden states to select
-- [ ] look into freezing embeddings, experiment
 - [ ] other hyperparameter experiments
 
 ## Optimize
