@@ -195,7 +195,7 @@ class DistillationTrainer(transformers.Trainer):
             framework_versions=framework_versions
         )
         with open(model_card_filepath, "w") as f:
-            f.write(model_card)
+            f.write(model_card.content)
 
     @staticmethod
     def _to_markdown_table(lines: List[Dict]) -> str:
