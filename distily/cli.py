@@ -203,7 +203,8 @@ def run():
     #train_dataset = get_train_dataset(dataset_args)
     #test_dataset = get_test_dataset(dataset_args)
     #extra_metrics = get_ppl_eval_datasets(dataset_args)
-    dataset = datasets.load_dataset("wikimedia/wikipedia", "20231101.en", split="train[:1000000]")
+    dataset = datasets.load_dataset("wikimedia/wikipedia", "20231101.en", split="train")
+    dataset = dataset[:1000000]
     dataset = dataset.train_test_split(test_size=0.001)
     tokenized_dataset = dataset.map(
         lambda x: tokenizer(x["text"], truncation=True, padding="max_length", max_length=max_seq_len),
