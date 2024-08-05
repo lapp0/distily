@@ -3,20 +3,24 @@ Training tool
 # TODO
 
 ## Priorities
-- [ ] add base model eval to model card
-- [ ] add distilled model full metrics table to model card
+- [x] add base model eval to model card
+- [x] add distilled model full metrics table to model card
 - [ ] add tooling to convert to 1.58b safetensors file
 - [ ] distill phi-3-mini to 1.58b
 - [ ] add eval tool for MMLU / MATH /  etc
 - [ ] add ability to transfer / freeze embeddings
 
+## Clean
+- [x] model card - description of method
+- [x] model card - remove incorrect "finetuned from"
+- [X] model card - verify tags
+- [x] model card - ensure original model and new model metrics included
 
 ## Package
 - [x] eval step
 - [x] convert loss to one or many of these metrics https://github.com/DD-DuDa/BitDistiller/blob/master/train/mytrainer.py
 - [x] experiment with loss based on hidden states
 - [x] gpt2-distily
-- [ ] phi-3-mini-instruct-distily
 - [x] convert command line args to be available via dataclasses like in llama_autotuner
 - [x] package
 
@@ -26,15 +30,9 @@ Training tool
 - [ ] look into freezing embeddings, experiment
 - [ ] other hyperparameter experiments
 
-## Clean
-- [ ] model card - description of method
-- [ ] model card - remove incorrect "finetuned from"
-- [X] model card - verify tags
-- [ ] model card - ensure original model and new model metrics included
-- [ ] use vllm for teacher output, serialize
-
 ## Optimize
 - [ ] ability to distill models using 8-bit backward pass
+- [ ] use vllm for teacher output, serialize
 
 # Install
 
