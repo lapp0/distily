@@ -2,64 +2,63 @@ from typing import Union, List, Optional, Callable
 import logging
 import os
 
-from transformers import Trainer
+import transformers
 import torch
-from torch.nn import functional as F
 from huggingface_hub import ModelCard
 
-from . import args as distily_args
+import distily
 
 
-def mse_loss(student_features, teacher_features):
-    return F.mse_loss(student_features, teacher_features)
+MODEL_CARD_TEMPLATE = """
+# {model_name}
+
+This student model is distilled from the teacher model [{teacher_model}](https://huggingface.co/{teacher_model}) using the dataset {dataset_name}.
+
+The [Distily](https://github.com/lapp0/distily) library was used for this distillation.
+
+It achieves the following results on the evaluation set:
+{eval_result}
+
+<!-- This model card has been generated automatically according to the information the Trainer had access to. You
+should probably proofread and complete it, then remove this comment.
+
+## Model description
+
+More information needed
+
+## Intended uses & limitations
+
+More information needed
+
+## Training and evaluation data
+
+More information needed
+-->
+
+## Training procedure
+
+### Training hyperparameters
+
+The following hyperparameters were used during training:
+{hyperparameters}
+
+### Model Results
+
+{eval_table}
+
+### Framework versions
+{framework_versions}
+"""
 
 
-def kl_divergence_loss(student_features, teacher_features):
-    student_log_prob = F.log_softmax(student_features, dim=-1)
-    teacher_prob = F.softmax(teacher_features, dim=-1)
-    return F.kl_div(student_log_prob, teacher_prob, reduction="batchmean")
 
-
-def reverse_kl_divergence_loss(student_features, teacher_features):
-    teacher_log_prob = F.log_softmax(teacher_features, dim=-1)
-    student_prob = F.softmax(student_features, dim=-1)
-    return F.kl_div(teacher_log_prob, student_prob, reduction="batchmean")
-
-
-def cakld_loss(student_features, teacher_features, beta_prob=0.5):
-    teacher_output_log_prob = F.log_softmax(teacher_features, dim=-1)
-    student_output_soft = F.softmax(student_features, dim=-1)
-    reverse_kl = F.kl_div(teacher_output_log_prob, student_output_soft, reduction="none").sum(-1)
-
-    student_output_log_prob = F.log_softmax(student_features, dim=-1)
-    teacher_output_soft = F.softmax(teacher_features, dim=-1)
-    forward_kl = F.kl_div(student_output_log_prob, teacher_output_soft, reduction="none").sum(-1)
-
-    kl_loss = beta_prob * reverse_kl + (1 - beta_prob) * forward_kl
-    return kl_loss.mean()
-
-
-def jsd_loss(student_features, teacher_features, beta_prob=0.5):
-    student_prob = F.softmax(student_features, dim=-1)
-    teacher_prob = F.softmax(teacher_features, dim=-1)
-
-    c_prob = beta_prob * teacher_prob + (1 - beta_prob) * student_prob
-    c_log_prob = c_prob.log()
-
-    kl_loss_f = beta_prob * F.kl_div(c_log_prob, teacher_prob, reduction="none").sum(-1)
-    kl_loss_r = (1 - beta_prob) * F.kl_div(c_log_prob, student_prob, reduction="none").sum(-1)
-
-    kl_loss = kl_loss_f + kl_loss_r
-    return kl_loss.mean()
-
-
-class DistillationTrainer(Trainer):
+class DistillationTrainer(transformers.Trainer):
     loss_fn_map = {
-        "mse": mse_loss,
-        "kl": kl_divergence_loss,
-        "reverse_kl": reverse_kl_divergence_loss,
-        "cakld": cakld_loss,
-        "jsd": jsd_loss
+        "mse": distily.distill_loss.mse_loss,
+        "kl": distily.distill_loss.kl_divergence_loss,
+        "reverse_kl": distily.distill_loss.reverse_kl_divergence_loss,
+        "cakld": distily.distill_loss.cakld_loss,
+        "jsd": distily.distill_loss.jsd_loss
     }
 
     def __init__(
@@ -94,6 +93,9 @@ class DistillationTrainer(Trainer):
             self.activation_loss_pairs = activation_loss_pairs
 
         self.log_trainer_details()
+
+        # TODO: fix, hardcoded for model card generation purposes
+        self.dataset
 
 
     def log_trainer_details(self):
@@ -155,16 +157,63 @@ class DistillationTrainer(Trainer):
         return metrics
 
     def create_model_card(self, *args, tags=None, finetuned_from=None, **kwargs):
-        # TODO: randomly initialized weights, distilled from teacher model `{self.teacher_model.config._name_or_path}`
         super().create_model_card(
             *args,
             tags=(tags or []) + ["Distily"],
             **kwargs
         )
+
+        step_evals = {}
+        for log_line in self.state.log_history:
+            extracted_logs = {
+                k: transformers.modelcard._maybe_round(v)
+                for k, v in log_line.items()
+                if k.endswith('_loss') or k.startswith('eval_')
+            }
+            if extracted_logs:
+                step_evals[log_line["step"]].update({
+                    "epoch": log_line.get("epoch"),
+                    **extracted_logs
+                })
+        eval_lines = [{"step": step, **value} for step, value in sorted(step_evals.items())]
+
+        eval_results = eval_lines[-1]
+        eval_results.pop("step", None)
+        eval_results.pop("epoch", None)
+
+        # TODO: include __version__ in distily
+        import pkg_resources, datasets
+        framework_versions = "\n".join([
+            f"- Distily {pkg_resources.get_distribution('distily').version}",
+            f"- Transformers {transformers.__version__}",
+            f"- Pytorch {torch.__version__}",
+            f"- Datasets {datasets.__version__}",
+        ])
+
+        # TODO: add strategy, loss_fn, other parameters and details
+
+        # TODO: add
+        # model_card.data["metrics"] = ...
+        # model_card.data["datasets"] = ...
+
         model_card_filepath = os.path.join(self.args.output_dir, "README.md")
         model_card = ModelCard.load(model_card_filepath)
-        import pdb;pdb.set_trace()
-        print()
+        model_card.data["library_name"] = "distily"
+
+        model_card.text = MODEL_CARD_TEMPLATE.format(
+            model_name=self.args.output_dir,
+            teacher_model=self.teacher_model.config._name_or_path,
+            dataset_name="(unspecified)",  # TODO
+            eval_result="\n".join([
+                f"- {name}: {transformers.modelcard._maybe_round(value)}"
+                for name, value in eval_results.items()
+            ]),
+            hyperparameters="\n".join([f"- {name}: {value}" for name, value in self.hyperparameters.items()]),
+            eval_table=transformers.modelcard.make_markdown_table(eval_lines),
+            framework_versions=framework_versions
+        )
+        with open(model_card_filepath, "w") as f:
+            f.write(model_card)
 
     def eval_and_log_teacher_metrics(self):
         """TODO: This doesn't work properly!"""
