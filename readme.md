@@ -55,24 +55,11 @@ To compress the model, and reduce vram for inference you must use [BitBlas](http
 (Trained on 1 x RTX 4090)
 ```
 python3 -m distily.cli \
-    --teacher_model_name_or_path gpt2 \
-    --student_model_as_bitnet True \
-    --output_dir gpt2_distily \
-    --hub_model_id "lapp0/gpt2_distily" \
-    --per_device_train_batch_size 16 \
-    --eval_strategy steps \
-    --eval_steps 2000 \
-    --logging_steps 4 \
-    --num_train_epochs 1 \
-    --lr_scheduler_type cosine \
-    --learning_rate 5e-5 \
-    --max_grad_norm 64.0 \
-    --gradient_checkpointing True \
-    --optim paged_adamw_32bit \
-    --save_steps 2000 \
+    --teacher_model_name_or_path Qwen/Qwen2-0.5B-Instruct \
+    --output_dir qwen2-0.5-experiments_control \
+    --hub_model_id "lapp0/qwen2-0.5-experiments_control" \
     --push_to_hub True \
-    --report_to tensorboard \
-    --eval_on_start True
+    --report_to tensorboard
 ```
 
 <details>

@@ -40,14 +40,45 @@ class TeacherModelArguments:
 
 @dataclass
 class DistillationTrainingArguments(TrainingArguments):
-    # TODO:
-    # clean
-    eval_and_log_teacher_metrics: bool = False
 
+    ##################################
+    # Distillation Training parameters
+    ##################################
+    eval_and_log_teacher_metrics: bool = False  # TODO: use field
+    loss_fn: typing.Union[str, typing.Callable] = field(
+        default="reverse_kl",
+        metadata={"help": "Loss function for distillation"}
+    )
+    train_embeddings: bool = field(
+        default=True,
+        metadata={"help": "If True, trains new embeddings from scratch. Else, use teachers input / output embeddings"}
+    )
     # TODO: add
     # Activation loss pairs
     # extra metric evaluators
-    pass
+
+    #####################################################
+    # TrainingArguments parameters with sane defaults set
+    #####################################################
+
+    # optimize convergence to final model
+    learning_rate: float = 1e-4
+    max_grad_norm: float = 100.0
+    lr_scheduler_type: str = "cosine"
+    num_train_epochs: float = 1.0
+
+    # optimize performance and memory
+    per_device_train_batch_size: int = 16
+    per_device_eval_batch_size: int = 16
+    optim: str = "paged_adamw_32bit"
+    gradient_checkpointing: bool = True
+
+    # logging / evaluation
+    logging_steps: int = 16
+    eval_strategy: str = "steps"
+    eval_steps: int = 2000
+    eval_on_start: bool = True
+
 
 
 def get_args():

@@ -1,9 +1,13 @@
 from typing import Union, List, Optional, Callable
+import logging
+import os
+
 from transformers import Trainer
 import torch
 from torch.nn import functional as F
-import logging
-import gc
+from huggingface_hub import ModelCard
+
+from . import args as distily_args
 
 
 def mse_loss(student_features, teacher_features):
@@ -63,20 +67,19 @@ class DistillationTrainer(Trainer):
         student_model,
         teacher_model,
         tokenizer,
-        loss_fn: Optional[str] = None,
         activation_loss_pairs: Union[None, List[int], bool] = None,
         *args,
         **kwargs
     ):
-        super().__init__(*args, model=student_model, tokenizer=tokenizer, **kwargs)
+        super().__init__(*args, model=student_model, tokenizer=tokenizer, args=args, **kwargs)
         self.teacher_model = teacher_model
 
-        loss_fn = loss_fn or "reverse_kl"
-        if isinstance(loss_fn, str):
+        loss_fn = self.args.loss_fn or "reverse_kl"
+        if isinstance(self.args.loss_fn, str):
             try:
-                self.loss_fn = self.loss_fn_map[loss_fn.lower()]
+                self.loss_fn = self.loss_fn_map[self.args.loss_fn.lower()]
             except KeyError:
-                raise ValueError(f"Unsupported loss function: {self.loss_fn}")
+                raise ValueError(f"Unsupported loss function: {self.args.loss_fn}")
         elif isinstance(loss_fn, Callable):
             self.loss_fn = loss_fn
         else:
@@ -153,11 +156,15 @@ class DistillationTrainer(Trainer):
 
     def create_model_card(self, *args, tags=None, finetuned_from=None, **kwargs):
         # TODO: randomly initialized weights, distilled from teacher model `{self.teacher_model.config._name_or_path}`
-        return super().create_model_card(
+        super().create_model_card(
             *args,
             tags=(tags or []) + ["Distily"],
             **kwargs
         )
+        model_card_filepath = os.path.join(self.args.output_dir, "README.md")
+        model_card = ModelCard.load(model_card_filepath)
+        import pdb;pdb.set_trace()
+        print()
 
     def eval_and_log_teacher_metrics(self):
         """TODO: This doesn't work properly!"""
