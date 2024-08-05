@@ -103,7 +103,7 @@ class DistillationTrainer(transformers.Trainer):
     def compute_loss(self, model, inputs, return_outputs=False):
         all_loss_inputs = self.distillation_strategy.get_loss_inputs(self.teacher_model, model, inputs)
         loss = torch.sum(torch.stack([
-            self.loss_fn(teacher_input, student_input) * weight / len(student_input)
+            self.loss_fn(teacher_input, student_input) * weight / student_input.numel()
             for weight, teacher_input, student_input in all_loss_inputs
         ]))
         loss /= sum([inp.weight for inp in all_loss_inputs])  # normalize so weights add to 1
@@ -148,6 +148,8 @@ class DistillationTrainer(transformers.Trainer):
                     "epoch": transformers.modelcard._maybe_round(log_line.get("epoch")),
                     **extracted_logs
                 })
+        if "-1" in step_evals:
+            step_evals["teacher"] = step_evals.pop("-1")
         eval_lines = [{"step": step, **value} for step, value in sorted(step_evals.items())]
 
         eval_results = dict(eval_lines[-1])
@@ -206,7 +208,10 @@ class DistillationTrainer(transformers.Trainer):
         separator = "| " + " | ".join("---" for _ in all_keys) + " |"
         sorted_lines = sorted(
             lines,
-            key=lambda line: (line.isnumeric(), float(line) if line.isnumeric() else line)
+            key=lambda line: (
+                line["step"].isnumeric(),
+                float(line["step"]) if line["step"].isnumeric() else line["step"]
+            )
         )
         rows = [
             "| " + " | ".join(str(row.get(key, "")) for key in all_keys) + " |"
@@ -223,6 +228,6 @@ class DistillationTrainer(transformers.Trainer):
                     self.teacher_model,
                     self.args.per_device_eval_batch_size
                 ))
-        teacher_model_results["epoch"] = "(teacher)"
-        teacher_model_results["step"] = "(teacher)"
+        teacher_model_results["epoch"] = -1
+        teacher_model_results["step"] = -1
         self.log(teacher_model_results)
