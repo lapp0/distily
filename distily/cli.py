@@ -196,6 +196,9 @@ def run():
 
     student_model = get_student_model(student_model_args, teacher_model.config)
 
+    # TODO: don't hardcode max length
+    max_seq_len = 4096
+
     # TODO: don't hardcode dataset
     #train_dataset = get_train_dataset(dataset_args)
     #test_dataset = get_test_dataset(dataset_args)
@@ -203,7 +206,7 @@ def run():
     dataset = datasets.load_dataset("wikimedia/wikipedia", "20231101.en", split="train[:1000000]")
     dataset = dataset.train_test_split(test_size=0.001)
     tokenized_dataset = dataset.map(
-        lambda x: tokenizer(x["text"], truncation=True, padding="max_length", max_length=tokenizer.model_max_length),
+        lambda x: tokenizer(x["text"], truncation=True, padding="max_length", max_length=max_seq_len),
         batched=True,
         batch_size=100,
         num_proc=os.cpu_count() * 3 // 4,
