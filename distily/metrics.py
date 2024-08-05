@@ -14,7 +14,7 @@ class PerplexityEvalCallback(TrainerCallback):
             predictions,
             padding=True,
             truncation=True,
-            max_length=self.max_length,
+            max_length=max_length,
             return_tensors="pt"
         )
 
