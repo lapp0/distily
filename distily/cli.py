@@ -89,7 +89,7 @@ def run():
         batch_size=100,
         num_proc=os.cpu_count() * 3 // 4,
     )
-    train_dataset = tokenized_dataset["train"]
+    train_dataset = tokenized_dataset
     #test_dataset = tokenized_dataset["test"]
     # TODO: don't hardcode this
     training_args.extra_evaluators = distily.metrics.get_all_metric_evaluators(tokenizer)
@@ -100,7 +100,7 @@ def run():
         tokenizer=tokenizer,
         args=training_args,
         data_collator=DataCollatorForLanguageModeling(tokenizer, mlm=False),
-        train_dataset=train_dataset,
+        tprain_dataset=train_dataset,
         #eval_dataset=test_dataset,
     )
 
