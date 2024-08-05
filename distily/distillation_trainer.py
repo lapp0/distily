@@ -98,13 +98,12 @@ class DistillationTrainer(transformers.Trainer):
         # activation pair transfers
 
     def compute_loss(self, model, inputs, return_outputs=False):
-        loss = torch.tensor(0.0)
-        total_weight = 0
-        for loss_inputs in self.distillation_strategy.get_loss_inputs(self.teacher_model, model, inputs):
-            feature_loss = self.loss_fn(loss_inputs.teacher_loss_input, loss_inputs.student_loss_input)
-            loss += loss_inputs.weight * feature_loss
-            total_weight += loss_inputs.weight
-        loss /= total_weight
+        all_loss_inputs = self.distillation_strategy.get_loss_inputs(self.teacher_model, model, inputs)
+        loss = torch.sum(torch.stack([
+            self.loss_fn(teacher_input, student_input) * weight
+            for weight, teacher_input, student_input in all_loss_inputs
+        ]))
+        loss /= sum([inp.weight for inp in all_loss_inputs])  # normalize so weights add to 1
 
         if return_outputs:
             # TODO: real output
