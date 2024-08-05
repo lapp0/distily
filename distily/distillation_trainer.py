@@ -94,10 +94,6 @@ class DistillationTrainer(transformers.Trainer):
 
         self.log_trainer_details()
 
-        # TODO: fix, hardcoded for model card generation purposes
-        self.dataset
-
-
     def log_trainer_details(self):
         logging.info("Student model: `{TODO}`")
         # TODO:

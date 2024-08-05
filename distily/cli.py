@@ -222,7 +222,7 @@ def run():
         data_collator=DataCollatorForLanguageModeling(tokenizer, mlm=False),
         train_dataset=train_dataset,
         eval_dataset=test_dataset,
-        activation_loss_pairs=True,  # TODO
+        activation_loss_pairs=True,  # TODO, use args.distillation_strategy
     )
 
     if training_args.eval_and_log_teacher_metrics:
