@@ -100,7 +100,7 @@ class DistillationTrainer(transformers.Trainer):
     def compute_loss(self, model, inputs, return_outputs=False):
         all_loss_inputs = self.distillation_strategy.get_loss_inputs(self.teacher_model, model, inputs)
         loss = torch.sum(torch.stack([
-            self.loss_fn(teacher_input, student_input) * weight
+            self.loss_fn(teacher_input, student_input) * weight / len(student_input)
             for weight, teacher_input, student_input in all_loss_inputs
         ]))
         loss /= sum([inp.weight for inp in all_loss_inputs])  # normalize so weights add to 1
@@ -197,6 +197,7 @@ class DistillationTrainer(transformers.Trainer):
         with open(model_card_filepath, "w") as f:
             f.write(model_card)
 
+    @staticmethod
     def _to_markdown_table(lines: List[Dict]) -> str:
         all_keys = sorted(set(key for row in lines for key in row))
         header = "| " + " | ".join(all_keys) + " |"
