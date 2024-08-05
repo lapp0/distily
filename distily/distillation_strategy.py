@@ -62,7 +62,7 @@ class DistillationStrategy:
         """
         mismatched = []
         for config_key in cls.required_equivalent_config:
-            if teacher_config.to_dict()[config_key] != student_config.to_dict()[config_key]:
+            if teacher_config.to_dict().get(config_key) != student_config.to_dict().get(config_key):
                 mismatched.append((
                     config_key,
                     teacher_config[config_key],
