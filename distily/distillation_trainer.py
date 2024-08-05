@@ -63,21 +63,28 @@ class DistillationTrainer(transformers.Trainer):
         super().__init__(*args, model=student_model, tokenizer=tokenizer, **kwargs)
         self.teacher_model = teacher_model
 
-        loss_fn = self.args.loss_fn or "reverse_kl"
+        # prepare loss_fn
         if isinstance(self.args.loss_fn, str):
             try:
                 self.loss_fn = distily.distill_loss.LOSS_FUNCTIONS[self.args.loss_fn.lower()]
             except KeyError:
                 raise ValueError(f"Unsupported loss function: {self.args.loss_fn}")
-        elif isinstance(loss_fn, Callable):
-            self.loss_fn = loss_fn
+        elif isinstance(self.args.loss_fn, Callable):
+            self.loss_fn = self.args.loss_fn
         else:
-            raise TypeError(f"invalid loss_fn: `{loss_fn}`")
+            raise TypeError(f"invalid loss_fn: `{self.args.loss_fn}`")
 
+        # prepare distillation_strategy
         if isinstance(self.args.distillation_strategy, distily.distillation_strategy.DistillationStrategy):
             self.distillation_strategy = self.args.distillation_strategy
+        elif (
+                isinstance(self.args.distillation_strategy, type) and
+                issubclass(self.args.distillation_strategy, distily.distillation_strategy.DistillationStrategy)
+        ):
+            self.distillation_strategy = self.args.distillation_strategy(teacher_model.config, student_model.config)
         elif isinstance(self.args.distillation_strategy, str):
-            self.distillation_strategy = distily.distillation_strategy.STRATEGIES[self.args.distillation_strategy]
+            distillation_strategy_cls = distily.distillation_strategy.STRATEGIES[self.args.distillation_strategy]
+            self.distillation_strategy = distillation_strategy_cls(teacher_model.config, student_model.config)
         else:
             raise TypeError(f"invalid distillation_strategy: `{self.args.distillation_strategy}`")
 
