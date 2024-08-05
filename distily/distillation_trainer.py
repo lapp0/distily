@@ -190,7 +190,7 @@ class DistillationTrainer(transformers.Trainer):
                 for name, value in eval_results.items()
             ]),
             hyperparameters="\n".join([f"- {name}: {value}" for name, value in hyperparameters.items()]),
-            peakmem_gb=torch.cuda.max_memory_allocated() / (1024 ** 3),
+            peakmem_gb=transformers.modelcard._maybe_round(torch.cuda.max_memory_allocated() / (1024 ** 3)),
             eval_table=self._to_markdown_table(eval_lines),
             framework_versions=framework_versions
         )
@@ -217,5 +217,6 @@ class DistillationTrainer(transformers.Trainer):
                     self.teacher_model,
                     self.args.per_device_eval_batch_size
                 ))
-        base_model_results["epoch"] = 0
+        base_model_results["epoch"] = "(teacher)"
+        base_model_results["step"] = "(teacher)"
         self.log(base_model_results)
