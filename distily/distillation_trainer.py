@@ -93,7 +93,7 @@ class DistillationTrainer(transformers.Trainer):
     def compute_loss(self, model, inputs, return_outputs=False):
         loss = torch.tensor(0.0)
         total_weight = 0
-        for loss_inputs in self.distillation_strategy.get_loss_inputs(self.teacher_model, model):
+        for loss_inputs in self.distillation_strategy.get_loss_inputs(self.teacher_model, model, inputs):
             feature_loss = self.loss_fn(loss_inputs.teacher_loss_input, loss_inputs.student_loss_input)
             loss += loss_inputs.weight * feature_loss
             total_weight += loss_inputs.weight
