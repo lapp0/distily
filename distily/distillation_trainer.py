@@ -46,14 +46,15 @@ The following hyperparameters were used during training:
 ### Resource Usage
 Peak GPU Memory: {peakmem_gb} GB
 
-### Model Results
-`eval_` metrics:
-
+### Eval-Phase Metrics
 {eval_table}
 
 ### Framework versions
 {framework_versions}
 """
+
+# TODO: add 'train_runtime', 'train_samples_per_second', 'train_steps_per_second'hardware info
+
 
 
 class DistillationTrainer(transformers.Trainer):
@@ -110,10 +111,9 @@ class DistillationTrainer(transformers.Trainer):
     def compute_loss(self, model, inputs, return_outputs=False):
         all_loss_inputs = self.distillation_strategy.get_loss_inputs(self.teacher_model, model, inputs)
         loss = torch.sum(torch.stack([
-            self.loss_fn(teacher_input, student_input) * weight / student_input.numel()
+            self.loss_fn(teacher_input, student_input) * weight
             for weight, teacher_input, student_input in all_loss_inputs
         ]))
-        loss /= sum([inp.weight for inp in all_loss_inputs])  # normalize so weights add to 1
 
         if return_outputs:
             # TODO: real output

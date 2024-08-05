@@ -136,7 +136,7 @@ class AttentionsStrategy(DistillationStrategy):
     def features_to_loss_inputs(teacher_output, student_output):
         return [
             DistillationLossInput(
-                weight=1 / len(student_output.hidden_states),
+                weight=1,
                 teacher_loss_input=teacher_hidden,
                 student_loss_input=student_hidden
             )
@@ -145,7 +145,7 @@ class AttentionsStrategy(DistillationStrategy):
         ]
 
 
-class LogitsAndActivationsStrategy(DistillationStrategy):
+class LogitsActivationsStrategy(DistillationStrategy):
     """
     Strategies Loss Inputs:
     - logits
@@ -156,13 +156,13 @@ class LogitsAndActivationsStrategy(DistillationStrategy):
 
     @staticmethod
     def features_to_loss_inputs(teacher_output, student_output):
-        return (
-            ActivationsStrategy.features_to_loss_inputs(teacher_output, student_output) +
-            LogitsStrategy.features_to_loss_inputs(teacher_output, student_output)
-        )
+        activation_inputs = ActivationsStrategy.features_to_loss_inputs(teacher_output, student_output)
+        logit_input = LogitsStrategy.features_to_loss_inputs(teacher_output, student_output)
+        logit_input.weight = len(activation_inputs)
+        return activation_inputs + [logit_input]
 
 
-class ComprehensiveStrategy(DistillationStrategy):
+class LogitsActivationsAttentionsStrategy(DistillationStrategy):
     """
     Strategies Loss Inputs:
     - logits
@@ -188,6 +188,6 @@ STRATEGIES = {
     "logits": LogitsStrategy,
     "activations": ActivationsStrategy,
     "attentions": ActivationsStrategy,
-    "logits_activations": LogitsAndActivationsStrategy,
-    "comprehensive": LogitsAndActivationsStrategy,
+    "logits_activations": LogitsActivationsStrategy,
+    "logits_activations_attentions": LogitsActivationsAttentionsStrategy,
 }
