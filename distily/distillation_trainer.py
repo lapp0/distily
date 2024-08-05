@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, List, Dict
 import collections
 import logging
 import os
@@ -191,11 +191,21 @@ class DistillationTrainer(transformers.Trainer):
                 for name, value in eval_results.items()
             ]),
             hyperparameters="\n".join([f"- {name}: {value}" for name, value in hyperparameters.items()]),
-            eval_table=transformers.modelcard.make_markdown_table(eval_lines),
+            eval_table=self._to_markdown_table(eval_lines),
             framework_versions=framework_versions
         )
         with open(model_card_filepath, "w") as f:
             f.write(model_card)
+
+    def _to_markdown_table(lines: List[Dict]) -> str:
+        all_keys = sorted(set(key for row in lines for key in row))
+        header = "| " + " | ".join(all_keys) + " |"
+        separator = "| " + " | ".join("---" for _ in all_keys) + " |"
+        rows = [
+            "| " + " | ".join(str(row.get(key, "")) for key in all_keys) + " |"
+            for row in lines
+        ]
+        return "\n".join([header, separator] + rows)
 
     def eval_and_log_teacher_metrics(self):
         """TODO: This doesn't work properly!"""
