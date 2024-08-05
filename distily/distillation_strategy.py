@@ -113,7 +113,7 @@ class ActivationsStrategy(DistillationStrategy):
     def features_to_loss_inputs(teacher_output, student_output):
         return [
             DistillationLossInput(
-                weight=1 / len(student_output.hidden_states),
+                weight=1,
                 teacher_loss_input=teacher_hidden,
                 student_loss_input=student_hidden
             )

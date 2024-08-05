@@ -111,7 +111,7 @@ class DistillationTrainer(transformers.Trainer):
     def compute_loss(self, model, inputs, return_outputs=False):
         all_loss_inputs = self.distillation_strategy.get_loss_inputs(self.teacher_model, model, inputs)
         loss = torch.sum(torch.stack([
-            self.loss_fn(teacher_input, student_input) * weight
+            self.loss_fn(teacher_input, student_input) * weight / teacher_input.shape[-1]
             for weight, teacher_input, student_input in all_loss_inputs
         ]))
 
