@@ -158,7 +158,7 @@ class LogitsActivationsStrategy(DistillationStrategy):
     def features_to_loss_inputs(teacher_output, student_output):
         activation_inputs = ActivationsStrategy.features_to_loss_inputs(teacher_output, student_output)
         logit_input = LogitsStrategy.features_to_loss_inputs(teacher_output, student_output)
-        logit_input[0].weight = len(activation_inputs)
+        logit_input[0] = logit_input[0]._replace(weight=len(activation_inputs))
         return activation_inputs + logit_input
 
 
