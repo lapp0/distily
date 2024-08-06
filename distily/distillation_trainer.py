@@ -123,7 +123,7 @@ class DistillationTrainer(transformers.Trainer):
 
     def evaluate(self, *args, metric_key_prefix="eval", **kwargs):
         self.model.eval()
-        gc.collect_garbage()
+        gc.collect()
         torch.cuda.empty_cache()
 
         metrics = {}
