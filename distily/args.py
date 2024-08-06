@@ -70,20 +70,20 @@ class DistillationTrainingArguments(TrainingArguments):
     # optimize convergence to final model
     learning_rate: float = 4e-5
     max_grad_norm: float = 100.0
-    lr_scheduler_type: str = "cosine"
+    lr_scheduler_type: str = "constant"
     num_train_epochs: float = 1.0
 
     # optimize performance and memory
     per_device_train_batch_size: int = 4
     per_device_eval_batch_size: int = 4
     gradient_accumulation_steps: int = 4
-    optim: str = "lion_8bit"
+    optim: str = "paged_adamw_8bit"
     gradient_checkpointing: bool = True
 
     # logging / evaluation
     logging_steps: int = 1
     eval_strategy: str = "steps"
-    eval_steps: int = 2000
+    eval_steps: int = 500
     eval_on_start: bool = True
 
 
