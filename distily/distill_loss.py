@@ -37,11 +37,11 @@ def jsd_loss(student_features, teacher_features, beta_prob=0.5):
     c_prob = beta_prob * teacher_prob + (1 - beta_prob) * student_prob
     c_log_prob = c_prob.log()
 
-    kl_loss_f = beta_prob * F.kl_div(c_log_prob, teacher_prob, reduction="none").sum(-1)
-    kl_loss_r = (1 - beta_prob) * F.kl_div(c_log_prob, student_prob, reduction="none").sum(-1)
+    kl_loss_f = F.kl_div(c_log_prob, teacher_prob, reduction="batchmean")
+    kl_loss_r = F.kl_div(c_log_prob, student_prob, reduction="batchmean")
 
-    kl_loss = kl_loss_f + kl_loss_r
-    return kl_loss.mean()
+    kl_loss = beta_prob * kl_loss_f + (1 - beta_prob) * kl_loss_r
+    return kl_loss
 
 
 LOSS_FUNCTIONS = {
