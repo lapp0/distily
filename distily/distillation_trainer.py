@@ -2,6 +2,7 @@ from typing import Callable, List, Dict
 import collections
 import logging
 import os
+import gc
 
 import transformers
 import torch
@@ -122,6 +123,9 @@ class DistillationTrainer(transformers.Trainer):
 
     def evaluate(self, *args, metric_key_prefix="eval", **kwargs):
         self.model.eval()
+        gc.collect_garbage()
+        torch.cuda.empty_cache()
+
         metrics = {}
         if metric_key_prefix == "eval":
             with torch.no_grad():

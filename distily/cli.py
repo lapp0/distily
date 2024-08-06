@@ -20,6 +20,7 @@ def get_teacher_model_tokenizer(teacher_model_args):
         load_in_4bit=teacher_model_args.teacher_load_in_4bit,
         device_map="cuda"
     )
+
     # freeze (maybe redundant)
     model.eval()
     for p in model.parameters():
@@ -82,7 +83,7 @@ def run():
     #test_dataset = get_test_dataset(dataset_args)
     #extra_metrics = get_ppl_eval_datasets(dataset_args)
     dataset = datasets.load_dataset("wikimedia/wikipedia", "20231101.en", split="train")
-    dataset = dataset.select(range(1000000)).train_test_split(test_size=0.001)
+    dataset = dataset.select(range(50000)).train_test_split(test_size=0.01)
     tokenized_dataset = dataset.map(
         lambda x: tokenizer(x["text"], truncation=True, padding="max_length", max_length=max_seq_len),
         batched=True,
@@ -103,6 +104,11 @@ def run():
         train_dataset=train_dataset,
         eval_dataset=test_dataset,
     )
+
+    ##############
+    # TODO: REMOVE
+    print(trainer.eval_teacher_metrics())
+    ##############
 
     trainer.train()
 
