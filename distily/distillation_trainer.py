@@ -81,11 +81,11 @@ class DistillationTrainer(transformers.Trainer):
             raise TypeError(f"invalid loss_fn: `{self.args.loss_fn}`")
 
         # prepare distillation_strategy
-        if isinstance(self.args.distillation_objective, distily.distillation_strategy.DistillationObjective):
+        if isinstance(self.args.distillation_objective, distily.objectives.DistillationObjective):
             self.distillation_objective = self.args.distillation_objective
         elif (
                 isinstance(self.args.distillation_objective, type) and
-                issubclass(self.args.distillation_objective, distily.distillation_strategy.DistillationObjective)
+                issubclass(self.args.distillation_objective, distily.objectives.DistillationObjective)
         ):
             self.distillation_objective = self.args.distillation_objective()
         elif isinstance(self.args.distillation_objective, str):
