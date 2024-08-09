@@ -21,6 +21,9 @@ class StudentModelArguments:
         default=False,
         metadata={"help": "Make student model a bitnet model."}
     )
+    # TODO: Full field
+    student_model_compile: bool = True
+
 
 
 @dataclass
@@ -36,6 +39,18 @@ class TeacherModelArguments:
         default=False,
         metadata={"help": "Load the teacher model in 4 bits precision"}
     )
+    # TODO: Full field
+    teacher_model_compile: bool = True
+
+
+@dataclass
+class DatasetArguments:
+    dataset_uri: str = "wikimedia/wikipedia"
+    subset: str = "20231101.en"
+    column_name: str = "text"
+    split: str = "train"
+    sample_size: int = 250000
+    test_size: float = 0.01
 
 
 @dataclass
@@ -80,6 +95,9 @@ class DistillationTrainingArguments(TrainingArguments):
     optim: str = "paged_adamw_8bit"
     gradient_checkpointing: bool = True
 
+    # Fixes
+    gradient_checkpointing_kwargs = {"use_reentrant": False}
+
     # logging / evaluation
     logging_steps: int = 1
     eval_strategy: str = "steps"
@@ -88,5 +106,10 @@ class DistillationTrainingArguments(TrainingArguments):
 
 
 def get_args():
-    parser = HfArgumentParser((DistillationTrainingArguments, StudentModelArguments, TeacherModelArguments))
+    parser = HfArgumentParser((
+        DistillationTrainingArguments,
+        StudentModelArguments,
+        TeacherModelArguments,
+        DatasetArguments
+    ))
     return parser.parse_args_into_dataclasses()

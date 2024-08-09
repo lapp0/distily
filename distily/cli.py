@@ -26,6 +26,9 @@ def get_teacher_model_tokenizer(teacher_model_args):
     for p in model.parameters():
         p.requires_grad = False
 
+    if teacher_model_args.teacher_model_compile:
+        model.forward = torch.compile(model.forward, mode="reduce-overhead", fullgraph=True)
+
     tokenizer = AutoTokenizer.from_pretrained(teacher_model_args.teacher_model_name_or_path)
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token_id = tokenizer.eos_token_id
@@ -65,33 +68,34 @@ def get_student_model(student_model_args, teacher_config):
             convert_to_bitnet(model, copy_weights=False)
             model.model_tags = ["bitnet", "1.58b"]
 
+    if student_model_args.student_model_compile:
+        model.forward = torch.compile(model.forward, mode="reduce-overhead", fullgraph=True)
+
     return model
 
 
-def run():
-    training_args, student_model_args, teacher_model_args = distily.args.get_args()
-
-    teacher_model, tokenizer = get_teacher_model_tokenizer(teacher_model_args)
-
-    student_model = get_student_model(student_model_args, teacher_model.config)
-
-    # TODO: don't hardcode max length
-    max_seq_len = 1024
-
-    # TODO: don't hardcode dataset
-    #train_dataset = get_train_dataset(dataset_args)
-    #test_dataset = get_test_dataset(dataset_args)
-    #extra_metrics = get_ppl_eval_datasets(dataset_args)
-    dataset = datasets.load_dataset("wikimedia/wikipedia", "20231101.en", split="train")
-    dataset = dataset.select(range(100000)).train_test_split(test_size=0.01)
+def get_dataset(dataset_args, tokenizer, max_seq_len: int):
+    dataset = datasets.load_dataset(dataset_args.hub_uri, dataset_args.subset, split=dataset_args.split)
+    dataset = dataset.select(range(dataset_args.sample_size)).train_test_split(test_size=dataset_args.test_size)
     tokenized_dataset = dataset.map(
-        lambda x: tokenizer(x["text"], truncation=True, padding="max_length", max_length=max_seq_len),
+        lambda x: tokenizer(x[dataset_args.column_name], truncation=True, padding="max_length", max_length=max_seq_len),
         batched=True,
         batch_size=100,
         num_proc=os.cpu_count() * 3 // 4,
     )
-    train_dataset = tokenized_dataset["train"]
-    test_dataset = tokenized_dataset["test"]
+    return tokenized_dataset["train"], tokenized_dataset["test"]
+
+
+def run():
+    training_args, student_model_args, teacher_model_args, dataset_args = distily.args.get_args()
+
+    # TODO: don't hardcode max length
+    max_seq_len = 1024
+
+    teacher_model, tokenizer = get_teacher_model_tokenizer(teacher_model_args)
+    student_model = get_student_model(student_model_args, teacher_model.config)
+    train_dataset, test_dataset = get_dataset(dataset_args, tokenizer, max_seq_len)
+
     # TODO: don't hardcode this
     training_args.extra_evaluators = distily.metrics.get_all_metric_evaluators(tokenizer)
 

@@ -1,23 +1,59 @@
 Training tool
 
+# At pool
+- launch new vast 4090
+- test reproducing 1M experiment
+
 # TODO
 
-## Priorities
-- [x] add base model eval to model card
-- [x] add distilled model full metrics table to model card
-- [x] get working qwen2-0.5b run
+## Model Generation Milestones
+- [ ] distill 99% quality model with identical architecture
+- [ ] distill phi-3-mini to 1.58b, report metrics
+
+
+## v0.2.0 (Next Experiment Set)
 - [ ] Change DistillationStrategy to DistillationObjective, which handles the entire loss calculation
-- [ ] eval for HotpotQA, TriviaQA, GLUE, SQUAD, CoNLL-2003
+- [x] fix re-entrant issue
+- [x] model.forward = torch.compile(model.forward, mode="reduce-overhead", fullgraph=True)
+- [x] allow dataset initialization by training arguments
+- [ ] log all training parameters (excluding stuff like push_to_hub)
+
+
+## Research immediately after v0.2.0
+- [ ] how are logit and activation loss typically combined (linear combination? Multiplication?)
+- [ ] how do different optimizers perform on 250K dataset? (SGD, lion, adaloma, etc)
+
+
+## v0.3.0
+**Auditability Improvements**
+- [ ] garbage collect each train round, and each eval round. log train memory and eval memory each step
+- [ ] log train and eval time each step
+- [ ] eval for HotpotQA, TriviaQA, GLUE, SQUAD, CoNLL-2003, CoLA, MNLI
+
+
+## v0.4.0
 - [ ] add eval tool for MMLU / MATH / etc
+
+**Training Quality Improvements**
 - [ ] add ability to transfer / freeze embeddings
-- [ ] fix re-entrant issue
+- [ ] gradient weighted loss (review paper, see if there's ways to handle case where activations gradients push model in opposite direction as logit gradients / are orthogonal)
+
+**Bug Fix**
+- [ ] loading the same dataset multiple times increases disk usage
+- [ ] fix checkpointing: `FileNotFoundError: [Errno 2] No such file or directory: 'distily_experiments_1M/checkpoint-8000/trainer_state.json'`
 
 ## Necessary for v1.0.0
 - [ ] model card: include metadata for benchmarks to include evaluation results
 - [ ] specify datasets by argument
 - [ ] specify metrics by argument
 - [ ] add tooling to convert to 1.58b safetensors file
-- [ ] distill phi-3-mini to 1.58b, report metrics
+- [ ] fix sinkhorn RuntimeError: "cdist_cuda" not implemented for 'BFloat16
+- [ ] test mutual_information_loss
+
+
+## v1.1.0
+- [ ] benchmark with https://github.com/huggingface/transformers/issues/14608
+
 
 ## Clean
 - [x] model card - description of method
@@ -67,8 +103,8 @@ python3 -m distily.cli \
     --push_to_hub True \
     --report_to tensorboard \
     --per_device_eval_batch_size 4 \
-    --per_device_train_batch_size 8 \
-    --gradient_accumulation_steps 8
+    --per_device_train_batch_size 4 \
+    --gradient_accumulation_steps 4
     --teacher_load_in_8bit True
 ```
 
@@ -202,6 +238,8 @@ There are a number of approaches for consideration
 - KL Divergence: The typical loss function for intermediate features
 - MSE: Two different papers evidence the strength of MSE as an alternative
 - Cosine Similarity: One paper suggests cosine similarity of the fetaures is effective.
+- Cross-Entropy
+- Sinkhorn Loss
 #
 ## Features / Knowledge Sources
 - Logits: Evidenced as a more efficient knowledge source
@@ -213,7 +251,38 @@ There are a number of approaches for consideration
 - https://www.researchgate.net/profile/Jianping-Gou/publication/342094012/figure/fig10/AS:950418217648129@1603608769145/The-generic-instance-relation-based-knowledge-distillation.png
 - Different relation-based features include FSP Matrix, Instance Relation, Similarity matrix, Representation graph etc.
 
+
 # Papers
+
+## Distiller: A Systematic Study of Model Distillation Methods in Natural Language Processing
+https://www.semanticscholar.org/reader/08460ecff91b8a54358b9c1709d7dc6a77417f62
+
+Core parameters:
+- data augmentation policy
+- a layer mapping policy for intermediate distillation
+  - skip: the student learns from every [M / N] layer of the teacher
+  - last: the student learns from the last k layers of the teacher
+  - EMD: a many-to-many learned layer mapping strategy (Li et al., 2020) based on Earth Mover’s Distance
+- intermediate distillation objective
+  - Cross-Entropy (CE)
+  - Mean Squared Error (MSE)
+  - L2 distance, Cosine Similarity (Cos)
+  - Patient Knowledge Distillation (PKD)
+  - Mutual Information (MI-alpha)
+- logits objective
+  - Cross-Entropy (CE)
+  - Mean Squared Error (MSE)
+
+"n Iα, f (·, ·) and q(·) are critic functions forapproximating unknown densities and m(·, ·) is aMonte-Carlo estimate of the partition function thatappears in MI calculations. Typically, the space zand the sample x, y are from the same minibatchwhile training, that is K +1 equals to the minibatchsize. Iα can flexibly trade off bias and variance,since increasing α ∈ [0, 1] will reduce the vari-ance of the estimator while increasing its bias. Wepropose to use Iα as an objective for intermediatedistillation and call it MI-α. Our implementationleverages a Transformer encoder (Vaswani et al.,2017) to learn f (·, ·) and q(·). To our knowledge, this is the first attempt to utilize complex NN archi- tectures for critic functions in MI estimation; typi- cally only shallow multilayer perceptrons (MLPs) are used (Tschannen et al., 2020). Our experiments (Table 4 in Appendix) reveal that Transformer pro- duces a better critic function than MLP".
+
+"objectives like MI (and tighter bounds thereof) merely attempt to ensure the information in the teacher rep- resentation is also captured in the student represen- tation. The latter aim is conceptually better suited for KD, particularly in settings where the student’s architecture differs from the teacher"
+
+Innovations in KD for NLP generally involve improvements in one of the following aspects:
+1) the loss function for gauging the discrepancy between student and teacher predictions
+2) the method for transferring intermediate network representations between teacher and student
+3) the use of data augmentation during student training
+4) multiple stages of distillation
+
 
 ## A Survey on Transformer Compression
 https://arxiv.org/pdf/2402.05964
@@ -233,13 +302,11 @@ Most effective knowledge sources ranked
 - features weighted by gradients
 - plain features
 
-
 **Other Details**
 
 "he Fisher information F (zt), which leverages the gradi- ents regarding the teacher’s intermediate representation, provides a weighting mechanism for the importance of features."
 
 "Note z can be the logits or features. Besides, the knowledge in the teacher’s gradients are transferred to the student via W (zt). Therefore LKD−G provides a unified framework for comparing the effectiveness of each knowledge source by in- stantiating it in different ways"
-
 "logits are generally a more efficient knowledge source and suggests that having sufficient feature dimensions is crucial for the model design, providing a practical guideline for effective KD-based trans- fer learning."
 
 "Heo et al. (2019b) shows the features are more effective; Tian, Krishnan, and Isola (2020) observes that logits are generally better, but matching the pairwise correlation with features outperforms logits."
@@ -284,8 +351,17 @@ Describes two loss functions and their nature:
 ## Sinkhorn Distance Minimization for Knowledge Distillation
 https://www.semanticscholar.org/reader/7304666dce9e90861ca7de928dd6826fb338fbd8
 
-## Distiller: A Systematic Study of Model Distillation Methods in Natural Language Processing
-https://www.semanticscholar.org/reader/08460ecff91b8a54358b9c1709d7dc6a77417f62
+Eval Performance of distance functions (consistent across datasets):
+- best: SinKD
+- 2nd: Jensen-Shannon (JS)
+- 3rd: Reverse-KL
+- 4th: KL
+
+implemented as `distily.objectives.sinkhorn_loss`
+
+"Existing KDmethods investigate various divergence measures including the Kullback-Leibler (KL), reverse Kullback-Leibler(RKL), and Jensen-Shannon (JS) divergences. However, due to limitations inherent in their assumptions anddefinitions, these measures fail to deliver effective supervision when few distribution overlap exists betweenthe teacher and the student."
+
+"e propose the Sinkhorn Knowledge Distillation (SinKD) that exploits the Sinkhorn distance to ensure a nuanced and precise assessment of the disparity between teacher and student distributions."
 
 ## Understanding and Improving Knowledge Distillation for Quantization Aware Training of Large Transformer Encoders
 https://arxiv.org/pdf/2211.11014
@@ -295,6 +371,13 @@ https://www.semanticscholar.org/reader/b39d324da2b6b728334c52927885c0e10494c935
 
 ## Distilling Inductive Bias: Knowledge Distillation Beyond Model Compression
 https://arxiv.org/pdf/2310.00369
+
+## Understanding the Effects of Projectors in Knowledge Distillation
+https://arxiv.org/pdf/2310.17183
+
+TODO
+
+"Conventionally, during the knowledge distillation process (e.g. feature distillation), an additional projector is often required to perform feature transformation due to the dimension mismatch between the teacher and the student networks. Interestingly, we discovered that even if the student and the teacher have the same feature dimensions, adding a projector still helps to improve the distillation performance"
 
 # Resources
 

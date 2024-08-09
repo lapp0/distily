@@ -20,14 +20,14 @@ def reverse_kl_divergence_loss(student_features, teacher_features):
 def cakld_loss(student_features, teacher_features, beta_prob=0.5):
     teacher_output_log_prob = F.log_softmax(teacher_features, dim=-1)
     student_output_soft = F.softmax(student_features, dim=-1)
-    reverse_kl = F.kl_div(teacher_output_log_prob, student_output_soft, reduction="none").sum(-1)
+    reverse_kl = F.kl_div(teacher_output_log_prob, student_output_soft, reduction="batchmean")
 
     student_output_log_prob = F.log_softmax(student_features, dim=-1)
     teacher_output_soft = F.softmax(teacher_features, dim=-1)
-    forward_kl = F.kl_div(student_output_log_prob, teacher_output_soft, reduction="none").sum(-1)
+    forward_kl = F.kl_div(student_output_log_prob, teacher_output_soft, reduction="batchmean")
 
     kl_loss = beta_prob * reverse_kl + (1 - beta_prob) * forward_kl
-    return kl_loss.mean()
+    return kl_loss
 
 
 def jsd_loss(student_features, teacher_features, beta_prob=0.5):

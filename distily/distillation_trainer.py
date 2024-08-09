@@ -54,8 +54,7 @@ Peak GPU Memory: {peakmem_gb} GB
 {framework_versions}
 """
 
-# TODO: add 'train_runtime', 'train_samples_per_second', 'train_steps_per_second'hardware info
-
+# TODO: add 'train_runtime', 'train_samples_per_second', 'train_steps_per_second' hardware info
 
 
 class DistillationTrainer(transformers.Trainer):
@@ -82,7 +81,7 @@ class DistillationTrainer(transformers.Trainer):
             raise TypeError(f"invalid loss_fn: `{self.args.loss_fn}`")
 
         # prepare distillation_strategy
-        if isinstance(self.args.distillation_strategy, distily.distillation_strategy.DistillationStrategy):
+        if isinstance(self.args.distillation_objective, distily.distillation_strategy.DistillationStrategy):
             self.distillation_strategy = self.args.distillation_strategy
         elif (
                 isinstance(self.args.distillation_strategy, type) and
@@ -110,6 +109,7 @@ class DistillationTrainer(transformers.Trainer):
         # activation pair transfers
 
     def compute_loss(self, model, inputs, return_outputs=False):
+        loss = self.distillation_objective(self.teacher_model, model, inputs)
         all_loss_inputs = self.distillation_strategy.get_loss_inputs(self.teacher_model, model, inputs)
         loss = torch.sum(torch.stack([
             self.loss_fn(teacher_input, student_input) * weight / teacher_input.shape[-1]
