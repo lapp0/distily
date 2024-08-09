@@ -72,7 +72,7 @@ class DistillationTrainer(transformers.Trainer):
         # prepare loss_fn
         if isinstance(self.args.loss_fn, str):
             try:
-                self.loss_fn = distily.distill_loss.LOSS_FUNCTIONS[self.args.loss_fn.lower()]
+                self.loss_fn = distily.objectives.LOSS_FUNCTIONS[self.args.loss_fn.lower()]
             except KeyError:
                 raise ValueError(f"Unsupported loss function: {self.args.loss_fn}")
         elif isinstance(self.args.loss_fn, Callable):
@@ -81,18 +81,18 @@ class DistillationTrainer(transformers.Trainer):
             raise TypeError(f"invalid loss_fn: `{self.args.loss_fn}`")
 
         # prepare distillation_strategy
-        if isinstance(self.args.distillation_objective, distily.distillation_strategy.DistillationStrategy):
-            self.distillation_strategy = self.args.distillation_strategy
+        if isinstance(self.args.distillation_objective, distily.distillation_strategy.DistillationObjective):
+            self.distillation_objective = self.args.distillation_objective
         elif (
-                isinstance(self.args.distillation_strategy, type) and
-                issubclass(self.args.distillation_strategy, distily.distillation_strategy.DistillationStrategy)
+                isinstance(self.args.distillation_objective, type) and
+                issubclass(self.args.distillation_objective, distily.distillation_strategy.DistillationObjective)
         ):
-            self.distillation_strategy = self.args.distillation_strategy(teacher_model.config, student_model.config)
-        elif isinstance(self.args.distillation_strategy, str):
-            distillation_strategy_cls = distily.distillation_strategy.STRATEGIES[self.args.distillation_strategy]
-            self.distillation_strategy = distillation_strategy_cls(teacher_model.config, student_model.config)
+            self.distillation_objective = self.args.distillation_objective()
+        elif isinstance(self.args.distillation_objective, str):
+            distillation_objective_cls = distily.objectives.OBJECTIVES[self.args.distillation_objective]
+            self.distillation_objective = distillation_objective_cls(teacher_model.config, student_model.config)
         else:
-            raise TypeError(f"invalid distillation_strategy: `{self.args.distillation_strategy}`")
+            raise TypeError(f"invalid distillation_objective: `{self.args.distillation_objective}`")
 
         self.log_trainer_details()
 
@@ -110,12 +110,6 @@ class DistillationTrainer(transformers.Trainer):
 
     def compute_loss(self, model, inputs, return_outputs=False):
         loss = self.distillation_objective(self.teacher_model, model, inputs)
-        all_loss_inputs = self.distillation_strategy.get_loss_inputs(self.teacher_model, model, inputs)
-        loss = torch.sum(torch.stack([
-            self.loss_fn(teacher_input, student_input) * weight / teacher_input.shape[-1]
-            for weight, teacher_input, student_input in all_loss_inputs
-        ]))
-
         if return_outputs:
             # TODO: real output
             return loss, torch.tensor([1.0])
@@ -183,13 +177,13 @@ class DistillationTrainer(transformers.Trainer):
 
         hyperparameters = transformers.modelcard.extract_hyperparameters_from_trainer(self)
         hyperparameters = {
-            "distillation_strategy": str(self.args.distillation_strategy),
+            "distillation_objective": repr(self.args.distillation_objective),
             "loss_fn": str(self.args.loss_fn),
             "train_embeddings": str(self.args.train_embeddings),
             **hyperparameters
         }
 
-        # TODO: add strategy, loss_fn, other parameters and details
+        # TODO: DistillationObjective needs a repr to include the loss fn, etc
 
         # TODO: add
         # model_card.data["metrics"] = ...

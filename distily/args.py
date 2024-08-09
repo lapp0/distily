@@ -64,9 +64,9 @@ class DistillationTrainingArguments(TrainingArguments):
         default="reverse_kl",
         metadata={"help": "Loss function for distillation"}
     )
-    distillation_strategy: str = field(
-        default="logits_activations",
-        metadata={"help": "Strategy determining which forward-pass features to incorporate into loss function."}
+    distillation_objective: str = field(
+        default="legacy",
+        metadata={"help": "DistillationObjective callable which calculate loss"}
     )  # TODO: document how to set Activation Loss Pairs
     train_embeddings: bool = field(
         default=True,
