@@ -277,3 +277,8 @@ class LegacyObjective(DistillationObjective):
 
         # legacy, this is an incorrect implementation:
         return logits_loss + activations_loss * student_features.hidden_states
+
+
+OBJECTIVES = {
+    "legacy": LegacyObjective
+}
