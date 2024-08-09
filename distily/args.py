@@ -46,11 +46,11 @@ class TeacherModelArguments:
 @dataclass
 class DatasetArguments:
     dataset_uri: str = "wikimedia/wikipedia"
-    subset: str = "20231101.en"
-    column_name: str = "text"
-    split: str = "train"
-    sample_size: int = 250000
-    test_size: float = 0.01
+    dataset_subset: str = "20231101.en"
+    dataset_split: str = "train"
+    dataset_column_name: str = "text"
+    dataset_sample_size: int = 250000
+    dataset_test_size: float = 0.01
 
 
 @dataclass

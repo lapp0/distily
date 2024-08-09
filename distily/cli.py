@@ -75,10 +75,21 @@ def get_student_model(student_model_args, teacher_config):
 
 
 def get_dataset(dataset_args, tokenizer, max_seq_len: int):
-    dataset = datasets.load_dataset(dataset_args.hub_uri, dataset_args.subset, split=dataset_args.split)
-    dataset = dataset.select(range(dataset_args.sample_size)).train_test_split(test_size=dataset_args.test_size)
+    dataset = datasets.load_dataset(
+        dataset_args.dataset_uri,
+        dataset_args.dataset_subset,
+        split=dataset_args.dataset_split
+    )
+    dataset = dataset\
+        .select(range(dataset_args.dataset_sample_size))\
+        .train_test_split(test_size=dataset_args.dataset_test_size)
     tokenized_dataset = dataset.map(
-        lambda x: tokenizer(x[dataset_args.column_name], truncation=True, padding="max_length", max_length=max_seq_len),
+        lambda x: tokenizer(
+            x[dataset_args.dataset_column_name],
+            truncation=True,
+            padding="max_length",
+            max_length=max_seq_len
+        ),
         batched=True,
         batch_size=100,
         num_proc=os.cpu_count() * 3 // 4,
