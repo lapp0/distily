@@ -280,5 +280,5 @@ class LegacyObjective(DistillationObjective):
 
 
 OBJECTIVES = {
-    "legacy": LegacyObjective()
+    "legacy": LegacyObjective
 }

@@ -90,7 +90,7 @@ class DistillationTrainer(transformers.Trainer):
             self.distillation_objective = self.args.distillation_objective()
         elif isinstance(self.args.distillation_objective, str):
             distillation_objective_cls = distily.objectives.OBJECTIVES[self.args.distillation_objective]
-            self.distillation_objective = distillation_objective_cls(teacher_model.config, student_model.config)
+            self.distillation_objective = distillation_objective_cls()
         else:
             raise TypeError(f"invalid distillation_objective: `{self.args.distillation_objective}`")
 
