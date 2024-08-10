@@ -10,14 +10,8 @@ Training tool
 - [ ] distill 99% quality model with identical architecture
 - [ ] distill phi-3-mini to 1.58b, report metrics
 
-
-## v0.2.0 (Next Experiment Set)
-- [ ] Change DistillationStrategy to DistillationObjective, which handles the entire loss calculation
-- [x] fix re-entrant issue
-- [x] model.forward = torch.compile(model.forward, mode="reduce-overhead", fullgraph=True)
-- [x] allow dataset initialization by training arguments
-- [ ] log all training parameters (excluding stuff like push_to_hub)
-
+## v0.2.1
+- [ ] implement all researched objective functions
 
 ## Research immediately after v0.2.0
 - [ ] how are logit and activation loss typically combined (linear combination? Multiplication?)
@@ -26,6 +20,7 @@ Training tool
 
 ## v0.3.0
 **Auditability Improvements**
+- [ ] log version of package, including commit
 - [ ] garbage collect each train round, and each eval round. log train memory and eval memory each step
 - [ ] log train and eval time each step
 - [ ] eval for HotpotQA, TriviaQA, GLUE, SQUAD, CoNLL-2003, CoLA, MNLI
@@ -33,6 +28,7 @@ Training tool
 
 ## v0.4.0
 - [ ] add eval tool for MMLU / MATH / etc
+- [ ] log all training parameters (excluding stuff like push_to_hub)
 
 **Training Quality Improvements**
 - [ ] add ability to transfer / freeze embeddings
@@ -53,6 +49,13 @@ Training tool
 
 ## v1.1.0
 - [ ] benchmark with https://github.com/huggingface/transformers/issues/14608
+
+
+## v0.2.0 (Next Experiment Set)
+- [x] Change DistillationStrategy to DistillationObjective, which handles the entire loss calculation
+- [x] fix re-entrant issue
+- [x] model.forward = torch.compile(model.forward, mode="reduce-overhead", fullgraph=True)
+- [x] allow dataset initialization by training arguments
 
 
 ## Clean

@@ -1,5 +1,6 @@
 from torch.nn import functional as F
-from typing import List, Callable, Union, Optional
+from typing import List, Callable, Union
+from dataclasses import dataclass
 import torch
 from transformers import PreTrainedModel
 
@@ -279,6 +280,66 @@ class LegacyObjective(DistillationObjective):
 
         # legacy, this is an incorrect implementation:
         return logits_loss + activations_loss * len(student_features.hidden_states)
+
+
+@dataclass
+class LinearObjective:
+    """
+    Comprehensive distillation objective to calculate loss based on various features.
+    Implements __call__(teacher_model, student_model, inputs) -> loss
+    """
+    logits_weight: float = 1
+    logits_loss_fn: Union[None, str, Callable] = "kl"
+    activations_weight: float = 1
+    activations_loss_fn: Union[None, str, Callable] = "mse"
+    attentions_weight: float = 0
+    attentions_loss_fn: Union[None, str, Callable] = "mse"
+
+    def __post_init__(self):
+        if isinstance(self.logits_loss_fn, str):
+            self.logits_loss_fn = LOSS_FUNCTIONS[self.logits_loss_fn]
+        if isinstance(self.activations_loss_fn, str):
+            self.activations_loss_fn = LOSS_FUNCTIONS[self.activations_loss_fn]
+        if isinstance(self.attentions_loss_fn, str):
+            self.attentions_loss_fn = LOSS_FUNCTIONS[self.attentions_loss_fn]
+
+    def __call__(self, teacher_model, student_model, inputs):
+        forward_kwargs = {
+            **inputs,
+            "output_hidden_states": (self.activations_weight != 0),
+            "output_attentions": (self.attentions_weight != 0)
+        }
+        with torch.no_grad():
+            teacher_outputs = teacher_model(**forward_kwargs)
+        student_outputs = student_model(**forward_kwargs)
+
+        losses = []
+        if self.logits_weight:
+            losses.append(self.logits_loss_fn(student_outputs.logits, teacher_outputs.logits))
+        if self.activations_weight:
+            losses.append(self.activations_loss_fn(
+                torch.stack(student_outputs.hidden_states),
+                torch.stack(teacher_outputs.hidden_states),
+            ))
+        if self.attentions_weight:
+            raise NotImplementedError
+
+        return torch.sum(torch.stack(losses))
+
+"""
+TODO
+- logits only
+- logits + all activations
+- logits + last activation
+- logits + all activations + all attentions
+- logits + all activations + last attentions
+- logits + last activation + last attention
+"""
+
+"""
+TODO iter 1
+- gradient weighted
+"""
 
 
 OBJECTIVES = {
