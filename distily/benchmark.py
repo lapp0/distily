@@ -34,9 +34,9 @@ def run(params=None, **kwargs):
     benchmark(learning_rate=[4e-5, 4e-4], optim=["lion", "adamw"])
     """
     assert params is not None
-    for key, value in params.items():
-        if not isinstance(value, list):
-            raise ValueError(f"The value for '{key}' must be a list.")
+    #for key, value in params.items():
+    #    if not isinstance(value, list):
+    #        raise ValueError(f"The value for '{key}' must be a list.")
 
     # Get all combinations of the items in the lists
     keys = params.keys()
