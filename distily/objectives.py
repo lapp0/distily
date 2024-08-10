@@ -283,7 +283,7 @@ class LegacyObjective(DistillationObjective):
 
 
 @dataclass
-class LinearObjective:
+class LinearObjective(DistillationObjective):
     """
     Comprehensive distillation objective to calculate loss based on various features.
     Implements __call__(teacher_model, student_model, inputs) -> loss
