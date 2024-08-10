@@ -14,7 +14,7 @@ def get_run_name(run_kwargs):
     ])
 
 
-def run(product_kwargs, **kwargs):
+def run(product_kwargs=None, **kwargs):
     """
     Benchmark the training process by exploring permutations of hyperparameters.
 
@@ -33,12 +33,13 @@ def run(product_kwargs, **kwargs):
     Example:
     benchmark(learning_rate=[4e-5, 4e-4], optim=["lion", "adamw"])
     """
+    assert product_kwargs is not None
     for key, value in product_kwargs.items():
         if not isinstance(value, list):
             raise ValueError(f"The value for '{key}' must be a list.")
 
     # Get all combinations of the items in the lists
-    keys = kwargs.keys()
+    keys = product_kwargs.keys()
     values_product = product(product_kwargs.values())
 
     # log params
