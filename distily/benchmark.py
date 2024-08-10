@@ -14,7 +14,7 @@ def get_run_name(run_kwargs):
     ])
 
 
-def run(product_kwargs=None, **kwargs):
+def run(params=None, **kwargs):
     """
     Benchmark the training process by exploring permutations of hyperparameters.
 
@@ -33,31 +33,29 @@ def run(product_kwargs=None, **kwargs):
     Example:
     benchmark(learning_rate=[4e-5, 4e-4], optim=["lion", "adamw"])
     """
-    assert product_kwargs is not None
-    for key, value in product_kwargs.items():
+    assert params is not None
+    for key, value in params.items():
         if not isinstance(value, list):
             raise ValueError(f"The value for '{key}' must be a list.")
 
     # Get all combinations of the items in the lists
-    keys = product_kwargs.keys()
-    if len(product_kwargs) == 1:
-        values_product = [[v] for v in list(product_kwargs.values())[0]]
-    else:
-        values_product = list(product(product_kwargs.values()))
+    keys = params.keys()
+
+    #if len(product_kwargs) == 1:
+    #    values_product = [[v] for v in list(product_kwargs.values())[0]]
+    #else:
+    #    values_product = list(product(product_kwargs.values()))
 
     # log params
     print("Training Parameters")
-    print("\n".join([
-        str(dict(zip(keys, vals)))
-        for vals in values_product
-    ]))
+    print("\n".join(map(str, params)))
 
-    for values in values_product:
+    for values in params:
         product_args = dict(zip(keys, values))
         run_name = get_run_name(product_args)
         print(run_name)
         current_args = {
-            "run_name": run_name,
+            "logging_dir": run_name,
             **product_args,
             **kwargs
         }
