@@ -41,7 +41,7 @@ def run(product_kwargs=None, **kwargs):
     # Get all combinations of the items in the lists
     keys = product_kwargs.keys()
     if len(product_kwargs) == 1:
-        values_product = [[p] for p in product_kwargs.values()]
+        values_product = [[v] for v in list(product_kwargs.values())[0]]
     else:
         values_product = list(product(product_kwargs.values()))
 
