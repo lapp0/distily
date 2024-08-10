@@ -33,7 +33,7 @@ def run(product_kwargs, **kwargs):
     Example:
     benchmark(learning_rate=[4e-5, 4e-4], optim=["lion", "adamw"])
     """
-    for key, value in kwargs.items():
+    for key, value in product_kwargs.items():
         if not isinstance(value, list):
             raise ValueError(f"The value for '{key}' must be a list.")
 
@@ -49,8 +49,12 @@ def run(product_kwargs, **kwargs):
     ]))
 
     for values in values_product:
-        current_args = dict(zip(keys, values))
-        current_args["run_name"] = get_run_name(current_args)
+        product_args = dict(zip(keys, values))
+        product_args["run_name"] = get_run_name(product_args)
+        current_args = {
+            **product_args,
+            **kwargs
+        }
         training_args, student_model_args, teacher_model_args, dataset_args = distily.args.parser.parse_dict(
             current_args,
             allow_extra_keys=True
