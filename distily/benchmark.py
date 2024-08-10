@@ -39,7 +39,7 @@ def run(params=None, **kwargs):
     #        raise ValueError(f"The value for '{key}' must be a list.")
 
     # Get all combinations of the items in the lists
-    keys = params.keys()
+    #keys = params.keys()
 
     #if len(product_kwargs) == 1:
     #    values_product = [[v] for v in list(product_kwargs.values())[0]]
@@ -51,7 +51,7 @@ def run(params=None, **kwargs):
     print("\n".join(map(str, params)))
 
     for values in params:
-        product_args = dict(zip(keys, values))
+        product_args = dict(values)
         run_name = get_run_name(product_args)
         print(run_name)
         current_args = {
