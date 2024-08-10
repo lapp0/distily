@@ -262,7 +262,7 @@ class AttentionsObjective(DistillationObjective):
 
 
 class LegacyObjective(DistillationObjective):
-    def __init__(self, loss_fn: Callable = "kl"):
+    def __init__(self, loss_fn: Callable = "reverse_kl"):
         if isinstance(loss_fn, str):
             loss_fn = LOSS_FUNCTIONS[loss_fn]
         self.loss_fn = loss_fn
@@ -273,7 +273,10 @@ class LegacyObjective(DistillationObjective):
         student_features = student_model(**inputs, output_hidden_states=True)
 
         logits_loss = self.loss_fn(student_features.logits, teacher_features.logits)
-        activations_loss = self.loss_fn(student_features.hidden_states, teacher_features.hidden_states)
+        activations_loss = self.loss_fn(
+            torch.stack(student_features.hidden_states),
+            torch.stack(teacher_features.hidden_states)
+        )
 
         # legacy, this is an incorrect implementation:
         return logits_loss + activations_loss * student_features.hidden_states
