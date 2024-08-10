@@ -14,7 +14,7 @@ def get_run_name(run_kwargs):
     ])
 
 
-def benchmark(product_kwargs, **kwargs):
+def run(product_kwargs, **kwargs):
     """
     Benchmark the training process by exploring permutations of hyperparameters.
 
