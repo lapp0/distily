@@ -1,4 +1,5 @@
 from itertools import product
+import os
 import re
 import gc
 import torch
@@ -55,10 +56,10 @@ def run(params=None, **kwargs):
         run_name = get_run_name(product_args)
         print(run_name)
         current_args = {
-            "logging_dir": run_name,
             **product_args,
             **kwargs
         }
+        current_args["logging_dir"] = os.path.join(current_args["output_dir"], "logs", run_name)
         training_args, student_model_args, teacher_model_args, dataset_args = distily.args.parser.parse_dict(
             current_args,
             allow_extra_keys=True
