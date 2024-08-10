@@ -54,7 +54,7 @@ def run(product_kwargs=None, **kwargs):
 
     for values in values_product:
         product_args = dict(zip(keys, values))
-        run_name = get_run_name(product_args),
+        run_name = get_run_name(product_args)
         print(run_name)
         current_args = {
             "run_name": run_name,
