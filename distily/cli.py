@@ -97,8 +97,7 @@ def get_dataset(dataset_args, tokenizer, max_seq_len: int):
     return tokenized_dataset["train"], tokenized_dataset["test"]
 
 
-def run():
-    training_args, student_model_args, teacher_model_args, dataset_args = distily.args.get_args()
+def do_train(training_args, student_model_args, teacher_model_args, dataset_args):
 
     # TODO: don't hardcode max length
     max_seq_len = 1024
@@ -132,4 +131,6 @@ def run():
 
 
 if __name__ == "__main__":
-    run()
+    do_train(
+        distily.args.get_args()
+    )

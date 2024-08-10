@@ -105,13 +105,18 @@ class DistillationTrainingArguments(TrainingArguments):
     eval_strategy: str = "steps"
     eval_steps: int = 500
     eval_on_start: bool = True
+    report_to: str = "tensorboard"
+
+    # push to hub
+
+
+parser = HfArgumentParser((
+    DistillationTrainingArguments,
+    StudentModelArguments,
+    TeacherModelArguments,
+    DatasetArguments
+))
 
 
 def get_args():
-    parser = HfArgumentParser((
-        DistillationTrainingArguments,
-        StudentModelArguments,
-        TeacherModelArguments,
-        DatasetArguments
-    ))
     return parser.parse_args_into_dataclasses()
