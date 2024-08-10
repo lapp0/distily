@@ -39,7 +39,7 @@ def run(product_kwargs, **kwargs):
 
     # Get all combinations of the items in the lists
     keys = kwargs.keys()
-    values_product = product(*kwargs.values())
+    values_product = product(product_kwargs.values())
 
     # log params
     print("Training Parameters")
