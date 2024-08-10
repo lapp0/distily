@@ -40,7 +40,10 @@ def run(product_kwargs=None, **kwargs):
 
     # Get all combinations of the items in the lists
     keys = product_kwargs.keys()
-    values_product = list(product(product_kwargs.values()))
+    if len(product_kwargs) == 1:
+        values_product = list(product_kwargs.values())
+    else:
+        values_product = list(product(product_kwargs.values()))
 
     # log params
     print("Training Parameters")
