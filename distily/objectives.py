@@ -262,10 +262,9 @@ class AttentionsObjective(DistillationObjective):
 
 
 class LegacyObjective(DistillationObjective):
-    def __init__(self, loss_fn: Callable = "reverse_kl"):
-        if isinstance(loss_fn, str):
-            loss_fn = LOSS_FUNCTIONS[loss_fn]
-        self.loss_fn = loss_fn
+    # Hard coded, to reproduce old success
+    def __init__(self, loss_fn: Callable = "kl"):
+        self.loss_fn = kl_divergence_loss
 
     def __call__(self, teacher_model, student_model, inputs):
         with torch.no_grad():
