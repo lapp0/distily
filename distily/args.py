@@ -58,7 +58,7 @@ class DatasetArguments:
 @dataclass
 class DistillationObjectiveArguments:
     distillation_objective: str = field(
-        default="logits",
+        default="multi",
         metadata={"help": "DistillationObjective callable which calculate loss"}
     )
     # TODO: add args for multi objective

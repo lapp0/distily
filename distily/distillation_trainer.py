@@ -87,7 +87,12 @@ class DistillationTrainer(transformers.Trainer):
         # activation pair transfers
 
     def compute_loss(self, model, inputs, return_outputs=False):
-        loss = self.distillation_objective(self.teacher_model, model, inputs)
+        loss_dict = self.distillation_objective(self.teacher_model, model, inputs)
+
+        loss = loss_dict.pop("loss")
+
+        self.log(loss_dict)
+
         if return_outputs:
             # TODO: real output
             return loss, torch.tensor([1.0])

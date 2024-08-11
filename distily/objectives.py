@@ -1,3 +1,4 @@
+import collections
 from torch.nn import functional as F
 from typing import List, Callable, Union
 from dataclasses import dataclass, fields
@@ -293,7 +294,7 @@ class MultiObjective(DistillationObjective):
     """
     logits_weight: float = 1
     logits_loss_fn: Union[None, str, Callable] = "kl"
-    activations_weight: float = 1
+    activations_weight: float = 0
     activations_loss_fn: Union[None, str, Callable] = "mse"
     attentions_weight: float = 0
     attentions_loss_fn: Union[None, str, Callable] = "mse"
@@ -316,18 +317,21 @@ class MultiObjective(DistillationObjective):
             teacher_outputs = teacher_model(**forward_kwargs)
         student_outputs = student_model(**forward_kwargs)
 
-        losses = []
+        losses = collections.defaultdict(lambda: torch.tensor(0.0, device=student_outputs.device))
         if self.logits_weight:
-            losses.append(self.logits_loss_fn(student_outputs.logits, teacher_outputs.logits))
+            losses["loss/logits"] = self.logits_loss_fn(
+                student_outputs.logits, teacher_outputs.logits
+            ) * self.logits_weight
         if self.activations_weight:
-            losses.append(self.activations_loss_fn(
+            losses["loss/activations"] = self.activations_loss_fn(
                 torch.stack(student_outputs.hidden_states),
                 torch.stack(teacher_outputs.hidden_states),
-            ))
+            ) * self.activations_weight
         if self.attentions_weight:
             raise NotImplementedError
 
-        return torch.sum(torch.stack(losses))
+        losses["loss"] = losses["loss/logits"] + losses["loss/activations"]
+        return losses
 
     def __repr__(self):
         attrs = []
