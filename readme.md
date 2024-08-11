@@ -1,18 +1,22 @@
 # Distily
 
-**In one command, distill an existing model into a smaller or different architecture.**
+
+##### In one command, distill an existing model into a smaller or different architecture.
+
+
+## Install
 
 ```
 pip install -U git+https://github.com/lapp0/distily
 ```
 
-### Features
+## Features
 Distily allows you to distill a model with
 - Smaller architecture: fewer layers, fewer attention heads, narrower MLP, etc
 - Quantized weights: e.g. bitnet
 - Distinct architecture: e.g. State-Space models such as Mamba
 
-### Usage
+## Usage
 
 **Minimal Example: `distily_gpt2`**
 
@@ -30,7 +34,7 @@ python3 -m distily.cli \
 The [Resulting `distily_gpt2` Model](https://huggingface.co/distily/distily_gpt2) has (TODO: explain metrics).
 
 
-### Further Reading
+## Further Reading
 
 TODO: commit the linked docs
 
