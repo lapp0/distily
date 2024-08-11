@@ -91,7 +91,7 @@ class DistillationTrainer(transformers.Trainer):
 
         loss = loss_dict.pop("loss")
 
-        self.log({k: float(v) for k, v in loss_dict.items})
+        self.log({k: float(v) for k, v in loss_dict.items()})
 
         if return_outputs:
             # TODO: real output
