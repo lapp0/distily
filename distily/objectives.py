@@ -317,7 +317,7 @@ class MultiObjective(DistillationObjective):
             teacher_outputs = teacher_model(**forward_kwargs)
         student_outputs = student_model(**forward_kwargs)
 
-        losses = collections.defaultdict(lambda: torch.tensor(0.0, device=student_outputs.device))
+        losses = collections.defaultdict(lambda: torch.tensor(0.0, device=inputs.device))
         if self.logits_weight:
             losses["loss/logits"] = self.logits_loss_fn(
                 student_outputs.logits, teacher_outputs.logits
