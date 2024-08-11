@@ -2,6 +2,7 @@
 
 ## Model Generation Milestones
 - [ ] distill 99% quality model with identical architecture
+- [ ] half layer gpt2, but beat distilgpt2 benchmarks
 - [ ] distill phi-3-mini to 1.58b, report metrics
 
 

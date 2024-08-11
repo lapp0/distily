@@ -20,15 +20,14 @@ Distily allows you to distill a model with
 
 **Minimal Example: `distily_gpt2`**
 
-In this simple example, we create and benchmark a distilled version of `gpt2` with 99% benchmark performance, but 1/2 the size.
-
-Command:
+Command to create a distilled `gpt2` with only 6 layers:
 ```
 python3 -m distily.cli \
     --teacher_model_name_or_path gpt2 \
     --output_dir distily_gpt2 \
     --hub_model_id "distily/distily_gpt2" \
     --push_to_hub True \
+    --student_model_config {"n_layers": 6}
 ```
 
 The [Resulting `distily_gpt2` Model](https://huggingface.co/distily/distily_gpt2) has (TODO: explain metrics).
