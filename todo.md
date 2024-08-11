@@ -5,12 +5,7 @@
 - [ ] distill phi-3-mini to 1.58b, report metrics
 
 ## v0.2.1
-- [ ] implement and benchmark all researched objectives
-
-## Research immediately after v0.2.0
-- [ ] how are logit and activation loss typically combined (linear combination? Multiplication?)
-- [ ] how do different optimizers perform on 250K dataset? (SGD, lion, adaloma, etc)
-
+- [ ]
 
 ## v0.3.0
 **Auditability Improvements**
@@ -19,8 +14,33 @@
 - [ ] log train and eval time each step
 - [ ] eval for HotpotQA, TriviaQA, GLUE, SQUAD, CoNLL-2003, CoLA, MNLI
 
-
 ## v0.4.0
+Complete basic objectives implementation
+
+**Objectives**
+### Implement layer mapping strategies from https://arxiv.org/pdf/2310.08797
+- 1-to-1: Maps student layers to uniformly distributed teacher layers.
+  - Last: simple, but effective baseline
+  - Last K uniform: `teacher_layer_i` -> `student_layer_i`
+  - All: Requires identical num layers
+- 1-to-N Mapping: Maps each student layer to multiple teacher layers.
+  - Uniform Consecutive: Maps each student layer to k consecutive teacher layers.
+    - Formula: ϕ(i)=[k(i−1),ki]ϕ(i)=[k(i−1),ki], where k=⌈LT/LS⌉k=⌈LT​/LS​⌉.
+	- Ensures all teacher layers contribute to the student's learning.
+  - Uniform + Last: Each student layer maps to two teacher layers: one selected uniformly and one from the last layers.
+    - Combines both Uniform and Last strategies from 1-to-1 mapping.
+	- Each student layer maps to two teacher layers: one selected uniformly and one from the last layers.
+	- Leverages the benefits of capturing both early syntactic features and late semantic features.
+
+### Implement loss functions from https://arxiv.org/pdf/2310.08797
+Loss Functions:
+- Cross Entropy
+- MHA MSE: sum over (Q, K, V) and attention heads of MSE(student_relation_matrix, teacher_relation_matrix)
+- Direct MHA MSE: (do not implement)
+- MSE: Sum of MSE
+
+
+## v0.5.0
 - [ ] add eval tool for MMLU / MATH / etc
 - [ ] log all training parameters (excluding stuff like push_to_hub)
 
@@ -42,7 +62,7 @@
 
 
 ## v1.1.0
-- [ ] benchmark with https://github.com/huggingface/transformers/issues/14608
+- [x] benchmark with https://github.com/huggingface/transformers/issues/14608
 
 
 ## v0.2.0 (Next Experiment Set)

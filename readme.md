@@ -10,6 +10,11 @@ Install Distily:
 pip install -U git+https://github.com/lapp0/distily
 ```
 
+Install default dependencies
+```
+pip install -U bitsandbytes tensorboardX flash-attn
+```
+
 ## Bitnet
 Bitnet models are trained in an unquantized dtype. If a bitnet model is loaded for training, forward passes are quantized to 1.58b, backwards passes are in the default torch dtype (usually bf16 or fp16).
 
@@ -179,6 +184,55 @@ There are a number of approaches for consideration
 
 # Papers
 
+## A Comparative Analysis of Task-Agnostic Distillation Methods for Compressing Transformer Language Models
+https://arxiv.org/pdf/2310.08797
+
+Explores simple logits distillation, along with hidden state and attention layer mapping strategies.
+
+Model Features
+- logits: uses cross entropy
+- MHA: "distil the attention relation matrices (Q-Q, K-K and V-V) obtained by first concatenating the query (Q), key (K), and value (V) mappings from all attention heads and re-splitting them into the same number of attention relation heads"
+- hidden states: using mean square error
+
+Layer Mapping Strategies
+- 1-to-1: Maps student layers to uniformly distributed teacher layers.
+  - Last: simple, but effective baseline
+  - Last K uniform: `teacher_layer_i` -> `student_layer_i`
+  - All: Requires identical num layers
+- 1-to-N Mapping: Maps each student layer to multiple teacher layers.
+  - Uniform Consecutive: Maps each student layer to k consecutive teacher layers.
+    - Formula: ϕ(i)=[k(i−1),ki]ϕ(i)=[k(i−1),ki], where k=⌈LT/LS⌉k=⌈LT​/LS​⌉.
+	- Ensures all teacher layers contribute to the student's learning.
+  - Uniform + Last: Each student layer maps to two teacher layers: one selected uniformly and one from the last layers.
+    - Combines both Uniform and Last strategies from 1-to-1 mapping.
+	- Each student layer maps to two teacher layers: one selected uniformly and one from the last layers.
+	- Leverages the benefits of capturing both early syntactic features and late semantic features.
+
+Loss Functions:
+- Cross Entropy
+- MHA MSE: sum over (Q, K, V) and attention heads of MSE(student_relation_matrix, teacher_relation_matrix)
+- Direct MHA MSE: sum over (Q, K, V) and attention heads of MSE(student_mapping * W, teacher_mapping)
+- MSE: Sum of MSE
+
+Linear transformation:
+- The loss functions learn a linear transformation. This is only necessary when the dimensions vary.
+
+Experiments:
+- Logits
+  - layer mapping strategy: N/A
+  - loss: cross entropy
+- Hidden States:
+  - Layer Mapping Strategies: 1-to-1, Uniform Consecutive, and Uniform + Last are used.
+  - loss: MSE
+- Attentions:
+  - Layer Mapping Strategy: Single mapping strategy, focusing on aligning attention weights directly.
+  - Loss: MHA MSE, Direct MHA MSE
+
+Results:
+- "For both MiniLMv2 and DirectMiniLM, we found distilling the upper-middle teacher layer, i.e. (LT −1)th or (LT −2)th strategy,"
+- "Importantly, we found that both MHA transfer methods generally outperform HS transfer, which points to the benefit of transferring the Q/K/V knowledge over the hidden state knowledge."
+- Direct MHA MSE didn't consistently improve performance based on their provided data. When it did, improvement wasn't substantial. Therefore we should only implement MHA MSE.
+
 ## Distiller: A Systematic Study of Model Distillation Methods in Natural Language Processing
 https://www.semanticscholar.org/reader/08460ecff91b8a54358b9c1709d7dc6a77417f62
 
@@ -303,6 +357,24 @@ https://arxiv.org/pdf/2310.17183
 TODO
 
 "Conventionally, during the knowledge distillation process (e.g. feature distillation), an additional projector is often required to perform feature transformation due to the dimension mismatch between the teacher and the student networks. Interestingly, we discovered that even if the student and the teacher have the same feature dimensions, adding a projector still helps to improve the distillation performance"
+
+## Towards Cross-Tokenizer Distillation: the Universal Logit Distillation Loss for LLMs
+https://arxiv.org/abs/2402.12030
+
+## Gradient Knowledge Distillation for Pre-trained Language Models
+https://arxiv.org/abs/2211.01071
+
+## Improving Knowledge Distillation for BERT Models: Loss Functions, Mapping Methods, and Weight Tuning
+https://arxiv.org/pdf/2308.13958
+
+## PET: Parameter-efficient Knowledge Distillation on Transformer
+https://www.semanticscholar.org/paper/PET%3A-Parameter-efficient-Knowledge-Distillation-on-HyojinJeon-Park/e01204e05440881e5edcd6a872fa40e3f8474a89
+
+## Revisiting Intermediate Layer Distillation for Compressing Language Models: An Overfitting Perspective
+https://www.semanticscholar.org/paper/Revisiting-Intermediate-Layer-Distillation-for-An-Ko-Park/21a5cd656e6d1426d46c443fb85a41bc2dc53bef
+
+## KS-DETR: Knowledge Sharing in Attention Learning for Detection Transformer
+https://www.semanticscholar.org/paper/KS-DETR%3A-Knowledge-Sharing-in-Attention-Learning-Zhao-Ukita/1ef697894bc8b7321cf4a960e07daf59013d3ea0
 
 # Resources
 

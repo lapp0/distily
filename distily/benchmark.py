@@ -9,7 +9,7 @@ import distily
 
 
 def get_run_name(run_kwargs):
-    normalize = lambda s: re.sub(r'[^a-zA-Z0-9]', '_', s if isinstance(s, str) else repr(s))
+    normalize = lambda s: re.sub(r'[^A-Za-z0-9_\-\.()]', '_', s if isinstance(s, str) else repr(s))
     # Create a sorted list of normalized key-value pairs joined by underscores
     return ", ".join([
         f"{normalize(k)}={normalize(v)}"

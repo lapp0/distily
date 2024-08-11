@@ -327,6 +327,16 @@ class LinearObjective(DistillationObjective):
 
         return torch.sum(torch.stack(losses))
 
+    def __repr__(self):
+        attrs = []
+        for field in fields(self):
+            value = getattr(self, field.name)
+            # Check if the value is callable (a function, method, etc.)
+            if callable(value):
+                attrs.append(f"{field.name}=(fn:{value.__name__}())")
+            else:
+                attrs.append(f"{field.name}={value!r}")
+        return f"{self.__class__.__name__}({', '.join(attrs)})"
 
 """
 TODO
