@@ -1,7 +1,6 @@
 from torch.nn import functional as F
 from typing import List, Callable, Union
-from dataclasses import dataclass, asdict, fields
-import json
+from dataclasses import dataclass, fields
 import torch
 from transformers import PreTrainedModel
 
@@ -9,10 +8,18 @@ from transformers import PreTrainedModel
 ####################
 # Distance Functions
 ####################
-def _stable_kl_div(P_log_prob, Q_prob, epsilon=1e-10, *args, **kwargs):
-    """Stabilize by clamping Q_prob to avoid log(0) and division by zero"""
+def _stable_kl_div(P_log_prob, Q_prob, epsilon=1e-10):
+    """
+    Stabilize by clamping Q_prob to avoid log(0) and division by zero
+    Ensure 2D tensors for sane kl_div / batchmean calculation
+    """
+    # flatten to 2D batch request
+    if len(P_log_prob.shape) > 2:
+        P_log_prob = P_log_prob.flatten(0, -2)
+        Q_prob = Q_prob.flatten(0, -2)
+    # ensure numerical stability
     Q_prob = Q_prob.clamp(min=epsilon)
-    return F.kl_div(P_log_prob, Q_prob, *args, **kwargs)
+    return F.kl_div(P_log_prob, Q_prob, reduction="batchmean")
 
 
 def mse_loss(student_features, teacher_features):
@@ -22,23 +29,23 @@ def mse_loss(student_features, teacher_features):
 def kl_divergence_loss(student_features, teacher_features, epsilon=1e-10):
     student_log_prob = F.log_softmax(student_features, dim=-1)
     teacher_prob = F.softmax(teacher_features, dim=-1)
-    return _stable_kl_div(student_log_prob, teacher_prob, reduction="batchmean")
+    return _stable_kl_div(student_log_prob, teacher_prob)
 
 
 def reverse_kl_divergence_loss(student_features, teacher_features):
     teacher_log_prob = F.log_softmax(teacher_features, dim=-1)
     student_prob = F.softmax(student_features, dim=-1)
-    return _stable_kl_div(teacher_log_prob, student_prob, reduction="batchmean")
+    return _stable_kl_div(teacher_log_prob, student_prob)
 
 
 def cakld_loss(student_features, teacher_features, beta_prob=0.5):
     teacher_output_log_prob = F.log_softmax(teacher_features, dim=-1)
     student_output_soft = F.softmax(student_features, dim=-1)
-    reverse_kl = _stable_kl_div(teacher_output_log_prob, student_output_soft, reduction="batchmean")
+    reverse_kl = _stable_kl_div(teacher_output_log_prob, student_output_soft)
 
     student_output_log_prob = F.log_softmax(student_features, dim=-1)
     teacher_output_soft = F.softmax(teacher_features, dim=-1)
-    forward_kl = _stable_kl_div(student_output_log_prob, teacher_output_soft, reduction="batchmean")
+    forward_kl = _stable_kl_div(student_output_log_prob, teacher_output_soft)
 
     kl_loss = beta_prob * reverse_kl + (1 - beta_prob) * forward_kl
     return kl_loss
@@ -51,8 +58,8 @@ def jsd_loss(student_features, teacher_features, beta_prob=0.5):
     c_prob = beta_prob * teacher_prob + (1 - beta_prob) * student_prob
     c_log_prob = c_prob.log()
 
-    kl_loss_f = _stable_kl_div(c_log_prob, teacher_prob, reduction="batchmean")
-    kl_loss_r = _stable_kl_div(c_log_prob, student_prob, reduction="batchmean")
+    kl_loss_f = _stable_kl_div(c_log_prob, teacher_prob)
+    kl_loss_r = _stable_kl_div(c_log_prob, student_prob)
 
     kl_loss = beta_prob * kl_loss_f + (1 - beta_prob) * kl_loss_r
     return kl_loss
@@ -284,7 +291,7 @@ class LegacyObjective(DistillationObjective):
 
 
 @dataclass
-class LinearObjective(DistillationObjective):
+class MultiObjective(DistillationObjective):
     """
     Comprehensive distillation objective to calculate loss based on various features.
     Implements __call__(teacher_model, student_model, inputs) -> loss
@@ -355,5 +362,7 @@ TODO iter 1
 
 
 OBJECTIVES = {
-    "legacy": LegacyObjective
+    "legacy": LegacyObjective,  # TODO: remove
+    "logits": LogitsObjective,
+    "multi": MultiObjective,
 }

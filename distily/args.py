@@ -57,14 +57,17 @@ class DatasetArguments:
 
 @dataclass
 class DistillationObjectiveArguments:
-    loss_fn: typing.Union[str] = field(
+    distillation_objective: str = field(
+        default="logits",
+        metadata={"help": "DistillationObjective callable which calculate loss"}
+    )
+    # TODO: add args for multi objective
+    """
+        loss_fn: typing.Union[str] = field(
         default="reverse_kl",
         metadata={"help": "Loss function for distillation"}
     )
-    distillation_objective: str = field(
-        default="legacy",
-        metadata={"help": "DistillationObjective callable which calculate loss"}
-    )  # TODO: document how to set Activation Loss Pairs
+    """
 
 
 @dataclass
@@ -97,8 +100,8 @@ class DistillationTrainingArguments(TrainingArguments):
 
     # optimize performance and memory
     per_device_train_batch_size: int = 4
-    per_device_eval_batch_size: int = 4
-    gradient_accumulation_steps: int = 4
+    per_device_eval_batch_size: int = 8
+    gradient_accumulation_steps: int = 1  # lower batch sizes perform much better
     gradient_checkpointing: bool = True
 
     # Fixes

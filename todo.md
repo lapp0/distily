@@ -5,7 +5,8 @@
 - [ ] distill phi-3-mini to 1.58b, report metrics
 
 ## v0.2.1
-- [ ]
+- [ ] fix loss calculation (is it batch-wise?)
+- [ ] add stochastic noise / batch regularization and experiment since smaller batch size performrs so much better
 
 ## v0.3.0
 **Auditability Improvements**
@@ -53,6 +54,9 @@ Loss Functions:
 - [ ] loading the same dataset multiple times increases disk usage
 - [ ] fix checkpointing: `FileNotFoundError: [Errno 2] No such file or directory: 'distily_experiments_1M/checkpoint-8000/trainer_state.json'`
 
+## v0.6.0
+- [ ] training qwen-0.5B
+
 ## Necessary for v1.0.0
 - [ ] model card: include metadata for benchmarks to include evaluation results
 - [ ] specify datasets by argument
@@ -61,31 +65,6 @@ Loss Functions:
 - [ ] fix sinkhorn RuntimeError: "cdist_cuda" not implemented for 'BFloat16
 - [ ] test mutual_information_loss
 
-
-## v1.1.0
-- [x] benchmark with https://github.com/huggingface/transformers/issues/14608
-
-
-## v0.2.0 (Next Experiment Set)
-- [x] Change DistillationStrategy to DistillationObjective, which handles the entire loss calculation
-- [x] fix re-entrant issue
-- [x] model.forward = torch.compile(model.forward, mode="reduce-overhead", fullgraph=True)
-- [x] allow dataset initialization by training arguments
-
-
-## Clean
-- [x] model card - description of method
-- [x] model card - remove incorrect "finetuned from"
-- [X] model card - verify tags
-- [x] model card - ensure original model and new model metrics included
-
-## Package
-- [x] eval step
-- [x] convert loss to one or many of these metrics https://github.com/DD-DuDa/BitDistiller/blob/master/train/mytrainer.py
-- [x] experiment with loss based on hidden states
-- [x] gpt2-distily
-- [x] convert command line args to be available via dataclasses like in llama_autotuner
-- [x] package
 
 ## Publish
 - [ ] evaluate results with logit distillation vs hidden state distillation
