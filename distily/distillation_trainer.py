@@ -155,8 +155,7 @@ class DistillationTrainer(transformers.Trainer):
 
         hyperparameters = transformers.modelcard.extract_hyperparameters_from_trainer(self)
         hyperparameters = {
-            "distillation_objective": repr(self.args.distillation_objective),
-            "loss_fn": str(self.args.loss_fn),
+            "distillation_objective": repr(self.distillation_objective),
             "train_embeddings": str(self.args.train_embeddings),
             **hyperparameters
         }
