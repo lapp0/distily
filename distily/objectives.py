@@ -15,7 +15,7 @@ def _stable_kl_div(P_log_prob, Q_prob, epsilon=1e-10):
     """
     # ensure numerical stability
     Q_prob = Q_prob.clamp(min=epsilon)
-    return F.kl_div(P_log_prob, Q_prob, reduction="none").sum(-1)
+    return F.kl_div(P_log_prob, Q_prob, reduction="none").sum(-1).mean()
 
 
 def mse_loss(student_features, teacher_features):
