@@ -14,7 +14,7 @@ def get_run_name(run_kwargs):
     return ", ".join([
         f"{normalize(k)}={normalize(v)}"
         for k, v in sorted(run_kwargs.items())
-    ])
+    ])[:40]
 
 
 def run(params=None, **kwargs):
