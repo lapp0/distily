@@ -11,15 +11,10 @@ from transformers import PreTrainedModel
 def _stable_kl_div(P_log_prob, Q_prob, epsilon=1e-10):
     """
     Stabilize by clamping Q_prob to avoid log(0) and division by zero
-    Ensure 2D tensors for sane kl_div / batchmean calculation
     """
-    # flatten to 2D batch request
-    if len(P_log_prob.shape) > 2:
-        P_log_prob = P_log_prob.flatten(0, -2)
-        Q_prob = Q_prob.flatten(0, -2)
     # ensure numerical stability
     Q_prob = Q_prob.clamp(min=epsilon)
-    return F.kl_div(P_log_prob, Q_prob, reduction="batchmean")
+    return F.kl_div(P_log_prob, Q_prob, reduction="none").sum(-1)
 
 
 def mse_loss(student_features, teacher_features):

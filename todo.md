@@ -5,12 +5,11 @@
 - [ ] distill phi-3-mini to 1.58b, report metrics
 
 ## v0.2.1
-- [ ] fix loss calculation (is it batch-wise?)
+- [x] fix loss calculation (is it batch-wise?)
 - [ ] add stochastic noise / batch regularization and experiment since smaller batch size performrs so much better
 
 ## v0.3.0
 **Auditability Improvements**
-- [ ] log version of package, including commit
 - [ ] garbage collect each train round, and each eval round. log train memory and eval memory each step
 - [ ] log train and eval time each step
 - [ ] log all training parameters (excluding stuff like push_to_hub)
@@ -55,6 +54,10 @@ Loss Functions:
 - [ ] fix checkpointing: `FileNotFoundError: [Errno 2] No such file or directory: 'distily_experiments_1M/checkpoint-8000/trainer_state.json'`
 
 ## v0.6.0
+**Optimizations**
+- [ ] use vLLM to prepare base model forward passes
+- [ ] use torch 2.5.0 to compile forward pass
+
 - [ ] training qwen-0.5B
 
 ## Necessary for v1.0.0
@@ -64,6 +67,11 @@ Loss Functions:
 - [ ] add tooling to convert to 1.58b safetensors file
 - [ ] fix sinkhorn RuntimeError: "cdist_cuda" not implemented for 'BFloat16
 - [ ] test mutual_information_loss
+
+
+## Create Issues
+Didn't want to tackle these
+- [ ] log version of package, including commit in model card
 
 
 ## Publish
