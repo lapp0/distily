@@ -97,7 +97,15 @@ def get_dataset(dataset_args, tokenizer, max_seq_len: int):
     return tokenized_dataset["train"], tokenized_dataset["test"]
 
 
-def do_train(training_args, student_model_args, teacher_model_args, dataset_args):
+def get_distillation_objective(distillation_objective_args):
+    # TODO: full impl
+    if isinstance(distillation_objective_args.distillation_objective, str):
+        return distily.objectives.OBJECTIVES[distillation_objective_args.distillation_objective]()
+    else:
+        return distillation_objective_args.distillation_objective
+
+
+def do_train(training_args, distillation_objective_args, student_model_args, teacher_model_args, dataset_args):
 
     # TODO: don't hardcode max length
     max_seq_len = 1024
@@ -109,6 +117,9 @@ def do_train(training_args, student_model_args, teacher_model_args, dataset_args
     # TODO: don't hardcode this
     training_args.extra_evaluators = distily.metrics.get_all_metric_evaluators(tokenizer)
 
+    # TODO: cleanup, use a get_distillation_objective() fn
+    distillation_objective = distillation_objective_args.distillation_objective
+
     trainer = distily.distillation_trainer.DistillationTrainer(
         student_model=student_model,
         teacher_model=teacher_model,
@@ -117,6 +128,7 @@ def do_train(training_args, student_model_args, teacher_model_args, dataset_args
         data_collator=DataCollatorForLanguageModeling(tokenizer, mlm=False),
         train_dataset=train_dataset,
         eval_dataset=test_dataset,
+        distillation_objective=distillation_objective,
     )
 
     ##############

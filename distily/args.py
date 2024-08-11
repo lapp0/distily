@@ -56,12 +56,7 @@ class DatasetArguments:
 
 
 @dataclass
-class DistillationTrainingArguments(TrainingArguments):
-
-    ##################################
-    # Distillation Training parameters
-    ##################################
-    eval_teacher_metrics: bool = True  # TODO: use field
+class DistillationObjectiveArguments:
     loss_fn: typing.Union[str] = field(
         default="reverse_kl",
         metadata={"help": "Loss function for distillation"}
@@ -70,6 +65,14 @@ class DistillationTrainingArguments(TrainingArguments):
         default="legacy",
         metadata={"help": "DistillationObjective callable which calculate loss"}
     )  # TODO: document how to set Activation Loss Pairs
+
+
+@dataclass
+class DistillationTrainingArguments(TrainingArguments):
+
+    ##################################
+    # Distillation Training parameters
+    ##################################
     train_embeddings: bool = field(
         default=True,
         metadata={"help": "If True, trains new embeddings from scratch. Else, use teachers input / output embeddings"}
@@ -78,6 +81,7 @@ class DistillationTrainingArguments(TrainingArguments):
     # TODO: add extra metric evaluators
 
     # extra helper specific to this trainer
+    eval_teacher_metrics: bool = True  # TODO: use field
     eval_on_end: bool = True
 
     #####################################################
@@ -89,12 +93,12 @@ class DistillationTrainingArguments(TrainingArguments):
     max_grad_norm: float = 100.0
     lr_scheduler_type: str = "constant"
     num_train_epochs: float = 1.0
+    optim: str = "paged_lion_32bit"
 
     # optimize performance and memory
     per_device_train_batch_size: int = 4
     per_device_eval_batch_size: int = 4
     gradient_accumulation_steps: int = 4
-    optim: str = "paged_adamw_8bit"
     gradient_checkpointing: bool = True
 
     # Fixes
@@ -112,6 +116,7 @@ class DistillationTrainingArguments(TrainingArguments):
 
 parser = HfArgumentParser((
     DistillationTrainingArguments,
+    DistillationObjectiveArguments,
     StudentModelArguments,
     TeacherModelArguments,
     DatasetArguments

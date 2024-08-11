@@ -60,6 +60,7 @@ Peak GPU Memory: {peakmem_gb} GB
 class DistillationTrainer(transformers.Trainer):
     def __init__(
         self,
+        distillation_objective,
         student_model,
         teacher_model,
         tokenizer,
@@ -67,32 +68,9 @@ class DistillationTrainer(transformers.Trainer):
         **kwargs
     ):
         super().__init__(*args, model=student_model, tokenizer=tokenizer, **kwargs)
+
         self.teacher_model = teacher_model
-
-        # prepare loss_fn
-        if isinstance(self.args.loss_fn, str):
-            try:
-                self.loss_fn = distily.objectives.LOSS_FUNCTIONS[self.args.loss_fn.lower()]
-            except KeyError:
-                raise ValueError(f"Unsupported loss function: {self.args.loss_fn}")
-        elif isinstance(self.args.loss_fn, Callable):
-            self.loss_fn = self.args.loss_fn
-        else:
-            raise TypeError(f"invalid loss_fn: `{self.args.loss_fn}`")
-
-        # prepare distillation_strategy
-        if isinstance(self.args.distillation_objective, distily.objectives.DistillationObjective):
-            self.distillation_objective = self.args.distillation_objective
-        elif (
-                isinstance(self.args.distillation_objective, type) and
-                issubclass(self.args.distillation_objective, distily.objectives.DistillationObjective)
-        ):
-            self.distillation_objective = self.args.distillation_objective()
-        elif isinstance(self.args.distillation_objective, str):
-            distillation_objective_cls = distily.objectives.OBJECTIVES[self.args.distillation_objective]
-            self.distillation_objective = distillation_objective_cls()
-        else:
-            raise TypeError(f"invalid distillation_objective: `{self.args.distillation_objective}`")
+        self.distillation_objective = distillation_objective
 
         self.log_trainer_details()
 
