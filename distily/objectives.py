@@ -327,7 +327,7 @@ class LinearObjective(DistillationObjective):
 
         return torch.sum(torch.stack(losses))
 
-    def to_json(self):
+    def to_dict(self):
         data = asdict(self)
         for field in fields(self):
             value = data[field.name]
@@ -337,7 +337,7 @@ class LinearObjective(DistillationObjective):
             except (TypeError, OverflowError):
                 # If not serializable, use the repr as fallback
                 data[field.name] = repr(value)
-        return json.dumps(data, indent=2)
+        return data
 
 
 """
