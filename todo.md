@@ -41,6 +41,9 @@ Loss Functions:
 - MSE: Sum of MSE
 
 
+## Research Task Before v0.5.0
+- [ ] Research Data-Free Knowledge Distillation techniques: ensure model is more representative and sample-efficient
+
 ## v0.5.0
 - [ ] add eval tool for MMLU-PRO / MATH / etc
 

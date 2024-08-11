@@ -89,10 +89,13 @@ class DistillationTrainer(transformers.Trainer):
     def compute_loss(self, model, inputs, return_outputs=False):
         loss_dict = self.distillation_objective(self.teacher_model, model, inputs)
         loss = loss_dict.pop("loss")
-        self.log({
-            "step": self.state.global_step,
-            **{k: float(v) for k, v in loss_dict.items()},
-        })
+
+        # if train step, log metrics
+        if not return_outputs:
+            self.log({
+                "step": self.state.global_step,
+                **{k: float(v) for k, v in loss_dict.items()},
+            })
 
         if return_outputs:
             # TODO: real output, this is nothing of use

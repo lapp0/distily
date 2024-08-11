@@ -32,6 +32,8 @@ python3 -m distily.cli \
 
 The [Resulting `distily_gpt2` Model](https://huggingface.co/distily/distily_gpt2) has (TODO: explain metrics).
 
+For more examples, review the [Examples](./docs/examples.md) documentation.
+
 
 ## Further Reading
 
