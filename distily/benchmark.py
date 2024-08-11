@@ -1,8 +1,10 @@
 from itertools import product
+import traceback
 import os
 import re
 import gc
 import torch
+
 import distily
 
 
@@ -71,7 +73,8 @@ def run(params=None, **kwargs):
         except Exception as e:
             print(f"FAILED FOR {current_args}")
             print(e)
-
+            traceback.print_exc()
+            continue
         print(f"SUCCESS FOR {current_args}")
 
         # cleanup
