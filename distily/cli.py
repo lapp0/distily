@@ -118,7 +118,7 @@ def do_train(training_args, distillation_objective_args, student_model_args, tea
     training_args.extra_evaluators = distily.metrics.get_all_metric_evaluators(tokenizer)
 
     # TODO: cleanup, use a get_distillation_objective() fn
-    distillation_objective = distillation_objective_args.distillation_objective
+    distillation_objective = get_distillation_objective(distillation_objective_args)
 
     trainer = distily.distillation_trainer.DistillationTrainer(
         student_model=student_model,
