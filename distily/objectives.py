@@ -1,6 +1,7 @@
 from torch.nn import functional as F
 from typing import List, Callable, Union
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict, fields
+import json
 import torch
 from transformers import PreTrainedModel
 
@@ -325,6 +326,19 @@ class LinearObjective(DistillationObjective):
             raise NotImplementedError
 
         return torch.sum(torch.stack(losses))
+
+    def to_dict(self):
+        data = asdict(self)
+        for field in fields(self):
+            value = data[field.name]
+            try:
+                # Attempt to serialize the value by checking if it can be dumped to JSON
+                json.dumps(value)
+            except (TypeError, OverflowError):
+                # If not serializable, use the repr as fallback
+                data[field.name] = repr(value)
+        return data
+
 
 """
 TODO
