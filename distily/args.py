@@ -23,7 +23,7 @@ class StudentModelArguments:
     )
     # TODO: Full field
     # TODO: validator, require pytorch 2.5.0 for compile
-    student_model_compile: bool = True
+    student_model_compile: bool = False
 
 
 
@@ -42,7 +42,7 @@ class TeacherModelArguments:
     )
     # TODO: Full field
     # TODO: validator, require pytorch 2.5.0 for compile
-    teacher_model_compile: bool = True
+    teacher_model_compile: bool = False
 
 
 @dataclass
@@ -110,8 +110,6 @@ class DistillationTrainingArguments(TrainingArguments):
     eval_steps: int = 500
     eval_on_start: bool = True
     report_to: str = "tensorboard"
-
-    # push to hub
 
 
 parser = HfArgumentParser((

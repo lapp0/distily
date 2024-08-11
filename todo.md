@@ -12,6 +12,8 @@
 - [ ] log version of package, including commit
 - [ ] garbage collect each train round, and each eval round. log train memory and eval memory each step
 - [ ] log train and eval time each step
+- [ ] log all training parameters (excluding stuff like push_to_hub)
+- [ ] log dataset total token count
 - [ ] eval for HotpotQA, TriviaQA, GLUE, SQUAD, CoNLL-2003, CoLA, MNLI
 
 ## v0.4.0
@@ -42,7 +44,6 @@ Loss Functions:
 
 ## v0.5.0
 - [ ] add eval tool for MMLU / MATH / etc
-- [ ] log all training parameters (excluding stuff like push_to_hub)
 
 **Training Quality Improvements**
 - [ ] add ability to transfer / freeze embeddings
