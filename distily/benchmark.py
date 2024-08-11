@@ -62,14 +62,14 @@ def run(params=None, **kwargs):
             **kwargs
         }
         current_args["logging_dir"] = os.path.join(current_args["output_dir"], "logs", run_name)
-        training_args, student_model_args, teacher_model_args, dataset_args = distily.args.parser.parse_dict(
+        parsed_args_tuple = distily.args.parser.parse_dict(
             current_args,
             allow_extra_keys=True
         )
 
         try:
             # TODO: do_train should return training results
-            res = distily.cli.do_train(training_args, student_model_args, teacher_model_args, dataset_args)
+            res = distily.cli.do_train(parsed_args_tuple)
         except Exception as e:
             print(f"FAILED FOR {current_args}")
             print(e)
