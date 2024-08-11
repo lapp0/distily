@@ -327,7 +327,7 @@ class LinearObjective(DistillationObjective):
 
         return torch.sum(torch.stack(losses))
 
-    def toJSON(self):
+    def to_json(self):
         data = asdict(self)
         for field in fields(self):
             value = data[field.name]
