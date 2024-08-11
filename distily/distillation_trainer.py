@@ -88,13 +88,14 @@ class DistillationTrainer(transformers.Trainer):
 
     def compute_loss(self, model, inputs, return_outputs=False):
         loss_dict = self.distillation_objective(self.teacher_model, model, inputs)
-
         loss = loss_dict.pop("loss")
-
-        self.log({k: float(v) for k, v in loss_dict.items()})
+        self.log({
+            "step": self.state.global_step,
+            **{k: float(v) for k, v in loss_dict.items()},
+        })
 
         if return_outputs:
-            # TODO: real output
+            # TODO: real output, this is nothing of use
             return loss, torch.tensor([1.0])
         return loss
 
@@ -173,7 +174,7 @@ class DistillationTrainer(transformers.Trainer):
 
         model_card_filepath = os.path.join(self.args.output_dir, "README.md")
         model_card = ModelCard.load(model_card_filepath)
-        model_card.data["library_name"] = "distily"
+        model_card.data["library_name"] = "Distily"
 
         model_card.text = MODEL_CARD_TEMPLATE.format(
             model_name=self.args.output_dir,

@@ -98,17 +98,19 @@ class DistillationTrainingArguments(TrainingArguments):
     num_train_epochs: float = 1.0
     optim: str = "paged_lion_32bit"
 
-    # optimize performance and memory
+    # smaller batch sizes perform better
     per_device_train_batch_size: int = 4
-    per_device_eval_batch_size: int = 8
-    gradient_accumulation_steps: int = 1  # lower batch sizes perform much better
+    gradient_accumulation_steps: int = 1
+
+    # optimize performance and memory
+    per_device_eval_batch_size: int = 4  # TODO: auto-find?
     gradient_checkpointing: bool = True
 
     # Fixes
     gradient_checkpointing_kwargs = {"use_reentrant": False}
 
     # logging / evaluation
-    logging_steps: int = 1
+    logging_steps: int = 25
     eval_strategy: str = "steps"
     eval_steps: int = 500
     eval_on_start: bool = True

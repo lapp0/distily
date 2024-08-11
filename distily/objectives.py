@@ -344,21 +344,6 @@ class MultiObjective(DistillationObjective):
                 attrs.append(f"{field.name}={value!r}")
         return f"{self.__class__.__name__}({', '.join(attrs)})"
 
-"""
-TODO
-- logits only
-- logits + all activations
-- logits + last activation
-- logits + all activations + all attentions
-- logits + all activations + last attentions
-- logits + last activation + last attention
-"""
-
-"""
-TODO iter 1
-- gradient weighted
-"""
-
 
 OBJECTIVES = {
     "legacy": LegacyObjective,  # TODO: remove

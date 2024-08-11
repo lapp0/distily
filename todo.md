@@ -4,14 +4,12 @@
 - [ ] distill 99% quality model with identical architecture
 - [ ] distill phi-3-mini to 1.58b, report metrics
 
+
 ## v0.2.1
 - [x] fix loss calculation (is it batch-wise?)
 - [ ] add stochastic noise / batch regularization and experiment since smaller batch size performrs so much better
 
 ## v0.3.0
-**Auditability Improvements**
-- [ ] garbage collect each train round, and each eval round. log train memory and eval memory each step
-- [ ] log train and eval time each step
 - [ ] log all training parameters (excluding stuff like push_to_hub)
 - [ ] log dataset total token count
 - [ ] eval for HotpotQA, TriviaQA, GLUE, SQUAD, CoNLL-2003, CoLA, MNLI
@@ -43,7 +41,7 @@ Loss Functions:
 
 
 ## v0.5.0
-- [ ] add eval tool for MMLU / MATH / etc
+- [ ] add eval tool for MMLU-PRO / MATH / etc
 
 **Training Quality Improvements**
 - [ ] add ability to transfer / freeze embeddings
@@ -53,6 +51,11 @@ Loss Functions:
 - [ ] loading the same dataset multiple times increases disk usage
 - [ ] fix checkpointing: `FileNotFoundError: [Errno 2] No such file or directory: 'distily_experiments_1M/checkpoint-8000/trainer_state.json'`
 
+**Auditability Improvements**
+- [ ] garbage collect each train round, and each eval round. log train memory and eval memory each step
+- [ ] log train and eval time each step
+
+
 ## v0.6.0
 **Optimizations**
 - [ ] use vLLM to prepare base model forward passes
@@ -60,7 +63,11 @@ Loss Functions:
 
 - [ ] training qwen-0.5B
 
+## v0.7.0
+- [ ] research dataset which would be best for this task
+
 ## Necessary for v1.0.0
+- [ ] documentation, all TODOs in readme.md
 - [ ] model card: include metadata for benchmarks to include evaluation results
 - [ ] specify datasets by argument
 - [ ] specify metrics by argument
