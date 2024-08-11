@@ -69,7 +69,7 @@ def run(params=None, **kwargs):
 
         try:
             # TODO: do_train should return training results
-            res = distily.cli.do_train(parsed_args_tuple)
+            res = distily.cli.do_train(*parsed_args_tuple)
         except Exception as e:
             print(f"FAILED FOR {current_args}")
             print(e)
