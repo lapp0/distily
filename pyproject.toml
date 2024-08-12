@@ -13,6 +13,10 @@ tqdm = ">=4.0"
 torch = ">=2.0"
 accelerate = ">=0.21.0"
 
+# TODO: these should be optional deps in distily[extras]
+bitsandbytes = ">=0.43.3 "
+flash-attn = ">=2.6.3"
+tensorboardX = "*"
 
 [build-system]
 requires = ["poetry-core"]

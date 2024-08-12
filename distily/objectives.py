@@ -103,8 +103,8 @@ Recommendations for loss functions, in order of expected performance.
 Activations:
 - MI-α
 - MSE
-- Cos
 - PKD
+- CE
 
 Logits:
 - MSE
@@ -114,6 +114,7 @@ Logits:
 
 Attentions:
 (todo experiment)
+- - Cos
 - sort: MI-α, MSE, KL, Reverse KL, JSD, CAKLD
 
 TODO CATEGORIZE:

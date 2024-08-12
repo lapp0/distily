@@ -14,7 +14,7 @@
 - [ ] log all training parameters (excluding stuff like push_to_hub)
 - [ ] log dataset total token count
 - [ ] eval for HotpotQA, TriviaQA, GLUE, SQUAD, CoNLL-2003, CoLA, MNLI
-
+- [ ] fix log output so the loss/logits and loss/activations respects logging_steps
 ## v0.4.0
 Complete basic objectives implementation
 
@@ -40,11 +40,16 @@ Loss Functions:
 - Direct MHA MSE: (do not implement)
 - MSE: Sum of MSE
 
+## v0.5.0
+Implement synthetic datasets
+- randomly sampled
+- custom generators focusing on OOD sequences
+
 
 ## Research Task Before v0.5.0
 - [ ] Research Data-Free Knowledge Distillation techniques: ensure model is more representative and sample-efficient
 
-## v0.5.0
+## v0.5.1
 - [ ] add eval tool for MMLU-PRO / MATH / etc
 
 **Training Quality Improvements**
