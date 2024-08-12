@@ -22,6 +22,12 @@ def mse_loss(student_features, teacher_features):
     return F.mse_loss(student_features, teacher_features)
 
 
+def soft_mse_loss(student_features, teacher_features):
+    student_prob = F.softmax(student_features, dim=-1)
+    teacher_prob = F.softmax(teacher_features, dim=-1)
+    return F.mse_loss(student_prob, teacher_prob)
+
+
 def kl_divergence_loss(student_features, teacher_features, epsilon=1e-10):
     student_log_prob = F.log_softmax(student_features, dim=-1)
     teacher_prob = F.softmax(teacher_features, dim=-1)
@@ -123,12 +129,15 @@ TODO CATEGORIZE:
 """
 LOSS_FUNCTIONS = {
     "mi": mutual_information_loss,
-    "mse": mse_loss,
+    "mse": soft_mse_loss,
     "kl": kl_divergence_loss,
     "reverse_kl": reverse_kl_divergence_loss,
     "cakld": cakld_loss,
     "jsd": jsd_loss,
     "sinkhorn": sinkhorn_loss,
+
+    # not recommended (TODO: delete?)
+    "raw_mse": mse_loss,
 }
 
 
