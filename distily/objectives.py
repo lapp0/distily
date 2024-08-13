@@ -154,9 +154,10 @@ LOSS_FUNCTIONS = {
     "jsd": jsd_loss,
     "cos": cosine_distance_loss,
     "sinkhorn": sinkhorn_loss,
+    "ce": F.cross_entropy,
 
     # not recommended (TODO: delete?)
-    "raw_mse": mse_loss,
+    "raw_mse": F.mse_loss,
 }
 
 
