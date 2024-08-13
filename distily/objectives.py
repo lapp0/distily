@@ -127,10 +127,8 @@ Activations:
 - CE
 
 Logits:
-- MSE
-- CE
-- Reverse KL
 - KL
+- No other loss function is close to its performance, experimentally
 
 Attentions:
 (todo experiment)
@@ -360,7 +358,7 @@ class MultiObjective(DistillationObjective):
         ) * self.logits_weight
 
     def _get_activation_loss(self, teacher_outputs, student_outputs):
-        if self.activations_weight:
+        if not self.activations_weight:
             return torch.tensor(0, device=student_outputs.logits.device)
         return self.activations_loss_fn(
             torch.stack(student_outputs.hidden_states),
@@ -368,7 +366,7 @@ class MultiObjective(DistillationObjective):
         ) * self.activations_weight
 
     def _get_attentions_loss(self, teacher_outputs, student_outputs):
-        if self.activations_weight:
+        if not self.activations_weight:
             return torch.tensor(0, device=student_outputs.logits.device)
         raise NotImplementedError
 
