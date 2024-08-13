@@ -370,7 +370,6 @@ class MultiObjective(DistillationObjective):
     hs_loss_fn: Union[None, str, Callable] = "mse"
     attn_weight: float = 0
     attn_loss_fn: Union[None, str, Callable] = "mse"
-    _projectors: dict = {}
 
     def __post_init__(self):
         if isinstance(self.logits_loss_fn, str):
@@ -379,6 +378,8 @@ class MultiObjective(DistillationObjective):
             self.hs_loss_fn = LOSS_FUNCTIONS[self.hs_loss_fn]
         if isinstance(self.attn_loss_fn, str):
             self.attn_loss_fn = LOSS_FUNCTIONS[self.attn_loss_fn]
+
+        self._projectors: dict = {}
 
     def __call__(self, teacher_model, student_model, inputs):
         forward_kwargs = {
