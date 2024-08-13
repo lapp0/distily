@@ -31,10 +31,6 @@ def _cdist(x: torch.Tensor, y: torch.Tensor, p: float = 1.0) -> torch.Tensor:
     return torch.cdist(x, y, p=p)
 
 
-def mse_loss(student_features, teacher_features):
-    return F.mse_loss(student_features, teacher_features)
-
-
 def soft_mse_loss(student_features, teacher_features):
     student_prob = F.softmax(student_features, dim=-1)
     teacher_prob = F.softmax(teacher_features, dim=-1)
@@ -358,14 +354,14 @@ class MultiObjective(DistillationObjective):
 
     def _get_logit_loss(self, student_outputs, teacher_outputs):
         if not self.logits_weight:
-            return torch.tensor(0, device=student_outputs.device)
+            return torch.tensor(0, device=student_outputs.logits.device)
         return self.logits_loss_fn(
             student_outputs.logits, teacher_outputs.logits
         ) * self.logits_weight
 
     def _get_activation_loss(self, teacher_outputs, student_outputs):
         if self.activations_weight:
-            return torch.tensor(0, device=student_outputs.device)
+            return torch.tensor(0, device=student_outputs.logits.device)
         return self.activations_loss_fn(
             torch.stack(student_outputs.hidden_states),
             torch.stack(teacher_outputs.hidden_states),
@@ -373,7 +369,7 @@ class MultiObjective(DistillationObjective):
 
     def _get_attentions_loss(self, teacher_outputs, student_outputs):
         if self.activations_weight:
-            return torch.tensor(0, device=student_outputs.device)
+            return torch.tensor(0, device=student_outputs.logits.device)
         raise NotImplementedError
 
     def __repr__(self):
