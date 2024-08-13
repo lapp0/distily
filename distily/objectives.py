@@ -1,4 +1,4 @@
-import collections
+import math
 from torch.nn import functional as F
 import einops
 from typing import List, Callable, Union
@@ -36,12 +36,10 @@ def soft_mse_loss(student_features, teacher_features):
     teacher_prob = F.softmax(teacher_features, dim=-1)
     return F.mse_loss(student_prob, teacher_prob)
 
-
 def kl_divergence_loss(student_features, teacher_features, epsilon=1e-10):
     student_log_prob = F.log_softmax(student_features, dim=-1)
     teacher_prob = F.softmax(teacher_features, dim=-1)
     return _stable_kl_div(student_log_prob, teacher_prob)
-
 
 def reverse_kl_divergence_loss(student_features, teacher_features):
     teacher_log_prob = F.log_softmax(teacher_features, dim=-1)
@@ -120,7 +118,7 @@ def sinkhorn_loss(student_features, teacher_features, epsilon=0.1, n_iters=20):
 """
 Recommendations for loss functions, in order of expected performance.
 
-Activations:
+Hidden States:
 - MI-α
 - MSE
 - PKD
@@ -183,6 +181,56 @@ LAYER_MAPPERS = {
 }
 
 
+################
+# TODO: REFACTOR
+# 1) ensure vectorized form works
+# 2) refactor into get_projection(student_features, teacher_features) -> apply_loss
+# 3) ensure still works as intended
+################
+def minilm_loss(student_attentions, teacher_attentions):
+    loss = 0
+    for student, teacher in zip(student_attentions, teacher_attentions):
+        for s, t in zip(student, teacher):
+            # Compute relation matrices with normalization
+            s_rel = torch.bmm(s, s.transpose(-1, -2)) / math.sqrt(s.size(-1))
+            t_rel = torch.bmm(t, t.transpose(-1, -2)) / math.sqrt(t.size(-1))
+            # Apply softmax and compute cross-entropy loss
+            s_rel = F.softmax(s_rel, dim=-1)
+            t_rel = F.softmax(t_rel, dim=-1)
+            loss += F.cross_entropy(s_rel.reshape(-1, s_rel.size(-1)), t_rel.reshape(-1, t_rel.size(-1)).argmax(dim=-1))
+
+    return loss
+
+
+def minilm_loss_vectorized(student_attentions, teacher_attentions):
+    s_rel = torch.matmul(student_attentions, student_attentions.transpose(-1, -2)) / math.sqrt(student_attentions.size(-1))
+    t_rel = torch.matmul(teacher_attentions, teacher_attentions.transpose(-1, -2)) / math.sqrt(teacher_attentions.size(-1))
+
+    s_rel = F.softmax(s_rel, dim=-1)
+    t_rel = F.softmax(t_rel, dim=-1)
+
+    s_rel_flat = s_rel.reshape(-1, s_rel.size(-1), s_rel.size(-1))
+    t_rel_flat = t_rel.reshape(-1, t_rel.size(-1), t_rel.size(-1))
+
+    loss = F.cross_entropy(s_rel_flat, t_rel_flat.argmax(dim=-1))
+
+    return loss
+
+
+def directminilm_loss(student_attentions, teacher_attentions, W):
+    loss = 0
+    for student, teacher in zip(student_attentions, teacher_attentions):
+        transformed_student = torch.einsum('bhij,jk->bhik', student, W)
+        loss += F.mse_loss(transformed_student, teacher)
+
+    return loss
+
+
+def directminilm_loss_vectorized(student_attentions, teacher_attentions, W):
+    transformed_student = torch.einsum('lbhij,jk->lbhik', student_attentions, W)
+    loss = F.mse_loss(transformed_student, teacher_attentions)
+    return loss
+
 #####################
 # Objective Functions
 #####################
@@ -194,7 +242,7 @@ class DistillationObjective:
 
     Distillation loss can be calculated based on any number of model features, including
     - logits
-    - specific activations (`hidden_states`)
+    - specific hidden states (`hidden_states`)
     - attention scones (`attentions`)
     """
     required_equivalent_config: List[str]
@@ -318,24 +366,25 @@ class MultiObjective(DistillationObjective):
     """
     logits_weight: float = 1
     logits_loss_fn: Union[None, str, Callable] = "kl"
-    activations_weight: float = 0
-    activations_loss_fn: Union[None, str, Callable] = "mse"
-    attentions_weight: float = 0
-    attentions_loss_fn: Union[None, str, Callable] = "mse"
+    hs_weight: float = 0
+    hs_loss_fn: Union[None, str, Callable] = "mse"
+    attn_weight: float = 0
+    attn_loss_fn: Union[None, str, Callable] = "mse"
+    _projectors: dict = {}
 
     def __post_init__(self):
         if isinstance(self.logits_loss_fn, str):
             self.logits_loss_fn = LOSS_FUNCTIONS[self.logits_loss_fn]
-        if isinstance(self.activations_loss_fn, str):
-            self.activations_loss_fn = LOSS_FUNCTIONS[self.activations_loss_fn]
-        if isinstance(self.attentions_loss_fn, str):
-            self.attentions_loss_fn = LOSS_FUNCTIONS[self.attentions_loss_fn]
+        if isinstance(self.hs_loss_fn, str):
+            self.hs_loss_fn = LOSS_FUNCTIONS[self.hs_loss_fn]
+        if isinstance(self.attn_loss_fn, str):
+            self.attn_loss_fn = LOSS_FUNCTIONS[self.attn_loss_fn]
 
     def __call__(self, teacher_model, student_model, inputs):
         forward_kwargs = {
             **inputs,
-            "output_hidden_states": (self.activations_weight != 0),
-            "output_attentions": (self.attentions_weight != 0)
+            "output_hidden_states": (self.hs_weight != 0),
+            "output_attentions": (self.attn_weight != 0)
         }
         with torch.no_grad():
             teacher_outputs = teacher_model(**forward_kwargs)
@@ -343,11 +392,11 @@ class MultiObjective(DistillationObjective):
 
         losses = {
             "loss/logits": self._get_logit_loss(student_outputs, teacher_outputs),
-            "loss/activations": self._get_activation_loss(teacher_outputs, student_outputs),
-            "loss/attentions": self._get_attentions_loss(teacher_outputs, student_outputs),
+            "loss/hs": self._get_hs_loss(student_outputs, teacher_outputs),
+            "loss/attn": self._get_attn_loss(student_outputs, teacher_outputs),
         }
 
-        losses["loss"] = losses["loss/logits"] + losses["loss/activations"]
+        losses["loss"] = losses["loss/logits"] + losses["loss/hs"]
         return losses
 
     def _get_logit_loss(self, student_outputs, teacher_outputs):
@@ -357,18 +406,42 @@ class MultiObjective(DistillationObjective):
             student_outputs.logits, teacher_outputs.logits
         ) * self.logits_weight
 
-    def _get_activation_loss(self, teacher_outputs, student_outputs):
-        if not self.activations_weight:
+    def _get_hs_loss(self, student_outputs, teacher_outputs):
+        if not self.hs_weight:
             return torch.tensor(0, device=student_outputs.logits.device)
-        return self.activations_loss_fn(
-            torch.stack(student_outputs.hidden_states),
-            torch.stack(teacher_outputs.hidden_states),
-        ) * self.activations_weight
 
-    def _get_attentions_loss(self, teacher_outputs, student_outputs):
-        if not self.activations_weight:
+        student_hidden, teacher_hidden = self._apply_layer_mapper(
+            student_outputs.hidden_states,
+            teacher_outputs.hidden_states,
+        )
+
+        loss = self.hs_loss_fn(student_hidden, teacher_hidden)
+        return loss * self.hs_weight
+
+    def _get_attn_loss(self, student_outputs, teacher_outputs):
+        if not self.attn_weight:
             return torch.tensor(0, device=student_outputs.logits.device)
-        raise NotImplementedError
+
+        student_attn, teacher_attn = self._apply_layer_mapper(
+            student_outputs.attentions,
+            teacher_outputs.attentions,
+        )
+
+        loss = self.attn_loss_fn(student_attn, teacher_attn)
+        return loss * self.attn_weight
+
+    def _apply_layer_mapper(self, student_features, teacher_features):
+        # TODO: apply actual layer mapper
+        return (
+            torch.stack(student_features),
+            torch.stack(teacher_features)
+        )
+
+    def _get_projector(self, name, shape):
+        projector_key = (name, tuple(shape))
+        if projector_key not in self._projections:
+            self._projectors[projector_key] = torch.nn.Parameter(torch.rand(*shape))
+        return self._projectors[projector_key]
 
     def __repr__(self):
         attrs = []
