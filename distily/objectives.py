@@ -1,5 +1,6 @@
 import collections
 from torch.nn import functional as F
+import einops
 from typing import List, Callable, Union
 from dataclasses import dataclass, fields
 import torch
@@ -16,6 +17,18 @@ def _stable_kl_div(P_log_prob, Q_prob, epsilon=1e-10):
     # ensure numerical stability
     Q_prob = Q_prob.clamp(min=epsilon)
     return F.kl_div(P_log_prob, Q_prob, reduction="none").sum(-1).mean()
+
+
+def _cdist(x: torch.Tensor, y: torch.Tensor, p: float = 1.0) -> torch.Tensor:
+    """Builtin cdist only works for float32"""
+    if x.dtype != torch.float32:
+        # Reshape x and y for broadcasting
+        x = einops.rearrange(x, "b l r -> b l () r")
+        y = einops.rearrange(y, "b l r -> b () l r")
+        # Compute the distance using the specified norm
+        return (x - y).norm(dim=-1, p=p)
+    # Use PyTorch's built-in cdist for other cases
+    return torch.cdist(x, y, p=p)
 
 
 def mse_loss(student_features, teacher_features):
@@ -67,40 +80,45 @@ def jsd_loss(student_features, teacher_features, beta_prob=0.5):
     return kl_loss
 
 
+def cosine_distance_loss(student_features, teacher_features):
+    cosine_sim = F.cosine_similarity(student_features, teacher_features, dim=-1)
+    cosine_distance = 1 - cosine_sim
+    return cosine_distance.mean()
+
+
 def mutual_information_loss(student_features, teacher_features, alpha=0.1):
-    sim = torch.bmm(teacher_features.unsqueeze(1), student_features.unsqueeze(2)).squeeze(-1).squeeze(-1)
+    student_features = student_features.squeeze(1)
+    teacher_features = teacher_features.squeeze(1)
 
-    # Stabilize the computation by subtracting the maximum similarity score
-    sim_max, _ = torch.max(sim, dim=0, keepdim=True)
-    sim_stable = sim - sim_max
+    similarities = torch.matmul(student_features, teacher_features.T) / alpha
 
-    # Compute the loss
-    numerator = torch.exp(sim_stable)
-    denominator = alpha * torch.mean(numerator, dim=0) + (1 - alpha)
-    loss = -torch.log(numerator / denominator)
-    return torch.mean(loss)
+    # Create labels for the diagonal entries (correct matches)
+    batch_size = student_features.shape[0]
+    labels = torch.arange(batch_size).to(student_features.device)
+
+    # cross entropy requires float32
+    with torch.autocast(similarities.device.type):
+        loss = F.cross_entropy(similarities, labels)
+    return loss
 
 
 def sinkhorn_loss(student_features, teacher_features, epsilon=0.1, n_iters=20):
-    """Uses algorithm from https://github.com/2018cx/SinKD/blob/main/loss.py#L119"""
-    def sinkhorn_normalized(x, n_iters=10):
+    """Based on algorithm in https://github.com/2018cx/SinKD/blob/main/loss.py#L119"""
+    def sinkhorn_normalized(K, n_iters):
         for _ in range(n_iters):
-            x = x / torch.sum(x, dim=1, keepdim=True)
-            x = x / torch.sum(x, dim=0, keepdim=True)
-        return x
+            K = K / K.sum(dim=2, keepdim=True)
+            K = K / K.sum(dim=1, keepdim=True)
+        return K
 
-    batch_size = student_features.size(0)
     p_s = F.softmax(student_features, dim=-1)
     p_t = F.softmax(teacher_features, dim=-1)
 
-    emd_loss = 0.0
-    for i in range(batch_size):
-        Wxy = torch.cdist(p_s[i:i + 1], p_t[i:i + 1], p=1)  # Cost matrix
-        K = torch.exp(-Wxy / epsilon)  # Kernel matrix
-        P = sinkhorn_normalized(K, n_iters)  # Sinkhorn iterations
-        emd_loss += torch.sum(P * Wxy)  # Approximate EMD loss
+    Wxy = _cdist(p_s, p_t, p=1)  # Cost Matrix
+    K = torch.exp(-Wxy / epsilon)  # kernel matrix
+    P = sinkhorn_normalized(K, n_iters)  # Sinkhorn iterations
 
-    return 0.001 * emd_loss / batch_size  # Average over batch
+    # EMD loss for batch
+    return torch.sum(P * Wxy, dim=(1, 2)).mean()
 
 
 """
@@ -134,6 +152,7 @@ LOSS_FUNCTIONS = {
     "reverse_kl": reverse_kl_divergence_loss,
     "cakld": cakld_loss,
     "jsd": jsd_loss,
+    "cos": cosine_distance_loss,
     "sinkhorn": sinkhorn_loss,
 
     # not recommended (TODO: delete?)
@@ -327,21 +346,34 @@ class MultiObjective(DistillationObjective):
             teacher_outputs = teacher_model(**forward_kwargs)
         student_outputs = student_model(**forward_kwargs)
 
-        losses = collections.defaultdict(lambda: torch.tensor(0.0, device=student_model.device))
-        if self.logits_weight:
-            losses["loss/logits"] = self.logits_loss_fn(
-                student_outputs.logits, teacher_outputs.logits
-            ) * self.logits_weight
-        if self.activations_weight:
-            losses["loss/activations"] = self.activations_loss_fn(
-                torch.stack(student_outputs.hidden_states),
-                torch.stack(teacher_outputs.hidden_states),
-            ) * self.activations_weight
-        if self.attentions_weight:
-            raise NotImplementedError
+        losses = {
+            "loss/logits": self._get_logit_loss(student_outputs, teacher_outputs),
+            "loss/activations": self._get_activation_loss(teacher_outputs, student_outputs),
+            "loss/attentions": self._get_attentions_loss(teacher_outputs, student_outputs),
+        }
 
         losses["loss"] = losses["loss/logits"] + losses["loss/activations"]
         return losses
+
+    def _get_logit_loss(self, student_outputs, teacher_outputs):
+        if not self.logits_weight:
+            return torch.tensor(0, device=student_outputs.device)
+        return self.logits_loss_fn(
+            student_outputs.logits, teacher_outputs.logits
+        ) * self.logits_weight
+
+    def _get_activation_loss(self, teacher_outputs, student_outputs):
+        if self.activations_weight:
+            return torch.tensor(0, device=student_outputs.device)
+        return self.activations_loss_fn(
+            torch.stack(student_outputs.hidden_states),
+            torch.stack(teacher_outputs.hidden_states),
+        ) * self.activations_weight
+
+    def _get_attentions_loss(self, teacher_outputs, student_outputs):
+        if self.activations_weight:
+            return torch.tensor(0, device=student_outputs.device)
+        raise NotImplementedError
 
     def __repr__(self):
         attrs = []
