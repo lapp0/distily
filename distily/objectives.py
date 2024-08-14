@@ -246,57 +246,6 @@ LAYER_MAPPERS = {
 }
 
 
-################
-# TODO: REFACTOR
-# 1) ensure vectorized form works
-# 2) refactor into get_projection(student_features, teacher_features) -> apply_loss
-# 3) ensure still works as intended
-################
-def minilm_loss(student_attentions, teacher_attentions):
-    loss = 0
-    for student, teacher in zip(student_attentions, teacher_attentions):
-        for s, t in zip(student, teacher):
-            # Compute relation matrices with normalization
-            s_rel = torch.bmm(s, s.transpose(-1, -2)) / math.sqrt(s.size(-1))
-            t_rel = torch.bmm(t, t.transpose(-1, -2)) / math.sqrt(t.size(-1))
-            # Apply softmax and compute cross-entropy loss
-            s_rel = F.softmax(s_rel, dim=-1)
-            t_rel = F.softmax(t_rel, dim=-1)
-            loss += F.cross_entropy(s_rel.reshape(-1, s_rel.size(-1)), t_rel.reshape(-1, t_rel.size(-1)).argmax(dim=-1))
-
-    return loss
-
-
-def minilm_loss_vectorized(student_attentions, teacher_attentions):
-    s_rel = torch.matmul(student_attentions, student_attentions.transpose(-1, -2)) / math.sqrt(student_attentions.size(-1))
-    t_rel = torch.matmul(teacher_attentions, teacher_attentions.transpose(-1, -2)) / math.sqrt(teacher_attentions.size(-1))
-
-    s_rel = F.softmax(s_rel, dim=-1)
-    t_rel = F.softmax(t_rel, dim=-1)
-
-    s_rel_flat = s_rel.reshape(-1, s_rel.size(-1), s_rel.size(-1))
-    t_rel_flat = t_rel.reshape(-1, t_rel.size(-1), t_rel.size(-1))
-
-    loss = F.cross_entropy(s_rel_flat, t_rel_flat.argmax(dim=-1))
-
-    return loss
-
-
-def directminilm_loss(student_attentions, teacher_attentions, W):
-    loss = 0
-    for student, teacher in zip(student_attentions, teacher_attentions):
-        transformed_student = torch.einsum('bhij,jk->bhik', student, W)
-        loss += F.mse_loss(transformed_student, teacher)
-
-    return loss
-
-
-def directminilm_loss_vectorized(student_attentions, teacher_attentions, W):
-    transformed_student = torch.einsum('lbhij,jk->lbhik', student_attentions, W)
-    loss = F.mse_loss(transformed_student, teacher_attentions)
-    return loss
-
-
 #####################
 # Objective Functions
 #####################
