@@ -379,7 +379,7 @@ class DistillationObjective:
         if loss_component.projector:
             student_features, teacher_features = loss_component.apply_layer_mapper(student_features, teacher_features)
         else:
-            student_features, teacher_features = torch.vstack(student_features), torch.vstack(teacher_features)
+            student_features, teacher_features = torch.cat(student_features, dim=0), torch.cat(teacher_features, dim=0)
 
         if loss_component.projector:
             # projectors are trainable, therefore we lazy-load, then re-use the same projector
