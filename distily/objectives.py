@@ -273,9 +273,9 @@ PROJECTORS = {
 class LossComponent:
     label: str
     weight: float
-    loss_fn: Optional[str, Callable]
-    layer_mapper: Optional[str, Callable] = None
-    projector: Optional[str, Callable] = None
+    loss_fn: Union[None, str, Callable]
+    layer_mapper: Union[None, str, Callable] = None
+    projector: Union[None, str, Callable] = None
 
     def _get_callable(self, attr, source_dict):
         if isinstance(attr, Union[str, None]):
