@@ -6,10 +6,6 @@
 - [ ] distill phi-3-mini to 1.58b, report metrics
 
 
-## v0.2.1
-- [x] fix loss calculation (is it batch-wise?)
-- [ ] add stochastic noise / batch regularization and experiment since smaller batch size performrs so much better
-
 ## v0.3.0
 - [ ] log all training parameters (excluding stuff like push_to_hub)
 - [ ] log dataset total token count
@@ -37,7 +33,7 @@ Complete basic objectives implementation
 Loss Functions:
 - Cross Entropy
 - MHA MSE: sum over (Q, K, V) and attention heads of MSE(student_relation_matrix, teacher_relation_matrix)
-- Direct MHA MSE: (do not implement)
+- Direct MHA MSE
 - MSE: Sum of MSE
 
 ## v0.5.0
@@ -55,6 +51,7 @@ Implement synthetic datasets
 **Training Quality Improvements**
 - [ ] add ability to transfer / freeze embeddings
 - [ ] gradient weighted loss (review paper, see if there's ways to handle case where activations gradients push model in opposite direction as logit gradients / are orthogonal)
+- [ ] add stochastic noise / batch regularization and experiment since smaller batch size performrs so much better
 
 **Bug Fix**
 - [ ] loading the same dataset multiple times increases disk usage

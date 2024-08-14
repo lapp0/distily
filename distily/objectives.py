@@ -1,7 +1,8 @@
 import math
+from functools import partial
 from torch.nn import functional as F
 import einops
-from typing import List, Callable, Union
+from typing import List, Callable, Union, Tuple
 from dataclasses import dataclass, fields
 import torch
 from transformers import PreTrainedModel
@@ -36,10 +37,12 @@ def soft_mse_loss(student_features, teacher_features):
     teacher_prob = F.softmax(teacher_features, dim=-1)
     return F.mse_loss(student_prob, teacher_prob)
 
+
 def kl_divergence_loss(student_features, teacher_features, epsilon=1e-10):
     student_log_prob = F.log_softmax(student_features, dim=-1)
     teacher_prob = F.softmax(teacher_features, dim=-1)
     return _stable_kl_div(student_log_prob, teacher_prob)
+
 
 def reverse_kl_divergence_loss(student_features, teacher_features):
     teacher_log_prob = F.log_softmax(teacher_features, dim=-1)
@@ -84,6 +87,7 @@ def mutual_information_loss(student_features, teacher_features, alpha=0.1):
     student_features = student_features.squeeze(1)
     teacher_features = teacher_features.squeeze(1)
 
+    # TODO: this function doesn't work, fix or remove
     similarities = torch.matmul(student_features, teacher_features.T) / alpha
 
     # Create labels for the diagonal entries (correct matches)
@@ -138,46 +142,100 @@ TODO CATEGORIZE:
 
 """
 LOSS_FUNCTIONS = {
-    "mi": mutual_information_loss,
     "mse": soft_mse_loss,
     "kl": kl_divergence_loss,
     "reverse_kl": reverse_kl_divergence_loss,
     "cakld": cakld_loss,
     "jsd": jsd_loss,
     "cos": cosine_distance_loss,
+    # TODO: soft_cross_entropy?
+
+    # TODO: fix
+    "mi": mutual_information_loss,
     "sinkhorn": sinkhorn_loss,
-    "ce": F.cross_entropy,
 
     # not recommended (TODO: delete?)
     "raw_mse": F.mse_loss,
+    "ce": F.cross_entropy,
 }
 
 
 ###############
 # Layer Mappers
 ###############
-def full_layer_mapper(student_features, teacher_features):
-    assert student_features.shape == teacher_features.shape
-    return student_features, teacher_features
+def index_layer_mapper(student_features, teacher_features, index_mapper: List[Tuple[int, int]]):
+    """
+    Maps specified student layers to corresponding teacher layers.
+
+    Args:
+        student_features: Student feature tensor.
+        teacher_features: Teacher feature tensor.
+        index_mapper: List of (student_layer, teacher_layer) index pairs.
+
+    Returns:
+        Mapped student and teacher tensors.
+    """
+    student_mapped = torch.stack([student_features[i] for i, _ in index_mapper])
+    teacher_mapped = torch.stack([teacher_features[j] for _, j in index_mapper])
+
+    return student_mapped, teacher_mapped
 
 
-def skip_layer_mapper(student_features, teacher_features):
-    raise NotImplementedError
+def sequential_layer_mapper(student_features, teacher_features, start, end):
+    """
+    Maps student layers to teacher layers sequentially from start_layer to end_layer.
+    input and output shape: (num layers, batch size, sequence length, feature size)
+    """
+    teacher_features = teacher_features[start:end]
+    student_features = student_features[start:end]
+    return torch.stack(student_features), torch.stack(teacher_features)
 
 
-def last_layer_mapper(student_features, teacher_features):
-    raise NotImplementedError
+def single_layer_mapper(student_features, teacher_features, layer):
+    end_idx = (layer, layer + 1) if layer != -1 else (-1, None)
+    return sequential_layer_mapper(student_features, teacher_features, start=layer, end=end_idx)
 
 
-def emd_layer_mapper(student_features, teacher_features):
-    raise NotImplementedError
+def last_k_layers_mapper(student_features, teacher_features, num_layers):
+    return sequential_layer_mapper(student_features, teacher_features, start=(-num_layers))
+
+
+def uniform_consecutive_layer_mapper(student_features, teacher_features):
+    num_student_layers = student_features.size(0)
+    num_teacher_layers = teacher_features.size(0)
+    k = math.ceil(num_teacher_layers / num_student_layers)
+
+    index_mapper = []
+    for i in range(num_student_layers):
+        start = k * i
+        end = min(k * (i + 1), num_teacher_layers)
+        index_mapper.extend([(i, j) for j in range(start, end)])
+    return index_layer_mapper(student_features, teacher_features, index_mapper)
+
+
+def uniform_last_layer_mapper(student_features, teacher_features):
+    num_student_layers = student_features.size(0)
+    num_teacher_layers = teacher_features.size(0)
+
+    index_mapper = []
+    for i in range(num_student_layers):
+        uniform_layer = i * num_teacher_layers // num_student_layers
+        index_mapper.append((i, uniform_layer))
+        index_mapper.append((i, -1))  # Adding last layer mapping
+    return index_layer_mapper(student_features, teacher_features, index_mapper)
 
 
 LAYER_MAPPERS = {
-    "full": full_layer_mapper,
-    "skip": skip_layer_mapper,
-    "last": last_layer_mapper,
-    "emd": emd_layer_mapper,
+    "all": partial(sequential_layer_mapper, start=None, end=None),
+    "last": partial(single_layer_mapper, layer=-1),
+    "last_k_2": partial(last_k_layers_mapper, num_layers=2),
+    "last_k_3": partial(last_k_layers_mapper, num_layers=3),
+    "last_k_4": partial(last_k_layers_mapper, num_layers=4),
+    "layer-2": partial(single_layer_mapper, layer=-2),
+    "layer-3": partial(single_layer_mapper, layer=-3),
+    "layer-4": partial(single_layer_mapper, layer=-4),
+    "uniform_cons": uniform_consecutive_layer_mapper,
+    "uniform+last": uniform_last_layer_mapper,
 }
 
 
@@ -230,6 +288,7 @@ def directminilm_loss_vectorized(student_attentions, teacher_attentions, W):
     transformed_student = torch.einsum('lbhij,jk->lbhik', student_attentions, W)
     loss = F.mse_loss(transformed_student, teacher_attentions)
     return loss
+
 
 #####################
 # Objective Functions
@@ -411,7 +470,7 @@ class MultiObjective(DistillationObjective):
         if not self.hs_weight:
             return torch.tensor(0, device=student_outputs.logits.device)
 
-        student_hidden, teacher_hidden = self._apply_layer_mapper(
+        student_hidden, teacher_hidden = self.hs_layer_mapper(
             student_outputs.hidden_states,
             teacher_outputs.hidden_states,
         )
@@ -423,7 +482,7 @@ class MultiObjective(DistillationObjective):
         if not self.attn_weight:
             return torch.tensor(0, device=student_outputs.logits.device)
 
-        student_attn, teacher_attn = self._apply_layer_mapper(
+        student_attn, teacher_attn = self.attn_layer_mapper(
             student_outputs.attentions,
             teacher_outputs.attentions,
         )
@@ -431,18 +490,59 @@ class MultiObjective(DistillationObjective):
         loss = self.attn_loss_fn(student_attn, teacher_attn)
         return loss * self.attn_weight
 
-    def _apply_layer_mapper(self, student_features, teacher_features):
+    def hs_layer_mapper(self, student_features, teacher_features):
         # TODO: apply actual layer mapper
-        return (
-            torch.stack(student_features),
-            torch.stack(teacher_features)
-        )
+        return torch.stack(student_features), torch.stack(teacher_features)
 
-    def _get_projector(self, name, shape):
-        projector_key = (name, tuple(shape))
-        if projector_key not in self._projections:
-            self._projectors[projector_key] = torch.nn.Parameter(torch.rand(*shape))
-        return self._projectors[projector_key]
+    def attn_layer_mapper(self, student_features, teacher_features):
+        # TODO: apply actual layer mapper
+        return torch.stack(student_features), torch.stack(teacher_features)
+
+    def project(self, student_features, teacher_features, projector_name, unique_projector_for_each_layer=True):
+        """
+        student_features and teacher_features are of shape
+        (num layers, batch size, sequence length, feature size)
+        """
+        num_layers = student_features.size(0)
+        student_feature_size = student_features.size(-1)
+        teacher_feature_size = teacher_features.size(-1)
+
+        if unique_projector_for_each_layer:
+            if projector_name not in self._projectors:
+                # Create a unique projector for each layer
+                self._projectors[projector_name] = torch.nn.Parameter(
+                    torch.nn.init.xavier_uniform_(
+                        torch.empty(num_layers, teacher_feature_size, student_feature_size)
+                    )
+                )
+            # Apply the unique projector to each layer of the student features
+            projected_student_features = torch.einsum(
+                'lbsh,lhi->lbsi',
+                student_features,
+                self._projectors[projector_name]
+            )
+        else:
+            if projector_name not in self._projectors:
+                # Create a single projector shared across layers
+                self._projectors[projector_name] = torch.nn.Parameter(
+                    torch.nn.init.xavier_uniform_(
+                        torch.empty(teacher_feature_size, student_feature_size)
+                    )
+                )
+            # Apply the shared projector to all layers of the student features
+            projected_student_features = torch.einsum(
+                'lbsh,hi->lbsi',
+                student_features,
+                self._projectors[projector_name]
+            )
+
+        return projected_student_features, teacher_features
+
+    def apply_hs_projector(self, student_features, teacher_features):
+        return self.project(student_features, teacher_features, "hs")
+
+    def apply_attn_projector(self, student_features, teacher_features):
+        return self.project(student_features, teacher_features, "attn")
 
     def __repr__(self):
         attrs = []
