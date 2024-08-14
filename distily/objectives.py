@@ -75,8 +75,8 @@ def jsd_loss(student_features, teacher_features, beta_prob=0.5):
     m_prob = 0.5 * (student_prob + teacher_prob)
 
     # Calculate KL divergences between student/teacher log_probs and the mixed distribution
-    kl_loss_f = _stable_kl_div(teacher_log_prob, m_prob, epsilon=epsilon)
-    kl_loss_r = _stable_kl_div(student_log_prob, m_prob, epsilon=epsilon)
+    kl_loss_f = _stable_kl_div(teacher_log_prob, m_prob)
+    kl_loss_r = _stable_kl_div(student_log_prob, m_prob)
 
     # Compute the JSD as the average of the two KL divergences
     jsd = (kl_loss_f + kl_loss_r) / 2.0
