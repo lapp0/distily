@@ -355,30 +355,30 @@ class DistillationObjective:
         }
         # get student / teacher forward pass outputs
         with torch.no_grad():
-            teacher_outputs = teacher_model(**forward_kwargs)
-        student_outputs = student_model(**forward_kwargs)
+            out_t = teacher_model(**forward_kwargs)
+        out_s = student_model(**forward_kwargs)
 
         # calculate component loss
         device = student_model.device
-        logits_loss = self._calc_loss(student_outputs.logits, teacher_outputs.logits, self.logits_loss_component, device)
-        hs_loss = self._calc_loss(student_outputs.hidden_states, teacher_outputs.hidden_states, self.hs_loss_component, device)
-        attn_loss = self._calc_loss(student_outputs.attentions, teacher_outputs.attentions, self.attn_loss_component, device)
+        logits_loss = self._calc_loss(out_s.logits, out_t.logits, self.logits_loss_component, device)
+        hs_loss = self._calc_loss(out_s.hidden_states, out_t.hidden_states, self.hs_loss_component, device)
+        attn_loss = self._calc_loss(out_s.attentions, out_t.attentions, self.attn_loss_component, device)
 
         # calculate aggregate linear-combination loss
         loss = (
-            logits_loss * self.logit_loss_component.weight +
+            logits_loss * self.logits_loss_component.weight +
             hs_loss * self.hs_loss_component.weight +
             attn_loss * self.attn_loss_component.weight
         )
 
         return {"loss": loss, "loss/logits": logits_loss, "loss/hs": hs_loss, "loss/attn": attn_loss}
 
-    def _calc_loss(self, student_features, teacher_features, loss_component, device):
+    def _calc_loss(self, feat_s, feat_t, loss_component, device):
         if not loss_component.is_measured:
             return torch.tensor(0, device=device)
 
         if loss_component.projector:
-            student_features, teacher_features = loss_component.apply_layer_mapper(student_features, teacher_features)
+            student_features, teacher_features = loss_component.apply_layer_mapper(feat_s, feat_t)
         elif isinstance(student_features, tuple):
             student_features, teacher_features = torch.vstack(student_features), torch.vstack(teacher_features)
 
