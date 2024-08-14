@@ -302,6 +302,11 @@ class LossComponent:
             raise ValueError(f"Expected both weight and loss_fn or neither, got {self.weight}, {self.loss_fn}")
         return bool(self.weight)
 
+    def __repr__(self):
+        class_name = self.__class__.__name__
+        field_values = ', '.join(f"{field}={getattr(self, field)}" for field in self.__dataclass_fields__)
+        return f"{class_name}({field_values})"
+
 
 class DistillationObjective:
     """
@@ -392,6 +397,14 @@ class DistillationObjective:
         return loss
 
     def __repr__(self):
+        return (
+            "DistillationObjective("
+            f"logits_loss_component={self.logits_loss_component}, "
+            f"hs_loss_component={self.hs_loss_component}, "
+            f"attn_loss_component={self.attn_loss_component}"
+            ")"
+        )
+
         attrs = []
         for field in fields(self):
             value = getattr(self, field.name)
