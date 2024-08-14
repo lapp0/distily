@@ -359,9 +359,10 @@ class DistillationObjective:
         student_outputs = student_model(**forward_kwargs)
 
         # calculate component loss
-        logits_loss = self._calc_loss(student_outputs.logits, teacher_outputs.logits, self.logits_loss_component)
-        hs_loss = self._calc_loss(student_outputs.hidden_states, teacher_outputs.hidden_states, self.hs_loss_component)
-        attn_loss = self._calc_loss(student_outputs.attentions, teacher_outputs.attentions, self.attn_loss_component)
+        device = student_model.device
+        logits_loss = self._calc_loss(student_outputs.logits, teacher_outputs.logits, self.logits_loss_component, device)
+        hs_loss = self._calc_loss(student_outputs.hidden_states, teacher_outputs.hidden_states, self.hs_loss_component, device)
+        attn_loss = self._calc_loss(student_outputs.attentions, teacher_outputs.attentions, self.attn_loss_component, device)
 
         # calculate aggregate linear-combination loss
         loss = (
@@ -372,9 +373,9 @@ class DistillationObjective:
 
         return {"loss": loss, "loss/logits": logits_loss, "loss/hs": hs_loss, "loss/attn": attn_loss}
 
-    def _calc_loss(self, student_features, teacher_features, loss_component):
+    def _calc_loss(self, student_features, teacher_features, loss_component, device):
         if not loss_component.is_measured:
-            return torch.tensor(0, device=student_features.device)
+            return torch.tensor(0, device=device)
 
         if loss_component.projector:
             student_features, teacher_features = loss_component.apply_layer_mapper(student_features, teacher_features)
