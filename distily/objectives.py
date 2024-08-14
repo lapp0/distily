@@ -64,17 +64,24 @@ def cakld_loss(student_features, teacher_features, beta_prob=0.5):
 
 
 def jsd_loss(student_features, teacher_features, beta_prob=0.5):
-    student_prob = F.softmax(student_features, dim=-1)
-    teacher_prob = F.softmax(teacher_features, dim=-1)
+    student_log_prob = F.log_softmax(student_features, dim=-1)
+    teacher_log_prob = F.log_softmax(teacher_features, dim=-1)
 
-    c_prob = beta_prob * teacher_prob + (1 - beta_prob) * student_prob
-    c_log_prob = c_prob.log()
+    # Convert logits to probabilities for the mixed distribution calculation
+    student_prob = student_log_prob.exp()
+    teacher_prob = teacher_log_prob.exp()
 
-    kl_loss_f = _stable_kl_div(c_log_prob, teacher_prob)
-    kl_loss_r = _stable_kl_div(c_log_prob, student_prob)
+    # Compute the mixed probability distribution
+    m_prob = 0.5 * (student_prob + teacher_prob)
 
-    kl_loss = beta_prob * kl_loss_f + (1 - beta_prob) * kl_loss_r
-    return kl_loss
+    # Calculate KL divergences between student/teacher log_probs and the mixed distribution
+    kl_loss_f = _stable_kl_div(teacher_log_prob, m_prob, epsilon=epsilon)
+    kl_loss_r = _stable_kl_div(student_log_prob, m_prob, epsilon=epsilon)
+
+    # Compute the JSD as the average of the two KL divergences
+    jsd = (kl_loss_f + kl_loss_r) / 2.0
+
+    return jsd
 
 
 def cosine_distance_loss(student_features, teacher_features):
