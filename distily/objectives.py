@@ -321,9 +321,11 @@ class DistillationObjective:
             hs_weight,
             hs_loss_fn,
             hs_layer_mapper,
+            hs_projector,
             attn_weight,
             attn_loss_fn,
-            attn_layer_mapper
+            attn_layer_mapper,
+            attn_projector,
     ):
         self.logits_loss_component = LossComponent(
             "logits",
