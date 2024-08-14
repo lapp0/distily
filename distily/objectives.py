@@ -2,7 +2,7 @@ import math
 from functools import partial
 from torch.nn import functional as F
 import einops
-from typing import List, Callable, Union, Tuple, Optional, Dict
+from typing import List, Callable, Union, Tuple, Dict
 from dataclasses import dataclass, fields
 import torch
 from transformers import PreTrainedModel
@@ -36,6 +36,12 @@ def soft_mse_loss(feat_s, feat_t):
     student_prob = F.softmax(feat_s, dim=-1)
     teacher_prob = F.softmax(feat_t, dim=-1)
     return F.mse_loss(student_prob, teacher_prob)
+
+
+def soft_mse_sum_loss(feat_s, feat_t):
+    student_prob = F.softmax(feat_s, dim=-1)
+    teacher_prob = F.softmax(feat_t, dim=-1)
+    return F.mse_loss(student_prob, teacher_prob, reduction="none").sum(-1).mean()
 
 
 def soft_cross_entropy_loss(feat_s, feat_t):
@@ -93,7 +99,7 @@ def jsd_loss(feat_s, feat_t, beta_prob=0.5):
 def cosine_distance_loss(feat_s, feat_t):
     cosine_sim = F.cosine_similarity(feat_s, feat_t, dim=-1)
     cosine_distance = 1 - cosine_sim
-    return cosine_distance.mean()
+    return cosine_distance.sum(-1).mean()
 
 
 def mutual_information_loss(feat_s, feat_t, alpha=0.1):
@@ -109,7 +115,7 @@ def mutual_information_loss(feat_s, feat_t, alpha=0.1):
 
     # cross entropy requires float32
     with torch.autocast(similarities.device.type):
-        loss = F.cross_entropy(similarities, labels)
+        loss = F.cross_entropy(similarities, labels, reduction="none").sum(-1).mean()
     return loss
 
 
@@ -140,6 +146,7 @@ LOSS_FUNCTIONS = {
     "jsd": jsd_loss,
     "cos": cosine_distance_loss,
     "ce": soft_cross_entropy_loss,
+    "mse_sum": soft_mse_sum_loss,
 
     # TODO: fix
     "mi": mutual_information_loss,
