@@ -99,7 +99,7 @@ def jsd_loss(feat_s, feat_t, beta_prob=0.5):
 def cosine_distance_loss(feat_s, feat_t):
     cosine_sim = F.cosine_similarity(feat_s, feat_t, dim=-1)
     cosine_distance = 1 - cosine_sim
-    return cosine_distance.sum(-1).mean()
+    return cosine_distance.mean()
 
 
 def mutual_information_loss(feat_s, feat_t, alpha=0.1):
