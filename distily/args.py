@@ -57,17 +57,19 @@ class DatasetArguments:
 
 @dataclass
 class DistillationObjectiveArguments:
-    distillation_objective: str = field(
-        default="multi",
-        metadata={"help": "DistillationObjective callable which calculate loss"}
-    )
-    # TODO: add args for multi objective
-    """
-        loss_fn: typing.Union[str] = field(
-        default="reverse_kl",
-        metadata={"help": "Loss function for distillation"}
-    )
-    """
+    # TODO: make fields, clean up
+    logits_weight: float = 1
+    logits_loss_fn: str = "kl"
+
+    hs_weight: float = 0
+    hs_loss_fn: typing.Optional[str] = None
+    hs_layer_mapper: typing.Optional[str] = None
+    hs_projector: typing.Optional[str] = None
+
+    attn_weight: float = 0
+    attn_loss_fn: typing.Optional[str] = None
+    attn_layer_mapper: typing.Optional[str] = None
+    attn_projector: typing.Optional[str] = None
 
 
 @dataclass

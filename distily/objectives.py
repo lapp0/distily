@@ -2,7 +2,7 @@ import math
 from functools import partial
 from torch.nn import functional as F
 import einops
-from typing import List, Callable, Union, Tuple
+from typing import List, Callable, Union, Tuple, Optional, Dict
 from dataclasses import dataclass, fields
 import torch
 from transformers import PreTrainedModel
@@ -132,37 +132,14 @@ def sinkhorn_loss(student_features, teacher_features, epsilon=0.1, n_iters=20):
     return torch.sum(P * Wxy, dim=(1, 2)).mean()
 
 
-"""
-Recommendations for loss functions, in order of expected performance.
-
-Hidden States:
-- MI-α
-- MSE
-- PKD
-- CE
-
-Logits:
-- KL
-- No other loss function is close to its performance, experimentally
-
-Attentions:
-(todo experiment)
-- - Cos
-- sort: MI-α, MSE, KL, Reverse KL, JSD, CAKLD
-
-TODO CATEGORIZE:
-- sinkhorn
-
-"""
 LOSS_FUNCTIONS = {
-    "mse": soft_mse_loss,
     "kl": kl_divergence_loss,
+    "mse": soft_mse_loss,
     "reverse_kl": reverse_kl_divergence_loss,
     "cakld": cakld_loss,
     "jsd": jsd_loss,
     "cos": cosine_distance_loss,
-    "soft_ce": soft_cross_entropy_loss,
-    # TODO: soft_cross_entropy?
+    "ce": soft_cross_entropy_loss,
 
     # TODO: fix
     "mi": mutual_information_loss,
@@ -170,7 +147,7 @@ LOSS_FUNCTIONS = {
 
     # not recommended (TODO: delete?)
     "raw_mse": F.mse_loss,
-    "ce": F.cross_entropy,
+    "raw_ce": F.cross_entropy,
 }
 
 
@@ -253,12 +230,82 @@ LAYER_MAPPERS = {
 }
 
 
-#####################
-# Objective Functions
-#####################
+############
+# Projectors
+############
+class LinearProjector:
+    def __init__(self):
+        self.W = torch.nn.Parameter(
+            torch.nn.init.xavier_uniform_(
+                torch.empty(num_layers, teacher_feature_size, student_feature_size)
+            )
+        )
+
+    def apply(self, student_features, teacher_features):
+        student_features_projected = torch.einsum('lbsh,lhi->lbsi', student_features, self.W)
+        return student_features_projected, teacher_features
+
+
+class SharedLinearProjector:
+    """Only a single projector shared across all layers"""
+    def __init__(self):
+        self.W = torch.nn.Parameter(
+            torch.nn.init.xavier_uniform_(
+                torch.empty(teacher_feature_size, student_feature_size)
+            )
+        )
+
+    def apply(self, student_features, teacher_features):
+        student_features_projected = torch.einsum('lbsh,hi->lbsi', student_features, self.W)
+        return student_features_projected, teacher_features
+
+
+PROJECTORS = {
+    "linear": LinearProjector,
+    "shared_linear": SharedLinearProjector,
+}
+
+
+###########
+# Objective
+###########
+@dataclass
+class LossComponent:
+    label: str
+    weight: float
+    loss_fn: Optional[str, Callable]
+    layer_mapper: Optional[str, Callable] = None
+    projector: Optional[str, Callable] = None
+
+    def _get_callable(self, attr, source_dict):
+        if isinstance(attr, Union[str, None]):
+            return source_dict[attr]
+        if not callable(attr) and attr is not None:
+            raise TypeError(f"{attr} must be a str, callable, or None")
+        return attr
+
+    @property
+    def get_loss(self):
+        return self._get_callable(self.loss_fn, LOSS_FUNCTIONS)
+
+    @property
+    def apply_layer_mapper(self):
+        return self._get_callable(self.layer_mapper, LAYER_MAPPERS)
+
+    @property
+    def get_projector(self):
+        return self._get_callable(self.projector, PROJECTORS)
+
+    @property
+    def is_measured(self):
+        if bool(self.weight) != bool(self.loss_fn):
+            raise ValueError(f"Expected both weight and loss_fn or neither, got {self.weight}, {self.loss_fn}")
+        return bool(self.weight)
+
+
 class DistillationObjective:
     """
-    Callable to calculate distillation loss.
+    Comprehensive distillation objective to calculate loss based on various features.
 
     Implements __call__(teacher_model, student_model, inputs) -> loss
 
@@ -267,245 +314,79 @@ class DistillationObjective:
     - specific hidden states (`hidden_states`)
     - attention scones (`attentions`)
     """
-    required_equivalent_config: List[str]
-    loss_fn: Callable
-
-    def __init__(self, teacher_config, student_config):
-        self._assert_required_configurations_equivalent(teacher_config, student_config)
-        self.teacher_config = teacher_config
-        self.student_config = student_config
-
-    def __call__(
-        self,
-        teacher_model: PreTrainedModel,
-        student_model: PreTrainedModel,
-        inputs,
+    def __init__(
+            self,
+            logits_weight,
+            logits_loss_fn,
+            hs_weight,
+            hs_loss_fn,
+            hs_layer_mapper,
+            attn_weight,
+            attn_loss_fn,
+            attn_layer_mapper
     ):
-        ...
-
-    @classmethod
-    def _assert_required_configurations_equivalent(cls, teacher_config, student_config):
-        """
-        Helper function to assert that the required_equivalent_config are equivalent
-        """
-        mismatched = []
-        for config_key in cls.required_equivalent_config:
-            if teacher_config.to_dict().get(config_key) != student_config.to_dict().get(config_key):
-                mismatched.append((
-                    config_key,
-                    teacher_config[config_key],
-                    student_config[config_key]
-                ))
-        if mismatched:
-            mismatch_configs_formatted = "\n".join([
-                f"Config Key: {config_key}, teacher value: {teacher_val}, student value: {student_val}"
-                for config_key, teacher_val, student_val in mismatched
-            ])
-            raise ValueError(
-                f"{cls.__name__} requires models to have the following equivalent configurations:\n"
-                f"{cls.required_equivalent_config}\n"
-                "The following configurations didn't match:\n"
-                f"{mismatch_configs_formatted}"
-            )
-
-
-class LogitsObjective(DistillationObjective):
-    """
-    logits of forward pass
-    """
-    def __init__(self, loss_fn: Union[str, Callable] = "mse"):
-        if isinstance(loss_fn, str):
-            loss_fn = LOSS_FUNCTIONS[loss_fn]
-        self.loss_fn = loss_fn
-
-    def __call__(self, teacher_model, student_model, inputs):
-        with torch.no_grad():
-            teacher_features = teacher_model(**inputs)
-        student_features = student_model(**inputs)
-
-        return self.loss_fn(student_features.logits, teacher_features.logits)
-
-
-class ActivationsObjective(DistillationObjective):
-    """
-    hidden states of forward pass
-    """
-    def __init__(self, loss_fn: Callable = "mse"):
-        if isinstance(loss_fn, str):
-            loss_fn = LOSS_FUNCTIONS[loss_fn]
-        self.loss_fn = loss_fn
-
-    def __call__(self, teacher_model, student_model, inputs):
-        with torch.no_grad():
-            teacher_features = teacher_model(**inputs, output_hidden_states=True)
-        student_features = student_model(**inputs, output_hidden_states=True)
-
-        return self.loss_fn(student_features.hidden_states, teacher_features.hidden_states)
-
-
-class AttentionsObjective(DistillationObjective):
-    """
-    attentions of forward pass
-    """
-    def __init__(self, loss_fn: Callable = "mse"):
-        if isinstance(loss_fn, str):
-            loss_fn = LOSS_FUNCTIONS[loss_fn]
-        self.loss_fn = loss_fn
-
-    def __call__(self, teacher_model, student_model, inputs):
-        with torch.no_grad():
-            teacher_features = teacher_model(**inputs, output_attentions=True)
-        student_features = student_model(**inputs, output_attentions=True)
-
-        return self.loss_fn(student_features.attentions, teacher_features.attentions)
-
-
-class LegacyObjective(DistillationObjective):
-    # Hard coded, to reproduce old success
-    def __init__(self, loss_fn: Callable = "kl"):
-        self.loss_fn = kl_divergence_loss
-
-    def __call__(self, teacher_model, student_model, inputs):
-        with torch.no_grad():
-            teacher_features = teacher_model(**inputs, output_hidden_states=True)
-        student_features = student_model(**inputs, output_hidden_states=True)
-
-        logits_loss = self.loss_fn(student_features.logits, teacher_features.logits)
-        activations_loss = self.loss_fn(
-            torch.stack(student_features.hidden_states),
-            torch.stack(teacher_features.hidden_states)
+        self.logits_loss_component = LossComponent(
+            "logits",
+            weight=logits_weight,
+            loss_fn=logits_loss_fn
         )
-
-        # legacy, this is an incorrect implementation:
-        return logits_loss + activations_loss * len(student_features.hidden_states)
-
-
-@dataclass
-class MultiObjective(DistillationObjective):
-    """
-    Comprehensive distillation objective to calculate loss based on various features.
-    Implements __call__(teacher_model, student_model, inputs) -> loss
-    """
-    logits_weight: float = 1
-    logits_loss_fn: Union[None, str, Callable] = "kl"
-    hs_weight: float = 0
-    hs_loss_fn: Union[None, str, Callable] = "mse"
-    attn_weight: float = 0
-    attn_loss_fn: Union[None, str, Callable] = "mse"
-
-    def __post_init__(self):
-        if isinstance(self.logits_loss_fn, str):
-            self.logits_loss_fn = LOSS_FUNCTIONS[self.logits_loss_fn]
-        if isinstance(self.hs_loss_fn, str):
-            self.hs_loss_fn = LOSS_FUNCTIONS[self.hs_loss_fn]
-        if isinstance(self.attn_loss_fn, str):
-            self.attn_loss_fn = LOSS_FUNCTIONS[self.attn_loss_fn]
+        self.hs_loss_component = LossComponent(
+            "hs",
+            weight=hs_weight,
+            loss_fn=hs_loss_fn,
+            layer_mapper=hs_layer_mapper,
+        )
+        self.attn_loss_component = LossComponent(
+            "attn",
+            weight=attn_weight,
+            loss_fn=attn_loss_fn,
+            layer_mapper=attn_layer_mapper,
+        )
 
         self._projectors: dict = {}
 
-    def __call__(self, teacher_model, student_model, inputs):
+    def __call__(self, teacher_model, student_model, inputs) -> Dict[str, float]:
         forward_kwargs = {
             **inputs,
-            "output_hidden_states": (self.hs_weight != 0),
-            "output_attentions": (self.attn_weight != 0)
+            "output_hidden_states": self.hs_loss_component.is_measured,
+            "output_attentions": self.attn_loss_component.is_measured,
         }
+        # get student / teacher forward pass outputs
         with torch.no_grad():
             teacher_outputs = teacher_model(**forward_kwargs)
         student_outputs = student_model(**forward_kwargs)
 
-        losses = {
-            "loss/logits": self._get_logit_loss(student_outputs, teacher_outputs),
-            "loss/hs": self._get_hs_loss(student_outputs, teacher_outputs),
-            "loss/attn": self._get_attn_loss(student_outputs, teacher_outputs),
-        }
+        # calculate component loss
+        logits_loss = self._calc_loss(student_outputs.logits, teacher_outputs.logits, self.logits_loss_component)
+        hs_loss = self._calc_loss(student_outputs.hidden_states, teacher_outputs.hidden_states, self.hs_loss_component)
+        attn_loss = self._calc_loss(student_outputs.attentions, teacher_outputs.attentions, self.attn_loss_component)
 
-        losses["loss"] = losses["loss/logits"] + losses["loss/hs"]
-        return losses
-
-    def _get_logit_loss(self, student_outputs, teacher_outputs):
-        if not self.logits_weight:
-            return torch.tensor(0, device=student_outputs.logits.device)
-        return self.logits_loss_fn(
-            student_outputs.logits, teacher_outputs.logits
-        ) * self.logits_weight
-
-    def _get_hs_loss(self, student_outputs, teacher_outputs):
-        if not self.hs_weight:
-            return torch.tensor(0, device=student_outputs.logits.device)
-
-        student_hidden, teacher_hidden = self.hs_layer_mapper(
-            student_outputs.hidden_states,
-            teacher_outputs.hidden_states,
+        # calculate aggregate linear-combination loss
+        loss = (
+            logits_loss * self.logit_loss_component.weight +
+            hs_loss * self.hs_loss_component.weight +
+            attn_loss * self.attn_loss_component.weight
         )
 
-        loss = self.hs_loss_fn(student_hidden, teacher_hidden)
-        return loss * self.hs_weight
+        return {"loss": loss, "loss/logits": logits_loss, "loss/hs": hs_loss, "loss/attn": attn_loss}
 
-    def _get_attn_loss(self, student_outputs, teacher_outputs):
-        if not self.attn_weight:
-            return torch.tensor(0, device=student_outputs.logits.device)
+    def _calc_loss(self, student_features, teacher_features, loss_component):
+        if not loss_component.is_measured:
+            return torch.tensor(0, device=student_features.device)
 
-        student_attn, teacher_attn = self.attn_layer_mapper(
-            student_outputs.attentions,
-            teacher_outputs.attentions,
-        )
-
-        loss = self.attn_loss_fn(student_attn, teacher_attn)
-        return loss * self.attn_weight
-
-    def hs_layer_mapper(self, student_features, teacher_features):
-        # TODO: apply actual layer mapper
-        return torch.stack(student_features), torch.stack(teacher_features)
-
-    def attn_layer_mapper(self, student_features, teacher_features):
-        # TODO: apply actual layer mapper
-        return torch.stack(student_features), torch.stack(teacher_features)
-
-    def project(self, student_features, teacher_features, projector_name, unique_projector_for_each_layer=True):
-        """
-        student_features and teacher_features are of shape
-        (num layers, batch size, sequence length, feature size)
-        """
-        num_layers = student_features.size(0)
-        student_feature_size = student_features.size(-1)
-        teacher_feature_size = teacher_features.size(-1)
-
-        if unique_projector_for_each_layer:
-            if projector_name not in self._projectors:
-                # Create a unique projector for each layer
-                self._projectors[projector_name] = torch.nn.Parameter(
-                    torch.nn.init.xavier_uniform_(
-                        torch.empty(num_layers, teacher_feature_size, student_feature_size)
-                    )
-                )
-            # Apply the unique projector to each layer of the student features
-            projected_student_features = torch.einsum(
-                'lbsh,lhi->lbsi',
-                student_features,
-                self._projectors[projector_name]
-            )
+        if loss_component.projector:
+            student_features, teacher_features = loss_component.apply_layer_mapper(student_features, teacher_features)
         else:
-            if projector_name not in self._projectors:
-                # Create a single projector shared across layers
-                self._projectors[projector_name] = torch.nn.Parameter(
-                    torch.nn.init.xavier_uniform_(
-                        torch.empty(teacher_feature_size, student_feature_size)
-                    )
-                )
-            # Apply the shared projector to all layers of the student features
-            projected_student_features = torch.einsum(
-                'lbsh,hi->lbsi',
-                student_features,
-                self._projectors[projector_name]
-            )
+            student_features, teacher_features = torch.vstack(student_features), torch.vstack(teacher_features)
 
-        return projected_student_features, teacher_features
+        if loss_component.projector:
+            # projectors are trainable, therefore we lazy-load, then re-use the same projector
+            projector = self._projectors.setdefault(loss_component.label, loss_component.get_projector())
+            student_features, teacher_features = projector.apply(student_features, teacher_features)
 
-    def apply_hs_projector(self, student_features, teacher_features):
-        return self.project(student_features, teacher_features, "hs")
+        loss = loss_component.get_loss(student_features, teacher_features)
 
-    def apply_attn_projector(self, student_features, teacher_features):
-        return self.project(student_features, teacher_features, "attn")
+        return loss
 
     def __repr__(self):
         attrs = []
@@ -517,10 +398,3 @@ class MultiObjective(DistillationObjective):
             else:
                 attrs.append(f"{field.name}={value!r}")
         return f"{self.__class__.__name__}({', '.join(attrs)})"
-
-
-OBJECTIVES = {
-    "legacy": LegacyObjective,  # TODO: remove
-    "logits": LogitsObjective,
-    "multi": MultiObjective,
-}

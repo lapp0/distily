@@ -1,5 +1,6 @@
 import distily
 
+from dataclasses import asdict
 import os
 import copy
 import datasets
@@ -98,11 +99,8 @@ def get_dataset(dataset_args, tokenizer, max_seq_len: int):
 
 
 def get_distillation_objective(distillation_objective_args):
-    # TODO: full impl
-    if isinstance(distillation_objective_args.distillation_objective, str):
-        return distily.objectives.OBJECTIVES[distillation_objective_args.distillation_objective]()
-    else:
-        return distillation_objective_args.distillation_objective
+    kwargs = asdict(distillation_objective_args)
+    return distily.objectives.DistillationObjective(**kwargs)
 
 
 def do_train(training_args, distillation_objective_args, student_model_args, teacher_model_args, dataset_args):
