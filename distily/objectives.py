@@ -38,6 +38,12 @@ def soft_mse_loss(student_features, teacher_features):
     return F.mse_loss(student_prob, teacher_prob)
 
 
+def soft_cross_entropy_loss(student_features, teacher_features):
+    student_prob = F.softmax(student_features, dim=-1)
+    teacher_prob = F.softmax(teacher_features, dim=-1)
+    return F.cross_entropy(student_prob, teacher_prob)
+
+
 def kl_divergence_loss(student_features, teacher_features, epsilon=1e-10):
     student_log_prob = F.log_softmax(student_features, dim=-1)
     teacher_prob = F.softmax(teacher_features, dim=-1)
@@ -155,6 +161,7 @@ LOSS_FUNCTIONS = {
     "cakld": cakld_loss,
     "jsd": jsd_loss,
     "cos": cosine_distance_loss,
+    "soft_ce": soft_cross_entropy_loss,
     # TODO: soft_cross_entropy?
 
     # TODO: fix
