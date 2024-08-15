@@ -92,7 +92,7 @@ def get_student_model(student_model_args, teacher_model):
     if student_model_args.student_model_compile:
         student_model.forward = torch.compile(student_model.forward, mode="reduce-overhead", fullgraph=True)
 
-    return model
+    return student_model
 
 
 
