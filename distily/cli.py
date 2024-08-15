@@ -48,7 +48,8 @@ def _transfer_module_to_student(student_model, teacher_model, module_name, freez
     get_module(student_model, module_name).load_state_dict(
         get_module(teacher_model, module_name).state_dict()
     )
-    assert get_module(teacher_model, module_name) == get_module(student_model, module_name)
+    if not get_module(teacher_model, module_name) == get_module(student_model, module_name):
+        import pdb;pdb.set_trace()
     if freeze:
         for param in get_module(student_model, module_name).parameters():
             param.requires_grad = False
