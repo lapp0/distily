@@ -1,5 +1,7 @@
 import distily
 
+import functools
+import copy
 from dataclasses import asdict
 import os
 import copy
@@ -37,9 +39,24 @@ def get_teacher_model_tokenizer(teacher_model_args):
     return model, tokenizer
 
 
-def get_student_model(student_model_args, teacher_config):
+def _transfer_module_to_student(student_model, teacher_model, module_name, freeze=False):
+    """
+    Replace module in student_model with module from teacher model.
+    Optionally freeze by disabling requires_grad.
+    """
+    get_module = lambda model, module_name: functools.reduce(getattr, module_name.split("."), model)
+    get_module(student_model, module_name).load_state_dict(
+        get_module(teacher_model, module_name).state_dict()
+    )
+    assert get_module(teacher_model, module_name) == get_module(student_model, module_name)
+    if freeze:
+        for param in get_module(student_model, module_name).parameters():
+            param.requires_grad = False
+
+
+def get_student_model(student_model_args, teacher_model):
     if student_model_args.student_model_name_or_path:
-        model = AutoModelForCausalLM.from_pretrained(
+        student_model = AutoModelForCausalLM.from_pretrained(
             student_model_args.student_model_name_or_path,
             torch_dtype=torch.bfloat16,
         )
@@ -48,31 +65,35 @@ def get_student_model(student_model_args, teacher_config):
         if student_model_args.student_config_name_or_path:
             config = AutoConfig.from_pretrained(student_model_args.student_config_name_or_path)
         else:
-            config = copy.copy(teacher_config)
+            config = copy.copy(teacher_model.config)
 
         if student_model_args.student_model_config:
             config.update(student_model_args.student_model_config)
 
         # Force student to have vocabulary size as teacher
-        config.vocab_size = teacher_config.vocab_size
+        config.vocab_size = teacher_model.config.vocab_size
 
         # TODO: remove .to(...) hack
-        model = AutoModelForCausalLM.from_config(
+        student_model = AutoModelForCausalLM.from_config(
             config=config,
             attn_implementation="flash_attention_2",
             torch_dtype=torch.bfloat16,
         ).to(device="cuda")
 
+    for module_name, freeze in student_model_args.copy_teacher_modules:
+        _transfer_module_to_student(student_model, teacher_model, module_name=module_name, freeze=freeze)
+
     if student_model_args.student_model_as_bitnet:
         with torch.no_grad():
             # TODO: use a different method which is better supported, an official third party library
-            convert_to_bitnet(model, copy_weights=False)
-            model.model_tags = ["bitnet", "1.58b"]
+            convert_to_bitnet(student_model, copy_weights=False)
+            student_model.model_tags = ["bitnet", "1.58b"]
 
     if student_model_args.student_model_compile:
-        model.forward = torch.compile(model.forward, mode="reduce-overhead", fullgraph=True)
+        student_model.forward = torch.compile(student_model.forward, mode="reduce-overhead", fullgraph=True)
 
     return model
+
 
 
 def get_dataset(dataset_args, tokenizer, max_seq_len: int):
@@ -109,7 +130,7 @@ def do_train(training_args, distillation_objective_args, student_model_args, tea
     max_seq_len = 1024
 
     teacher_model, tokenizer = get_teacher_model_tokenizer(teacher_model_args)
-    student_model = get_student_model(student_model_args, teacher_model.config)
+    student_model = get_student_model(student_model_args, teacher_model)
     train_dataset, test_dataset = get_dataset(dataset_args, tokenizer, max_seq_len)
 
     # TODO: don't hardcode this

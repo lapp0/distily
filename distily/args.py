@@ -17,14 +17,18 @@ class StudentModelArguments:
         default=None,
         metadata={"help": "Config dict of student model. Unset parameters default to set models config."}
     )
+    copy_teacher_modules: typing.Optional[typing.List[typing.Tuple[str, bool]]] = field(
+        default=None,
+        metadata={"help": "List of tuples with module name and freeze boolean to copy modules from teacher to student."}
+    )
     student_model_as_bitnet: bool = field(
         default=False,
         metadata={"help": "Make student model a bitnet model."}
     )
+
     # TODO: Full field
     # TODO: validator, require pytorch 2.5.0 for compile
     student_model_compile: bool = False
-
 
 
 @dataclass

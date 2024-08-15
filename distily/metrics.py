@@ -22,34 +22,23 @@ class PerplexityEvalCallback(TrainerCallback):
         input_ids = self.encodings["input_ids"].to(model.device)
         attention_mask = self.encodings["attention_mask"].to(model.device)
 
-        loss_fct = CrossEntropyLoss(reduction="none")
         total_loss = 0.0
-        total_count = 0
+        total_tokens = 0
 
+        model.eval()
         with torch.no_grad():
             for start_index in tqdm(range(0, len(input_ids), batch_size)):
                 end_index = start_index + batch_size
                 batch_input_ids = input_ids[start_index:end_index]
                 batch_attention_mask = attention_mask[start_index:end_index]
 
-                outputs = model(batch_input_ids, attention_mask=batch_attention_mask)
-                logits = outputs.logits
-
-                # Shift so that tokens < n predict n
-                shift_logits = logits[..., :-1, :].contiguous()
-                shift_labels = batch_input_ids[..., 1:].contiguous()
-
-                # Ensure logits and labels are of the same shape
-                assert shift_logits.shape[:-1] == shift_labels.shape
-
-                loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
-                mask = batch_attention_mask[..., 1:].contiguous().view(-1)
-                loss = (loss * mask).sum()
+                outputs = model(batch_input_ids, attention_mask=batch_attention_mask, labels=batch_input_ids)
+                loss = outputs.loss * batch_attention_mask.sum()  # Sum of non-padded tokens in the batch
 
                 total_loss += loss.item()
-                total_count += torch.sum(mask).item()
+                total_tokens += batch_attention_mask.sum().item()  # Sum of non-padded tokens in the batch
 
-        avg_loss = total_loss / total_count
+        avg_loss = total_loss / total_tokens
         perplexity = torch.exp(torch.tensor(avg_loss)).item()
         return perplexity
 
