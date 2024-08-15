@@ -58,7 +58,7 @@ def get_all_metric_evaluators(tokenizer):
             tokenizer=tokenizer,
         ).do_eval,
         "tinystoriesppl": PerplexityEvalCallback(
-            dataset=load_dataset("roneneldan/TinyStories", None, split="train"),
+            dataset=load_dataset("roneneldan/TinyStories", None, split="validation"),
             tokenizer=tokenizer,
         ).do_eval,
     }
