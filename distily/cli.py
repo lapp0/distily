@@ -80,7 +80,7 @@ def get_student_model(student_model_args, teacher_model):
             torch_dtype=torch.bfloat16,
         ).to(device="cuda")
 
-    for module_name, freeze in student_model_args.copy_teacher_modules:
+    for module_name, freeze in (student_model_args.copy_teacher_modules or []):
         _transfer_module_to_student(student_model, teacher_model, module_name=module_name, freeze=freeze)
 
     if student_model_args.student_model_as_bitnet:
