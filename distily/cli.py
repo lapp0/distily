@@ -141,6 +141,4 @@ def do_train(training_args, distillation_objective_args, student_model_args, tea
 
 
 if __name__ == "__main__":
-    do_train(
-        distily.args.get_args()
-    )
+    do_train(*distily.args.get_args())
