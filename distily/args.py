@@ -8,7 +8,7 @@ def StrBoolTupleType(arg_str: str) -> typing.Tuple[str, bool]:
         s, b = arg_str.split(",")
         return str(s), (b.lower() in ("true", "1"))
     else:
-        return s, False
+        return arg_str, False
 
 
 @dataclass
