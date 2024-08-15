@@ -3,6 +3,14 @@ from dataclasses import dataclass, field
 import typing
 
 
+def StrBoolTupleType(arg_str: str) -> typing.Tuple[str, bool]:
+    if "," in arg_str:
+        s, b = arg_str.split(",")
+        return str(s), (b.lower() in ("true", "1"))
+    else:
+        return s, False
+
+
 @dataclass
 class StudentModelArguments:
     student_model_name_or_path: typing.Optional[str] = field(
@@ -17,7 +25,7 @@ class StudentModelArguments:
         default=None,
         metadata={"help": "Config dict of student model. Unset parameters default to set models config."}
     )
-    copy_teacher_modules: typing.Optional[typing.List[typing.Tuple[str, bool]]] = field(
+    copy_teacher_modules: typing.Optional[typing.List[StrBoolTupleType]] = field(
         default=None,
         metadata={"help": "List of tuples with module name and freeze boolean to copy modules from teacher to student."}
     )
@@ -132,15 +140,5 @@ parser = HfArgumentParser((
 ))
 
 
-def parse_copy_teacher_modules(modules_str):
-    modules = modules_str.split(',')
-    return [(modules[i], modules[i + 1].lower() == 'true') for i in range(0, len(modules), 2)]
-
-
 def get_args():
-    args = parser.parse_args_into_dataclasses()
-    if args.student_model_args.copy_teacher_modules:
-        args.student_model_args.copy_teacher_modules = parse_copy_teacher_modules(
-            args.student_model_args.copy_teacher_modules
-        )
-    return args
+    return parser.parse_args_into_dataclasses()
