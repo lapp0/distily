@@ -57,4 +57,8 @@ def get_all_metric_evaluators(tokenizer):
             dataset=load_dataset("wikimedia/wikipedia", "20231101.zh", split="train").select(range(1000)),
             tokenizer=tokenizer,
         ).do_eval,
+        "tinystoriesppl": PerplexityEvalCallback(
+            dataset=load_dataset("roneneldan/TinyStories", None, split="train"),
+            tokenizer=tokenizer,
+        ).do_eval,
     }
