@@ -45,11 +45,17 @@ def _transfer_module_to_student(student_model, teacher_model, module_name, freez
     Optionally freeze by disabling requires_grad.
     """
     get_module = lambda model, module_name: functools.reduce(getattr, module_name.split("."), model)
-    get_module(student_model, module_name).load_state_dict(
-        get_module(teacher_model, module_name).state_dict()
-    )
-    if not get_module(teacher_model, module_name) == get_module(student_model, module_name):
-        import pdb;pdb.set_trace()
+
+    student_module = get_module(student_model, module_name)
+    teacher_module = get_module(teacher_model, module_name)
+    student_module.load_state_dict(teacher_module.state_dict())
+
+    # ensure transfer successful
+    sm_sd = student_module.state_dict()
+    tm_sd = teacher_module.state_dict()
+    assert all(torch.equal(sm_sd[k], tm_sd[k]) for k in student_module.state_dict())
+
+    # freeze module
     if freeze:
         for param in get_module(student_model, module_name).parameters():
             param.requires_grad = False
