@@ -132,14 +132,15 @@ parser = HfArgumentParser((
 ))
 
 
-def parse_copy_teacher_modules(modules):
-    # Convert flat list into list of tuples
+def parse_copy_teacher_modules(modules_str):
+    modules = modules_str.split(',')
     return [(modules[i], modules[i + 1].lower() == 'true') for i in range(0, len(modules), 2)]
 
 
 def get_args():
     args = parser.parse_args_into_dataclasses()
-    args.student_model_args.copy_teacher_modules = parse_copy_teacher_modules(
-        args.student_model_args.copy_teacher_modules
-    )
+    if args.student_model_args.copy_teacher_modules:
+        args.student_model_args.copy_teacher_modules = parse_copy_teacher_modules(
+            args.student_model_args.copy_teacher_modules
+        )
     return args
