@@ -49,7 +49,10 @@ def _reinitialize_weights(model, weight_init_fn="xavier"):
 
     for module in model.modules():
         if hasattr(module, 'weight') and module.weight is not None:
-            init_fn(module.weight)
+            if module.weight.dim() >= 2:  # Only initialize if the weight tensor has 2 or more dimensions
+                init_fn(module.weight)
+            else:
+                print("skipping, not 2D for", module)
 
 
 def _transfer_module_to_student(student_model, teacher_model, module_name, freeze=False):
