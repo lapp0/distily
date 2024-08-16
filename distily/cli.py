@@ -42,6 +42,7 @@ def get_teacher_model_tokenizer(teacher_model_args):
 def _reinitialize_weights(model, weight_init_fn="xavier"):
     """Reinitialize the weights using the provided weight initialization function."""
 
+    print("reinitializing weights as", weight_init_fn)
     # TODO: full impl
     assert weight_init_fn == "xavier"
     init_fn = torch.nn.init.xavier_uniform_
