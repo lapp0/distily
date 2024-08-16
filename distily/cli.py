@@ -39,6 +39,18 @@ def get_teacher_model_tokenizer(teacher_model_args):
     return model, tokenizer
 
 
+def _reinitialize_weights(model, weight_init_fn="xavier"):
+    """Reinitialize the weights using the provided weight initialization function."""
+
+    # TODO: full impl
+    assert weight_init_fn == "xavier"
+    init_fn = torch.nn.init.xavier_uniform_
+
+    for module in model.modules():
+        if hasattr(module, 'weight') and module.weight is not None:
+            init_fn(module.weight)
+
+
 def _transfer_module_to_student(student_model, teacher_model, module_name, freeze=False):
     """
     Replace module in student_model with module from teacher model.
@@ -86,6 +98,9 @@ def get_student_model(student_model_args, teacher_model):
             attn_implementation="flash_attention_2",
             torch_dtype=torch.bfloat16,
         ).to(device="cuda")
+
+    if student_model_args.reinitialize_weights:
+        _reinitialize_weights(student_model, student_model_args.reinitialize_weights)
 
     for module_name, freeze in (student_model_args.copy_teacher_modules or []):
         _transfer_module_to_student(student_model, teacher_model, module_name=module_name, freeze=freeze)

@@ -25,6 +25,7 @@ class StudentModelArguments:
         default=None,
         metadata={"help": "Config dict of student model. Unset parameters default to set models config."}
     )
+    reinitialize_weights: typing.Optional[str] = None  # TODO: field
     copy_teacher_modules: typing.Optional[typing.List[StrBoolTupleType]] = field(
         default=None,
         metadata={"help": "List of tuples with module name and freeze boolean to copy modules from teacher to student."}
