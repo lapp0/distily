@@ -37,17 +37,6 @@ def run(params=None, **kwargs):
     benchmark(learning_rate=[4e-5, 4e-4], optim=["lion", "adamw"])
     """
     assert params is not None
-    #for key, value in params.items():
-    #    if not isinstance(value, list):
-    #        raise ValueError(f"The value for '{key}' must be a list.")
-
-    # Get all combinations of the items in the lists
-    #keys = params.keys()
-
-    #if len(product_kwargs) == 1:
-    #    values_product = [[v] for v in list(product_kwargs.values())[0]]
-    #else:
-    #    values_product = list(product(product_kwargs.values()))
 
     # log params
     print("Training Parameters")
@@ -62,6 +51,12 @@ def run(params=None, **kwargs):
             **kwargs
         }
         current_args["logging_dir"] = os.path.join(current_args["output_dir"], "logs", run_name)
+
+        completion_flag = os.path.join(current_args["logging_dir"], "completed.flag")
+        if os.path.exists(completion_flag):
+            print(f"Run '{run_name}' has already been completed. Skipping...")
+            continue
+
         parsed_args_tuple = distily.args.parser.parse_dict(
             current_args,
             allow_extra_keys=True
@@ -70,6 +65,9 @@ def run(params=None, **kwargs):
         try:
             # TODO: do_train should return training results
             res = distily.cli.do_train(*parsed_args_tuple)
+
+            open(completion_flag, 'a').close()  # write completion flag
+
         except Exception as e:
             print(f"FAILED FOR {current_args}")
             print(e)
