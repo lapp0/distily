@@ -39,6 +39,8 @@ class StudentModelArguments:
     # TODO: validator, require pytorch 2.5.0 for compile
     student_model_compile: bool = False
 
+    dropout: typing.Optional[float] = None
+
 
 @dataclass
 class TeacherModelArguments:

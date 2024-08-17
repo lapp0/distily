@@ -103,6 +103,10 @@ def get_student_model(student_model_args, teacher_model):
             torch_dtype=torch.bfloat16,
         ).to(device="cuda")
 
+    if student_model_args.dropout:  # TODO: argument
+        student_model.hidden_dropout_prob = student_model_args.dropout
+        student_model.attention_probs_dropout_prob = student_model_args.dropout
+
     if student_model_args.reinitialize_weights:
         _reinitialize_weights(student_model, student_model_args.reinitialize_weights)
 
