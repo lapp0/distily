@@ -27,7 +27,7 @@ class StudentModelArguments:
     )
     reinitialize_weights: typing.Optional[str] = None  # TODO: field
     copy_teacher_modules: typing.Optional[typing.List[StrBoolTupleType]] = field(
-        default=[("lm_head", False)],
+        default_factory=lambda: [("lm_head", False)],
         metadata={"help": (
             "List of tuples with module name and is_frozen boolean to copy modules from teacher to student. "
             "Default: copy the LM head, and make it trainable"
