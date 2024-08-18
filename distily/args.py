@@ -27,8 +27,11 @@ class StudentModelArguments:
     )
     reinitialize_weights: typing.Optional[str] = None  # TODO: field
     copy_teacher_modules: typing.Optional[typing.List[StrBoolTupleType]] = field(
-        default=None,
-        metadata={"help": "List of tuples with module name and freeze boolean to copy modules from teacher to student."}
+        default=[("lm_head", False)],
+        metadata={"help": (
+            "List of tuples with module name and is_frozen boolean to copy modules from teacher to student. "
+            "Default: copy the LM head, and make it trainable"
+        )}
     )
     student_model_as_bitnet: bool = field(
         default=False,
@@ -110,7 +113,7 @@ class DistillationTrainingArguments(TrainingArguments):
 
     # optimize convergence to final model
     learning_rate: float = 4e-5
-    max_grad_norm: float = 100.0
+    max_grad_norm: float = 1.0
     lr_scheduler_type: str = "constant"
     num_train_epochs: float = 1.0
     optim: str = "paged_lion_32bit"
