@@ -6,16 +6,23 @@ from tqdm import tqdm
 
 
 class PerplexityEvalCallback(TrainerCallback):
-    def __init__(self, dataset, tokenizer, max_length=1024, dataset_column="text"):
+    def __init__(self, dataset, tokenizer, max_length=1024, dataset_column="text", add_start_token=True):
         # preprocess / tokenize
         predictions = [example[dataset_column] for example in dataset]
         self.encodings = tokenizer(
             predictions,
             padding=True,
             truncation=True,
-            max_length=max_length,
+            max_length=max_length - 1 if add_start_token else max_length,
             return_tensors="pt"
         )
+        if add_start_token:
+            bos_token_ids = torch.full((self.encodings["input_ids"].size(0), 1), tokenizer.bos_token_id)
+            self.encodings["input_ids"] = torch.cat([bos_token_ids, self.encodings["input_ids"]], dim=1)
+            self.encodings["attention_mask"] = torch.cat([
+                torch.ones_like(bos_token_ids),
+                self.encodings["attention_mask"]
+            ], dim=1)
 
     def do_eval(self, model, batch_size):
         input_ids = self.encodings["input_ids"].to(model.device)
