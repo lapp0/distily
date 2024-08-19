@@ -29,6 +29,7 @@ class PerplexityEvalCallback(TrainerCallback):
         attention_mask = self.encodings["attention_mask"].to(model.device)
 
         ppls = []
+        loss_fct = CrossEntropyLoss(reduction="none")
 
         with torch.no_grad():
             for start_index in range(0, len(input_ids), batch_size):
@@ -46,16 +47,18 @@ class PerplexityEvalCallback(TrainerCallback):
                 shift_attention_mask_batch = batch_attention_mask[..., 1:].contiguous()
 
                 # Calculate loss for the batch
-                loss_fct = CrossEntropyLoss(reduction="none")
-                loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
-                loss = (loss * shift_attention_mask_batch.view(-1)).sum(1) / shift_attention_mask_batch.sum(1)
+                loss = loss_fct(shift_logits.transpose(1, 2), shift_labels)
+                loss = (loss * shift_attention_mask_batch).sum(1) / shift_attention_mask_batch.sum(1)
 
                 # Calculate perplexity for the batch
-                perplexity_batch = torch.exp(loss).tolist()
-                ppls += perplexity_batch
+                perplexity_batch = torch.exp(loss)
+                ppls.append(perplexity_batch)
 
-        # Average loss over total tokens and compute perplexity
-        return torch.mean(ppls)
+        # Concatenate all batch perplexities and calculate the mean perplexity
+        all_ppls = torch.cat(ppls)
+        mean_perplexity = torch.mean(all_ppls)
+
+        return mean_perplexity.item()
 
 
 def get_all_metric_evaluators(tokenizer):
