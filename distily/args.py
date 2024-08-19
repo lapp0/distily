@@ -112,8 +112,9 @@ class DistillationTrainingArguments(TrainingArguments):
     #####################################################
 
     # optimize convergence to final model
-    learning_rate: float = 4e-5
+    learning_rate: float = 4e-4
     max_grad_norm: float = 1.0
+    warmup_ratio: float = 0.2
     lr_scheduler_type: str = "constant"
     num_train_epochs: float = 1.0
     optim: str = "paged_lion_32bit"
