@@ -26,16 +26,27 @@ class PerplexityEvalCallback(TrainerCallback):
 
         model.eval()
         with torch.no_grad():
-            for start_index in tqdm(range(0, len(input_ids), batch_size)):
+            for start_index in range(0, len(input_ids), batch_size):
                 end_index = min(start_index + batch_size, len(input_ids))
                 batch_input_ids = input_ids[start_index:end_index]
                 batch_attention_mask = attention_mask[start_index:end_index]
 
-                outputs = model(batch_input_ids, attention_mask=batch_attention_mask, labels=batch_input_ids)
-                loss = outputs.loss * batch_attention_mask.sum()  # Sum of non-padded tokens in the batch
+                # Generate model outputs
+                outputs = model(batch_input_ids, attention_mask=batch_attention_mask)
+                logits = outputs.logits
 
-                total_loss += loss.item()
-                total_tokens += batch_attention_mask.sum().item()  # Sum of non-padded tokens in the batch
+                # Shift logits and labels to calculate loss
+                shift_logits = logits[..., :-1, :].contiguous()
+                shift_labels = batch_input_ids[..., 1:].contiguous()
+                shift_attention_mask_batch = batch_attention_mask[..., 1:].contiguous()
+
+                # Calculate loss
+                loss_fct = CrossEntropyLoss(reduction="none")
+                loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
+                loss = (loss * shift_attention_mask_batch.view(-1)).sum() / shift_attention_mask_batch.sum()
+
+                total_loss += loss.item() * shift_attention_mask_batch.sum().item()
+                total_tokens += shift_attention_mask_batch.sum().item()
 
         avg_loss = total_loss / total_tokens
         perplexity = torch.exp(torch.tensor(avg_loss)).item()
