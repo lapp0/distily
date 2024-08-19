@@ -5,7 +5,6 @@ from torch.nn import CrossEntropyLoss
 from tqdm import tqdm
 
 
-# TODO: Respect eval batch size for `batch_size` argument
 class PerplexityEvalCallback(TrainerCallback):
     def __init__(self, dataset, tokenizer, max_length=1024, dataset_column="text"):
         # preprocess / tokenize
@@ -28,7 +27,7 @@ class PerplexityEvalCallback(TrainerCallback):
         model.eval()
         with torch.no_grad():
             for start_index in tqdm(range(0, len(input_ids), batch_size)):
-                end_index = start_index + batch_size
+                end_index = min(start_index + batch_size, len(input_ids))
                 batch_input_ids = input_ids[start_index:end_index]
                 batch_attention_mask = attention_mask[start_index:end_index]
 
