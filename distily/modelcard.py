@@ -12,8 +12,8 @@ MODEL_CARD_TEMPLATE = """
 
 # Summary
 
-`{model_name}` distilled with the [Distily](https://github.com/lapp0/distily) library.
-Distilled from teacher model, [{teacher_model}](https://huggingface.co/{teacher_model}),
+Distilled with [Distily](https://github.com/lapp0/distily) library
+using teacher model [{teacher_model}](https://huggingface.co/{teacher_model})
 on dataset [{dataset_name}](https://huggingface.co/datasets/{dataset_name}).
 
 <!-- This model card has been generated automatically according to the information the Trainer had access to. You
@@ -97,7 +97,7 @@ def _to_markdown_table(lines: typing.List[typing.Dict]) -> str:
         key=lambda s: (s != "step", s != "epoch", s)
     )
     header = "| " + " | ".join([k.removeprefix("eval_") for k in all_keys]) + " |"
-    separator = "| " + " | ".join("---" for _ in all_keys) + " |"
+    separator = "| " + " | ".join(":---:" for _ in all_keys) + " |"
     sorted_lines = sorted(
         lines,
         key=lambda line: (

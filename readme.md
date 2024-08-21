@@ -45,3 +45,14 @@ TODO: commit the linked docs
 **Models**
 - [Official Distily Models](./docs/official_models.md)
 - [All HF Models Created With Distily](https://huggingface.co/models?library=Distily)
+
+
+## Roadmap
+
+Features to enable:
+- [X] Standard knowledge distillation using logits.
+- [x] Distill using intermediate features including hidden states and attentions.
+- [x] Distill to bitnet.
+- [x] Layer removal through advanced [layer mapping techniques](https://arxiv.org/pdf/2310.08797).
+- [ ] Dimension shrinking through the use of projectors.
+- [ ] Improve sampling efficiency through synthetic data generation.
