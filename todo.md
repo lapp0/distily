@@ -1,49 +1,28 @@
-# TODO
-
-## Model Generation Milestones
+# Model Generation Milestones
 - [ ] distill 99% quality model with identical architecture
 - [ ] half layer gpt2, but beat distilgpt2 benchmarks
 - [ ] distill phi-3-mini to 1.58b, report metrics
 
 
+# TODO
+
+
 ## v0.3.0
+- [ ] refactor so trainer constructs all inputs using args OR direct model / dataset passing
 - [ ] log all training parameters (excluding stuff like push_to_hub)
 - [ ] log dataset total token count
+
+## v0.3.1
+- [ ] parameterized eval_step metrics, and final metrics
 - [ ] eval for HotpotQA, TriviaQA, GLUE, SQUAD, CoNLL-2003, CoLA, MNLI
 - [ ] fix log output so the loss/logits and loss/activations respects logging_steps
+
 ## v0.4.0
-Complete basic objectives implementation
-
-**Objectives**
-### Implement layer mapping strategies from https://arxiv.org/pdf/2310.08797
-- 1-to-1: Maps student layers to uniformly distributed teacher layers.
-  - Last: simple, but effective baseline
-  - Last K uniform: `teacher_layer_i` -> `student_layer_i`
-  - All: Requires identical num layers
-- 1-to-N Mapping: Maps each student layer to multiple teacher layers.
-  - Uniform Consecutive: Maps each student layer to k consecutive teacher layers.
-    - Formula: ϕ(i)=[k(i−1),ki]ϕ(i)=[k(i−1),ki], where k=⌈LT/LS⌉k=⌈LT​/LS​⌉.
-	- Ensures all teacher layers contribute to the student's learning.
-  - Uniform + Last: Each student layer maps to two teacher layers: one selected uniformly and one from the last layers.
-    - Combines both Uniform and Last strategies from 1-to-1 mapping.
-	- Each student layer maps to two teacher layers: one selected uniformly and one from the last layers.
-	- Leverages the benefits of capturing both early syntactic features and late semantic features.
-
-### Implement loss functions from https://arxiv.org/pdf/2310.08797
-Loss Functions:
-- Cross Entropy
-- MHA MSE: sum over (Q, K, V) and attention heads of MSE(student_relation_matrix, teacher_relation_matrix)
-- Direct MHA MSE
-- MSE: Sum of MSE
+- [ ] Implement synthetic datasets: randomly sampled
 
 ## v0.5.0
-Implement synthetic datasets
-- randomly sampled
-- custom generators focusing on OOD sequences
-
-
-## Research Task Before v0.5.0
-- [ ] Research Data-Free Knowledge Distillation techniques: ensure model is more representative and sample-efficient
+- [ ] synthetic datasets: custom generators focusing on OOD sequences
+- [ ] vllm?
 
 ## v0.5.1
 - [ ] add eval tool for MMLU-PRO / MATH / etc

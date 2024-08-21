@@ -1,4 +1,3 @@
-from itertools import product
 import traceback
 import os
 import re
@@ -6,15 +5,6 @@ import gc
 import torch
 
 import distily
-
-
-def get_run_name(run_kwargs):
-    normalize = lambda s: re.sub(r'[^A-Za-z0-9_\-\.()]', '_', s if isinstance(s, str) else repr(s))
-    # Create a sorted list of normalized key-value pairs joined by underscores
-    return ", ".join([
-        f"{normalize(k)}={normalize(v)}"
-        for k, v in sorted(run_kwargs.items())
-    ])[:200]
 
 
 def run(params=None, **kwargs):
@@ -36,6 +26,14 @@ def run(params=None, **kwargs):
     Example:
     benchmark(learning_rate=[4e-5, 4e-4], optim=["lion", "adamw"])
     """
+    def get_run_name(run_kwargs):
+        normalize = lambda s: re.sub(r'[^A-Za-z0-9_\-\.()]', '_', s if isinstance(s, str) else repr(s))
+        # Create a sorted list of normalized key-value pairs joined by underscores
+        return ", ".join([
+            f"{normalize(k)}={normalize(v)}"
+            for k, v in sorted(run_kwargs.items())
+        ])[:200]
+
     assert params is not None
 
     # log params
@@ -78,3 +76,16 @@ def run(params=None, **kwargs):
         # cleanup
         gc.collect()
         torch.cuda.empty_cache()
+
+
+def train(training_args, distillation_objective_args, student_model_args, teacher_model_args, dataset_args):
+    trainer = distily.distillation_trainer.DistillationTrainer.from_args(
+        training_args, distillation_objective_args, student_model_args, teacher_model_args, dataset_args
+    )
+    trainer.train()
+    if training_args.push_to_hub:
+        trainer.push_to_hub()
+
+
+def train_entry():
+    train(*distily.args.get_args())

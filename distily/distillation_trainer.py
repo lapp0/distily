@@ -1,4 +1,5 @@
 from typing import Callable, List, Dict
+from dataclasses import asdict
 import collections
 import logging
 import os
@@ -73,6 +74,46 @@ class DistillationTrainer(transformers.Trainer):
         self.distillation_objective = distillation_objective
 
         self.log_trainer_details()
+
+    @classmethod
+    def from_args(
+            cls,
+            training_args,
+            distillation_objective_args,
+            student_model_args,
+            teacher_model_args,
+            dataset_args
+    ):
+
+        teacher_model, tokenizer = distily.models.get_teacher_model_tokenizer(teacher_model_args)
+        student_model = distily.models.get_student_model(student_model_args, teacher_model)
+
+        # TODO: don't hardcode max length
+        max_seq_len = 1024
+        # TODO: don't hardcode this
+        training_args.extra_evaluators = distily.metrics.get_all_metric_evaluators(tokenizer)
+
+        train_dataset, test_dataset = distily.data.get_dataset(dataset_args, tokenizer, max_seq_len)
+
+        distillation_objective = distily.objectives.DistillationObjective(**asdict(distillation_objective_args))
+
+        return cls(
+            student_model=student_model,
+            teacher_model=teacher_model,
+            tokenizer=tokenizer,
+            args=training_args,
+            data_collator=transformers.DataCollatorForLanguageModeling(tokenizer, mlm=False),
+            train_dataset=train_dataset,
+            eval_dataset=test_dataset,
+            distillation_objective=distillation_objective,
+        )
+
+    def from_kwargs(cls, **kwargs):
+        parsed_args_tuple = distily.args.parser.parse_dict(
+            kwargs,
+            allow_extra_keys=True
+        )
+        return cls.from_args(*parsed_args_tuple)
 
     def train(self, *args, **kwargs):
         super().train(*args, **kwargs)

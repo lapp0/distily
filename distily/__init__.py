@@ -1,5 +1,14 @@
-from . import args, benchmark, cli, distillation_trainer, objectives, metrics
-from . import tinyllama_bitnet_utils  # TODO: Remove, replace with a good bitnet library
+from . import (  # noqa
+    args,
+    bitnet_utils,
+    data,
+    distillation_trainer,
+    metrics,
+    models,
+    objectives,
+    run,
+)
+
 
 import importlib.metadata
 __version__ = importlib.metadata.version("distily")
