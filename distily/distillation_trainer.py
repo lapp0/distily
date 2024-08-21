@@ -112,10 +112,13 @@ class DistillationTrainer(transformers.Trainer):
         student_model,
         teacher_model,
         tokenizer,
+        all_args=None,
         *args,
         **kwargs
     ):
         super().__init__(*args, model=student_model, tokenizer=tokenizer, **kwargs)
+
+        self.all_args = all_args or {}
 
         self.teacher_model = teacher_model
         self.distillation_objective = distillation_objective
@@ -153,6 +156,12 @@ class DistillationTrainer(transformers.Trainer):
             train_dataset=train_dataset,
             eval_dataset=test_dataset,
             distillation_objective=distillation_objective,
+            all_args=dict(
+                distillation_objective_args=distillation_objective_args,
+                student_model_args=student_model_args,
+                teacher_model_args=teacher_model_args,
+                dataset_args=dataset_args,
+            )
         )
 
     def from_kwargs(cls, **kwargs):
@@ -273,12 +282,13 @@ class DistillationTrainer(transformers.Trainer):
         model_card_filepath = os.path.join(self.args.output_dir, "README.md")
         model_card = ModelCard.load(model_card_filepath)
         model_card.data["library_name"] = "Distily"
-        model_card.data["datasets"] = [self.train_dataset.args.dataset_uri]
+        if self.all_args.get("train_dataset"):
+            model_card.data["datasets"] = [self.all_args["train_dataset"].dataset_uri]
 
         model_card.text = MODEL_CARD_TEMPLATE.format(
             model_name=self.args.output_dir,
             teacher_model=self.teacher_model.config._name_or_path,
-            dataset_name=self.train_dataset.args.dataset_uri,
+            dataset_name=self.all_args["train_dataset"].dataset_uri if self.all_args.get("train_dataset") else "(unspecified)",
             student_model_architecture=student_model_architecture,
             student_total_params=f"{student_total_params:,}",
             student_model_dtype=str(student_model_dtype),
