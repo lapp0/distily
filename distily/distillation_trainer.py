@@ -303,10 +303,13 @@ class DistillationTrainer(transformers.Trainer):
             )
 
         import difflib  # noqa
-        model_diff_repr = '\n'.join(
-            line for line in difflib.Differ().compare(
-                repr(self.model), repr(self.teacher_model)
-            ) if line.startswith('+') or line.startswith('-')
+        model_diff_repr = "".join(
+            difflib.unified_diff(
+                repr(self.teacher_model).splitlines(keepends=True),
+                repr(self.model).splitlines(keepends=True),
+                fromfile="teacher model modules",
+                tofile="student model modules"
+            )
         )
 
         # TODO: Expand on this
