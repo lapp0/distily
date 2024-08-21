@@ -43,7 +43,7 @@ More information needed
 
 {resource_table}
 
-`# Distillation (Teacher -> Student) Architecture Difference:
+# Distillation (Teacher -> Student) Architecture Difference:
 
 - **Architecture**: `{teacher_model_architecture}` -> `{student_model_architecture}`
 - **Total Parameters**: {teacher_total_params} -> {student_total_params}
@@ -130,7 +130,7 @@ def create_model_card_text(trainer):
         else "Unknown"
     )
     teacher_total_params = sum(p.numel() for p in trainer.teacher_model.parameters())
-    teacher_model_dtype = trainer.teacher_model.num_parameters()
+    teacher_model_dtype = next(trainer.model.parameters()).dtype
     teacher_model_size = trainer.teacher_model.get_memory_footprint() / (1024 ** 3)
 
     step_evals = collections.defaultdict(dict)
