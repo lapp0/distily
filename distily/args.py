@@ -132,8 +132,9 @@ class DistillationTrainingArguments(TrainingArguments):
 
     # logging / evaluation
     logging_steps: int = 25
+    save_steps: int = 2500
     eval_strategy: str = "steps"
-    eval_steps: int = 1000
+    eval_steps: int = 2500
     eval_on_start: bool = True
     report_to: str = "tensorboard"
 
