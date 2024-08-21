@@ -88,16 +88,11 @@ Trained on {token_count} tokens from the [{dataset_name}](link_to_dataset) datas
 - Subset / Split: [subset={dataset_subset_name} split={dataset_split_name}](link_to_dataset)
 - Train Samples: {num_train_samples}
 
-# Training Loss Function
-**Logits**:
-{logit_details}
+# Training Objective
 
-**Hidden States**:
-{hs_loss_details}
-
-**Attention**:
-{attn_loss_details}
-
+```
+{objective_details}
+```
 
 # Hyperparameters
 The following hyperparameters were used during training:
@@ -337,9 +332,7 @@ class DistillationTrainer(transformers.Trainer):
             eval_table=self._to_markdown_table(eval_lines),
             resource_table=resource_table,
             num_train_samples=len(self.train_dataset),
-            logit_details="",  # Extracted from distillation objective or logs
-            hs_loss_details="",  # Extracted from distillation objective or logs
-            attn_loss_details="",  # Extracted from distillation objective or logs
+            objective_details=self.distillation_objective,
             hyperparameters="\n".join([f"- {name}: {value}" for name, value in hyperparameters.items()]),
             framework_versions=framework_versions,
             token_count=sum(map(sum, self.train_dataset["attention_mask"])),
