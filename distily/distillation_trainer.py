@@ -42,9 +42,11 @@ More information needed
 
 <details>
 <summary>Student Model Architecture Details</summary>
+
 ```
 {model_repr}
 ```
+
 </details>
 <br/>
 
@@ -57,9 +59,11 @@ More information needed
 
 <details>
 <summary>Teacher Model Architecture Details</summary>
+
 ```
 {teacher_model_repr}
 ```
+
 </details>
 <br/>
 
@@ -67,9 +71,11 @@ More information needed
 
 <details>
 <summary>Expand</summary>
+
 ```diff
 {model_diff_repr}
 ```
+
 </details>
 <br/>
 
