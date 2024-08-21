@@ -6,12 +6,6 @@
 
 # TODO
 
-
-## v0.3.0
-- [x] refactor so trainer constructs all inputs using args OR direct model / dataset passing
-- [ ] log all training parameters (excluding stuff like push_to_hub)
-- [ ] log dataset total token count
-
 ## v0.3.1
 - [ ] parameterized eval_step metrics, and final metrics
 - [ ] eval for HotpotQA, TriviaQA, GLUE, SQUAD, CoNLL-2003, CoLA, MNLI

@@ -4,6 +4,7 @@ from . import (  # noqa
     data,
     distillation_trainer,
     metrics,
+    modelcard,
     models,
     objectives,
     run,
