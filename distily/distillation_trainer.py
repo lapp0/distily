@@ -231,14 +231,14 @@ class DistillationTrainer(transformers.Trainer):
         student_total_params = sum(p.numel() for p in self.model.parameters())
         student_model_dtype = next(self.model.parameters()).dtype
         student_quantization = "Not Quantized"  # Set based on the quantization details, if any
-        student_model_size = sys.getsizeof(self.model.state_dict().keys()) / (1024 ** 2)
+        student_model_size = sys.getsizeof(self.model.state_dict()) / (1024 ** 3)
 
         # Teacher model details
         teacher_model_architecture = self.teacher_model.config.architectures[0] if hasattr(self.teacher_model.config, 'architectures') else "Unknown"
         teacher_total_params = sum(p.numel() for p in self.teacher_model.parameters())
         teacher_model_dtype = next(self.teacher_model.parameters()).dtype
         teacher_quantization = "Not Quantized"  # Set based on the quantization details, if any
-        teacher_model_size = sys.getsizeof(self.teacher_model.state_dict().keys()) / (1024 ** 2)
+        teacher_model_size = sys.getsizeof(self.teacher_model.state_dict()) / (1024 ** 3)
 
         step_evals = collections.defaultdict(dict)
         for log_line in self.state.log_history:
@@ -320,14 +320,14 @@ class DistillationTrainer(transformers.Trainer):
             student_total_params=f"{student_total_params:,}",
             student_model_dtype=str(student_model_dtype),
             student_quantization=student_quantization,
-            student_model_size=f"{student_model_size:.2f} MB",
+            student_model_size=f"{student_model_size:.2f} GB",
             model_repr=repr(self.model),
             teacher_model_repr=repr(self.teacher_model),
             teacher_model_architecture=teacher_model_architecture,
             teacher_total_params=f"{teacher_total_params:,}",
             teacher_model_dtype=str(teacher_model_dtype),
             teacher_quantization=teacher_quantization,
-            teacher_model_size=f"{teacher_model_size:.2f} MB",
+            teacher_model_size=f"{teacher_model_size:.2f} GB",
             model_diff_repr=model_diff_repr,
             eval_table=self._to_markdown_table(eval_lines),
             resource_table=resource_table,
