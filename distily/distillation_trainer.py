@@ -14,12 +14,10 @@ import distily
 
 
 MODEL_CARD_TEMPLATE = """
-# Summary
 
-- Model Name: `{model_name}`
-- Distilled using the [Distily](https://github.com/lapp0/distily) library
-- Teacher Model: [{teacher_model}](https://huggingface.co/{teacher_model})
-- Train Dataset: [{dataset_name}](link_to_dataset)
+Student model, `{model_name}`, distilled using the [Distily](https://github.com/lapp0/distily) library.
+Distilled from teacher model, [{teacher_model}](https://huggingface.co/{teacher_model}),
+on dataset [{dataset_name}](https://huggingface.co/datasets/{dataset_name}).
 
 <!-- This model card has been generated automatically according to the information the Trainer had access to. You
 should probably proofread and complete it, then remove this comment.
@@ -33,7 +31,7 @@ More information needed
 More information needed
 -->
 
-# Student Model (`{model_name}`) Architecture:
+# `{model_name}` Model Architecture:
 - **Architecture**: `{student_model_architecture}`
 - **Total Parameters**: {student_total_params}
 - **Data Type (dtype)**: {student_model_dtype}
@@ -87,10 +85,12 @@ More information needed
 
 
 # Train Dataset
-Trained on {token_count} tokens from the [{dataset_name}](link_to_dataset) dataset.
+Trained on {token_count:,} tokens from the [{dataset_name}](https://huggingface.co/datasets/{dataset_name}) dataset.
 
-- Subset / Split: [subset={dataset_subset_name} split={dataset_split_name}](link_to_dataset)
-- Train Samples: {num_train_samples}
+- Num Samples: `{num_train_samples:,}`
+- Subset: `{dataset_subset_name}`
+- Split: `{dataset_split_name}`
+
 
 # Training Objective
 
@@ -275,21 +275,24 @@ class DistillationTrainer(transformers.Trainer):
             f"- Datasets {datasets.__version__}",
         ])
 
-        included_hyperparams = [
-            "gradient_accumulation_steps",
-            "weight_decay", "max_grad_norm",
-            "warmup_ratio", "warmup_steps",
-            "gradient_checkpointing",
+        included_training_args = [
+            "gradient_accumulation_steps", "weight_decay", "max_grad_norm",
+            "warmup_ratio", "warmup_steps", "gradient_checkpointing",
         ]
+        additional_training_args = {k: v for k, v in asdict(self.args).items() if k in included_training_args}
 
         # includes lr, train_batch_size, eval_batch_size, seed,
         # optimizer, lr_scheduler_type / warmup_ratio, num_epochs
         hyperparameters = transformers.modelcard.extract_hyperparameters_from_trainer(self)
-        hyperparameters = {
+        hyperparameters.update({
             "distillation_objective": repr(self.distillation_objective),
             "train_embeddings": str(self.args.train_embeddings),
-            **hyperparameters
-        }
+            "lr_scheduler": self.lr_scheduler,
+            **asdict(self.all_args.get("student_model_args", {})),
+            **asdict(self.all_args.get("teacher_model_args", {})),
+            **asdict(self.all_args.get("dataset_args", {})),
+            **additional_training_args,
+        })
 
         model_card_filepath = os.path.join(self.args.output_dir, "README.md")
         model_card = ModelCard.load(model_card_filepath)
@@ -320,10 +323,12 @@ class DistillationTrainer(transformers.Trainer):
         )
 
         # TODO: Expand on this
+        # - Hardware (GPU / total VRAM / CPU / total memory)
+        # - Eval Performance of both models in terms of memory and speed
         resource_table = (
             "- VRAM Use: " +
             transformers.modelcard._maybe_round(torch.cuda.max_memory_allocated() / (1024 ** 3)) +
-            "GB"
+            " GB"
         )
 
         model_card.text = MODEL_CARD_TEMPLATE.format(
@@ -344,7 +349,7 @@ class DistillationTrainer(transformers.Trainer):
             resource_table=resource_table,
             num_train_samples=len(self.train_dataset),
             objective_details=self.distillation_objective,
-            hyperparameters="\n".join([f"- {name}: {value}" for name, value in hyperparameters.items()]),
+            hyperparameters="\n".join([f"- {name}: `{value}`" for name, value in hyperparameters.items()]),
             framework_versions=framework_versions,
             token_count=sum(map(sum, self.train_dataset["attention_mask"])),
             **dataset_kwargs
