@@ -15,7 +15,9 @@ import distily
 
 MODEL_CARD_TEMPLATE = """
 
-Student model, `{model_name}`, distilled using the [Distily](https://github.com/lapp0/distily) library.
+# Summary
+
+`{model_name}` distilled with the [Distily](https://github.com/lapp0/distily) library.
 Distilled from teacher model, [{teacher_model}](https://huggingface.co/{teacher_model}),
 on dataset [{dataset_name}](https://huggingface.co/datasets/{dataset_name}).
 
@@ -31,49 +33,12 @@ More information needed
 More information needed
 -->
 
-# `{model_name}` Model Architecture:
+# Model Architecture:
 - **Architecture**: `{student_model_architecture}`
 - **Total Parameters**: {student_total_params}
 - **Data Type (dtype)**: {student_model_dtype}
 - **Model Size**: {student_model_size}
 
-<details>
-<summary>Student Model Architecture Details</summary>
-
-```
-{model_repr}
-```
-
-</details>
-<br/>
-
-# Teacher Model Architecture:
-- **Architecture**: `{teacher_model_architecture}`
-- **Total Parameters**: {teacher_total_params}
-- **Data Type (dtype)**: {teacher_model_dtype}
-- **Model Size**: {teacher_model_size}
-
-<details>
-<summary>Teacher Model Architecture Details</summary>
-
-```
-{teacher_model_repr}
-```
-
-</details>
-<br/>
-
-# Architecture Diff:
-
-<details>
-<summary>Expand</summary>
-
-```diff
-{model_diff_repr}
-```
-
-</details>
-<br/>
 
 # Evaluation Metrics Comparison
 
@@ -83,6 +48,22 @@ More information needed
 
 {resource_table}
 
+`# Distillation (Teacher -> Student) Architecture Difference:
+
+- **Architecture**: `{teacher_model_architecture}` -> `{student_model_architecture}`
+- **Total Parameters**: {teacher_total_params} -> {student_total_params}
+- **Data Type (dtype)**: {teacher_model_dtype} -> {student_model_dtype}
+- **Model Size**: {teacher_model_size} -> {student_model_size}
+
+<details>
+<summary>Module Diff Details</summary>
+
+```diff
+{model_diff_repr}
+```
+
+</details>
+<br/>
 
 # Train Dataset
 Trained on {token_count:,} tokens from the [{dataset_name}](https://huggingface.co/datasets/{dataset_name}) dataset.
@@ -100,7 +81,14 @@ Trained on {token_count:,} tokens from the [{dataset_name}](https://huggingface.
 
 # Hyperparameters
 The following hyperparameters were used during training:
+
+<details>
+<summary>Expand</summary>
+
 {hyperparameters}
+
+</details>
+<br/>
 
 
 # Framework Versions
@@ -338,8 +326,6 @@ class DistillationTrainer(transformers.Trainer):
             student_total_params=f"{student_total_params:,}",
             student_model_dtype=str(student_model_dtype),
             student_model_size=f"{student_model_size:.2f} GB",
-            model_repr=repr(self.model),
-            teacher_model_repr=repr(self.teacher_model),
             teacher_model_architecture=teacher_model_architecture,
             teacher_total_params=f"{teacher_total_params:,}",
             teacher_model_dtype=str(teacher_model_dtype),
