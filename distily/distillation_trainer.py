@@ -284,12 +284,12 @@ class DistillationTrainer(transformers.Trainer):
         model_card.data["library_name"] = "Distily"
 
         if self.all_args.get("train_dataset"):
-            model_card.data["datasets"] = [self.all_args["train_dataset"].dataset_uri]
+            model_card.data["datasets"] = [self.all_args["dataset_args"].dataset_uri]
             dataset_kwargs = dict(
-                dataset_name=self.all_args["train_dataset"].dataset_uri,
-                token_count=self.all_args["train_dataset"].dataset_sample_size,
-                dataset_subset_name=self.all_args["train_dataset"].dataset_subset,
-                dataset_split_name=self.all_args["train_dataset"].dataset_split,
+                dataset_name=self.all_args["dataset_args"].dataset_uri,
+                token_count=self.all_args["dataset_args"].dataset_sample_size,
+                dataset_subset_name=self.all_args["dataset_args"].dataset_subset,
+                dataset_split_name=self.all_args["dataset_args"].dataset_split,
             )
         else:
             dataset_kwargs = dict(
@@ -298,7 +298,7 @@ class DistillationTrainer(transformers.Trainer):
                 dataset_split_name="unspecified",
             )
 
-        token_count = self.all_args["train_dataset"].dataset_sample_size,
+        token_count = self.all_args["dataset_args"].dataset_sample_size,
 
         import pdb;pdb.set_trace()
 
