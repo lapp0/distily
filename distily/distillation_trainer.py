@@ -298,10 +298,6 @@ class DistillationTrainer(transformers.Trainer):
                 dataset_split_name="unspecified",
             )
 
-        token_count = self.all_args["dataset_args"].dataset_sample_size,
-
-        import pdb;pdb.set_trace()
-
         model_card.text = MODEL_CARD_TEMPLATE.format(
             model_name=self.args.output_dir,
             teacher_model=self.teacher_model.config._name_or_path,
@@ -325,7 +321,9 @@ class DistillationTrainer(transformers.Trainer):
             hs_loss_details="",  # Extracted from distillation objective or logs
             attn_loss_details="",  # Extracted from distillation objective or logs
             hyperparameters="\n".join([f"- {name}: {value}" for name, value in hyperparameters.items()]),
-            framework_versions=framework_versions
+            framework_versions=framework_versions,
+            token_count=sum(map(sum, self.train_dataset["attention_mask"])),
+            **dataset_kwargs
         )
         model_card.save(model_card_filepath)
 
