@@ -4,3 +4,4 @@ from . import (  # noqa
     projectors,
     objectives,
 )
+from .objectives import DistillationObjective  # noqa

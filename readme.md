@@ -54,5 +54,5 @@ Features to enable:
 - [x] Distill using intermediate features including hidden states and attentions.
 - [x] Distill to bitnet.
 - [x] Layer removal through advanced [layer mapping techniques](https://arxiv.org/pdf/2310.08797).
-- [ ] Dimension shrinking through the use of projectors.
+- [x] Dimension shrinking through the use of [projectors](https://arxiv.org/abs/2403.06213).
 - [ ] Improve sampling efficiency through synthetic data generation.
