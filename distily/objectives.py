@@ -305,8 +305,6 @@ class LossComponent:
 
     @property
     def is_measured(self):
-        if bool(self.weight) != bool(self.loss_fn):
-            raise ValueError(f"Expected both weight and loss_fn or neither, got {self.weight}, {self.loss_fn}")
         return bool(self.weight)
 
     def __repr__(self):
