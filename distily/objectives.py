@@ -309,7 +309,11 @@ class LossComponent:
 
     def __repr__(self):
         class_name = self.__class__.__name__
-        field_values = ', '.join(f"{field}={getattr(self, field)}" for field in self.__dataclass_fields__)
+        field_values = ', '.join(
+            f"{field}={getattr(self, field)}"
+            for field in self.__dataclass_fields__
+            if getattr(self, field) is not None
+        )
         return f"{class_name}({field_values})"
 
 

@@ -37,7 +37,6 @@ More information needed
 - **Architecture**: `{student_model_architecture}`
 - **Total Parameters**: {student_total_params}
 - **Data Type (dtype)**: {student_model_dtype}
-  - **Quantization:** {student_quantization}
 - **Model Size**: {student_model_size}
 
 <details>
@@ -54,7 +53,6 @@ More information needed
 - **Architecture**: `{teacher_model_architecture}`
 - **Total Parameters**: {teacher_total_params}
 - **Data Type (dtype)**: {teacher_model_dtype}
-  - **Quantization:** {teacher_quantization}
 - **Model Size**: {teacher_model_size}
 
 <details>
@@ -277,6 +275,15 @@ class DistillationTrainer(transformers.Trainer):
             f"- Datasets {datasets.__version__}",
         ])
 
+        included_hyperparams = [
+            "gradient_accumulation_steps",
+            "weight_decay", "max_grad_norm",
+            "warmup_ratio", "warmup_steps",
+            "gradient_checkpointing",
+        ]
+
+        # includes lr, train_batch_size, eval_batch_size, seed,
+        # optimizer, lr_scheduler_type / warmup_ratio, num_epochs
         hyperparameters = transformers.modelcard.extract_hyperparameters_from_trainer(self)
         hyperparameters = {
             "distillation_objective": repr(self.distillation_objective),
