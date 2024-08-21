@@ -236,13 +236,13 @@ class DistillationTrainer(transformers.Trainer):
         student_model_architecture = self.model.config.architectures[0] if hasattr(self.model.config, 'architectures') else "Unknown"
         student_total_params = self.model.num_parameters()
         student_model_dtype = next(self.model.parameters()).dtype
-        student_model_size = self.model.get_memory_footprints() / (1024 ** 3)
+        student_model_size = self.model.get_memory_footprint() / (1024 ** 3)
 
         # Teacher model details
         teacher_model_architecture = self.teacher_model.config.architectures[0] if hasattr(self.teacher_model.config, 'architectures') else "Unknown"
         teacher_total_params = sum(p.numel() for p in self.teacher_model.parameters())
         teacher_model_dtype = self.teacher_model.num_parameters()
-        teacher_model_size = self.model.get_memory_footprints() / (1024 ** 3)
+        teacher_model_size = self.teacher_model.get_memory_footprint() / (1024 ** 3)
 
         step_evals = collections.defaultdict(dict)
         for log_line in self.state.log_history:
