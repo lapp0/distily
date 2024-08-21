@@ -4,6 +4,7 @@ import collections
 import logging
 import os
 import gc
+import sys
 
 import transformers
 import torch
@@ -220,14 +221,14 @@ class DistillationTrainer(transformers.Trainer):
         student_total_params = sum(p.numel() for p in self.model.parameters())
         student_model_dtype = next(self.model.parameters()).dtype
         student_quantization = "Not Quantized"  # Set based on the quantization details, if any
-        student_model_size = sum(os.path.getsize(p) for p in self.model.state_dict().keys()) / (1024 ** 2)
+        student_model_size = sys.getsizeof(self.model.state_dict().keys()) / (1024 ** 2)
 
         # Teacher model details
         teacher_model_architecture = self.teacher_model.config.architectures[0] if hasattr(self.teacher_model.config, 'architectures') else "Unknown"
         teacher_total_params = sum(p.numel() for p in self.teacher_model.parameters())
         teacher_model_dtype = next(self.teacher_model.parameters()).dtype
         teacher_quantization = "Not Quantized"  # Set based on the quantization details, if any
-        teacher_model_size = sum(os.path.getsize(p) for p in self.teacher_model.state_dict().keys()) / (1024 ** 2)
+        teacher_model_size = sys.getsizeof(self.teacher_model.state_dict().keys()) / (1024 ** 2)
 
         step_evals = collections.defaultdict(dict)
         for log_line in self.state.log_history:
