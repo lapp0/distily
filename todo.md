@@ -8,7 +8,7 @@
 
 
 ## v0.3.0
-- [ ] refactor so trainer constructs all inputs using args OR direct model / dataset passing
+- [x] refactor so trainer constructs all inputs using args OR direct model / dataset passing
 - [ ] log all training parameters (excluding stuff like push_to_hub)
 - [ ] log dataset total token count
 

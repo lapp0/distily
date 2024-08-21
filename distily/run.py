@@ -7,7 +7,7 @@ import torch
 import distily
 
 
-def run(params=None, **kwargs):
+def benchmark(params=None, **kwargs):
     """
     Benchmark the training process by exploring permutations of hyperparameters.
 
