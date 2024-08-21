@@ -402,20 +402,11 @@ class DistillationObjective:
         return loss
 
     def __repr__(self):
-        return (
-            "DistillationObjective("
-            f"logits_loss_component={self.logits_loss_component}, "
-            f"hs_loss_component={self.hs_loss_component}, "
-            f"attn_loss_component={self.attn_loss_component}"
-            ")"
-        )
-
-        attrs = []
-        for field in fields(self):
-            value = getattr(self, field.name)
-            # Check if the value is callable (a function, method, etc.)
-            if callable(value):
-                attrs.append(f"{field.name}=(fn:{value.__name__}())")
-            else:
-                attrs.append(f"{field.name}={value!r}")
-        return f"{self.__class__.__name__}({', '.join(attrs)})"
+        res = []
+        if self.logits_loss_component.is_measured:
+            res.append(f"logits_loss_component={self.logits_loss_component}")
+        if self.hs_loss_component.is_measured:
+            res.append(f"hs_loss_component={self.hs_loss_component}")
+        if self.attn_loss_component.is_measured:
+            res.append(f"attn_loss_component={self.attn_loss_component}")
+        res = f"{self.__class__.__name__}({', '.join(res)})"

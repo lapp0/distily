@@ -34,28 +34,34 @@ More information needed
 -->
 
 # Student Model (`{model_name}`) Architecture:
-- **Architecture**: {student_model_architecture}
+- **Architecture**: `{student_model_architecture}`
 - **Total Parameters**: {student_total_params}
 - **Data Type (dtype)**: {student_model_dtype}
   - **Quantization:** {student_quantization}
 - **Model Size**: {student_model_size}
 
 <details>
-  <summary>Student Model Architecture Details</summary>
-  {model_repr}
+<summary>Student Model Architecture Details</summary>
+```
+{model_repr}
+```
 </details>
+<br/>
 
 # Teacher Model Architecture:
-- **Architecture**: {teacher_model_architecture}
+- **Architecture**: `{teacher_model_architecture}`
 - **Total Parameters**: {teacher_total_params}
 - **Data Type (dtype)**: {teacher_model_dtype}
-  - Quantization: {teacher_quantization}
+  - **Quantization:** {teacher_quantization}
 - **Model Size**: {teacher_model_size}
 
 <details>
-  <summary>Teacher Model Architecture Details</summary>
-  {teacher_model_repr}
+<summary>Teacher Model Architecture Details</summary>
+```
+{teacher_model_repr}
+```
 </details>
+<br/>
 
 # Architecture Diff:
 
@@ -65,7 +71,7 @@ More information needed
 {model_diff_repr}
 ```
 </details>
-
+<br/>
 
 # Evaluation Metrics Comparison
 
@@ -283,7 +289,7 @@ class DistillationTrainer(transformers.Trainer):
         model_card = ModelCard.load(model_card_filepath)
         model_card.data["library_name"] = "Distily"
 
-        if self.all_args.get("train_dataset"):
+        if self.all_args.get("dataset_args"):
             model_card.data["datasets"] = [self.all_args["dataset_args"].dataset_uri]
             dataset_kwargs = dict(
                 dataset_name=self.all_args["dataset_args"].dataset_uri,
@@ -297,6 +303,20 @@ class DistillationTrainer(transformers.Trainer):
                 dataset_subset_name="unspecified",
                 dataset_split_name="unspecified",
             )
+
+        import difflib  # noqa
+        model_diff_repr = '\n'.join(
+            line for line in difflib.Differ().compare(
+                repr(self.model), repr(self.teacher_model)
+            ) if line.startswith('+') or line.startswith('-')
+        )
+
+        # TODO: Expand on this
+        resource_table = (
+            "- VRAM Use: " +
+            transformers.modelcard._maybe_round(torch.cuda.max_memory_allocated() / (1024 ** 3)) +
+            "GB"
+        )
 
         model_card.text = MODEL_CARD_TEMPLATE.format(
             model_name=self.args.output_dir,
@@ -313,9 +333,9 @@ class DistillationTrainer(transformers.Trainer):
             teacher_model_dtype=str(teacher_model_dtype),
             teacher_quantization=teacher_quantization,
             teacher_model_size=f"{teacher_model_size:.2f} MB",
-            model_diff_repr="",  # Needs custom implementation if required
+            model_diff_repr=model_diff_repr,
             eval_table=self._to_markdown_table(eval_lines),
-            resource_table="",  # Implement based on your resource metrics
+            resource_table=resource_table,
             num_train_samples=len(self.train_dataset),
             logit_details="",  # Extracted from distillation objective or logs
             hs_loss_details="",  # Extracted from distillation objective or logs
