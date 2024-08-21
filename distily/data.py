@@ -34,7 +34,6 @@ Generate data at runtime based on energy function.
 """
 
 import os
-import copy
 import datasets
 
 

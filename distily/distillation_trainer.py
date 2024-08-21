@@ -13,45 +13,91 @@ import distily
 
 
 MODEL_CARD_TEMPLATE = """
-# {model_name}
+# Summary
 
-This student model is distilled from the teacher model [{teacher_model}](https://huggingface.co/{teacher_model}) using the dataset {dataset_name}.
-
-The [Distily](https://github.com/lapp0/distily) library was used for this distillation.
-
-It achieves the following results on the evaluation set:
-{eval_result}
+- Model Name: `{model_name}`
+- Distilled using the [Distily](https://github.com/lapp0/distily) library
+- Teacher Model: [{teacher_model}](https://huggingface.co/{teacher_model})
+- Train Dataset: [{dataset_name}](link_to_dataset)
 
 <!-- This model card has been generated automatically according to the information the Trainer had access to. You
 should probably proofread and complete it, then remove this comment.
 
-## Model description
+# Model description
 
 More information needed
 
-## Intended uses & limitations
-
-More information needed
-
-## Training and evaluation data
+# Intended uses & limitations
 
 More information needed
 -->
 
-## Training procedure
+# Student Model (`{model_name}`) Architecture:
+- **Architecture**: {student_model_architecture}
+- **Total Parameters**: {student_total_params}
+- **Data Type (dtype)**: {student_model_dtype}
+  - **Quantization:** {student_quantization}
+- **Model Size**: {student_model_size}
 
-### Training hyperparameters
+<details>
+  <summary>Student Model Architecture Details</summary>
+  {model_repr}
+</details>
 
+# Teacher Model Architecture:
+- **Architecture**: {teacher_model_architecture}
+- **Total Parameters**: {teacher_total_params}
+- **Data Type (dtype)**: {teacher_model_dtype}
+  - Quantization: {teacher_quantization}
+- **Model Size**: {teacher_model_size}
+
+<details>
+  <summary>Teacher Model Architecture Details</summary>
+  {teacher_model_repr}
+</details>
+
+# Architecture Diff:
+
+<details>
+<summary>Expand</summary>
+```diff
+{model_diff_repr}
+```
+</details>
+
+
+# Evaluation Metrics Comparison
+
+{eval_table}
+
+# Resource Usage Comparison
+
+{resource_table}
+
+
+# Train Dataset
+Trained on {token_count} tokens from the [{dataset_name}](link_to_dataset) dataset.
+
+- Subset / Split: [subset={dataset_subset_name} split={dataset_split_name}](link_to_dataset)
+- Train Samples: {num_train_samples}
+
+# Training Loss Function
+**Logits**:
+{logit_details}
+
+**Hidden States**:
+{hs_loss_details}
+
+**Attention**:
+{attn_loss_details}
+
+
+# Hyperparameters
 The following hyperparameters were used during training:
 {hyperparameters}
 
-### Resource Usage
-Peak GPU Memory: {peakmem_gb} GB
 
-### Eval-Phase Metrics
-{eval_table}
-
-### Framework versions
+# Framework Versions
 {framework_versions}
 """
 
@@ -169,6 +215,20 @@ class DistillationTrainer(transformers.Trainer):
     def create_model_card(self, *args, **kwargs):
         super().create_model_card(*args, **kwargs)
 
+        # Student model details
+        student_model_architecture = self.model.config.architectures[0] if hasattr(self.model.config, 'architectures') else "Unknown"
+        student_total_params = sum(p.numel() for p in self.model.parameters())
+        student_model_dtype = next(self.model.parameters()).dtype
+        student_quantization = "Not Quantized"  # Set based on the quantization details, if any
+        student_model_size = sum(os.path.getsize(p) for p in self.model.state_dict().keys()) / (1024 ** 2)
+
+        # Teacher model details
+        teacher_model_architecture = self.teacher_model.config.architectures[0] if hasattr(self.teacher_model.config, 'architectures') else "Unknown"
+        teacher_total_params = sum(p.numel() for p in self.teacher_model.parameters())
+        teacher_model_dtype = next(self.teacher_model.parameters()).dtype
+        teacher_quantization = "Not Quantized"  # Set based on the quantization details, if any
+        teacher_model_size = sum(os.path.getsize(p) for p in self.teacher_model.state_dict().keys()) / (1024 ** 2)
+
         step_evals = collections.defaultdict(dict)
         for log_line in self.state.log_history:
             extracted_logs = {
@@ -194,7 +254,6 @@ class DistillationTrainer(transformers.Trainer):
         eval_results.pop("step", None)
         eval_results.pop("epoch", None)
 
-        # TODO: include __version__ in distily
         import pkg_resources, datasets
         framework_versions = "\n".join([
             f"- Distily {pkg_resources.get_distribution('distily').version}",
@@ -210,27 +269,38 @@ class DistillationTrainer(transformers.Trainer):
             **hyperparameters
         }
 
-        # TODO: DistillationObjective needs a repr to include the loss fn, etc
-
-        # TODO: add
-        # model_card.data["metrics"] = ...
-        # model_card.data["datasets"] = ...
-
         model_card_filepath = os.path.join(self.args.output_dir, "README.md")
         model_card = ModelCard.load(model_card_filepath)
         model_card.data["library_name"] = "Distily"
+        model_card.data["datasets"] = [self.train_dataset.args.dataset_uri]
 
         model_card.text = MODEL_CARD_TEMPLATE.format(
             model_name=self.args.output_dir,
             teacher_model=self.teacher_model.config._name_or_path,
-            dataset_name="(unspecified)",  # TODO
-            eval_result="\n".join([
-                f"- {name}: {transformers.modelcard._maybe_round(value)}"
-                for name, value in eval_results.items()
-            ]),
-            hyperparameters="\n".join([f"- {name}: {value}" for name, value in hyperparameters.items()]),
-            peakmem_gb=transformers.modelcard._maybe_round(torch.cuda.max_memory_allocated() / (1024 ** 3)),
+            dataset_name=self.train_dataset.args.dataset_uri,
+            student_model_architecture=student_model_architecture,
+            student_total_params=f"{student_total_params:,}",
+            student_model_dtype=str(student_model_dtype),
+            student_quantization=student_quantization,
+            student_model_size=f"{student_model_size:.2f} MB",
+            model_repr=repr(self.model),
+            teacher_model_repr=repr(self.teacher_model),
+            teacher_model_architecture=teacher_model_architecture,
+            teacher_total_params=f"{teacher_total_params:,}",
+            teacher_model_dtype=str(teacher_model_dtype),
+            teacher_quantization=teacher_quantization,
+            teacher_model_size=f"{teacher_model_size:.2f} MB",
+            model_diff_repr="",  # Needs custom implementation if required
             eval_table=self._to_markdown_table(eval_lines),
+            resource_table="",  # Implement based on your resource metrics
+            token_count=self.train_dataset.args.dataset_sample_size,
+            dataset_subset_name=self.train_dataset.args.dataset_subset,
+            dataset_split_name=self.train_dataset.args.dataset_split,
+            num_train_samples=len(self.train_dataset),
+            logit_details="",  # Extracted from distillation objective or logs
+            hs_loss_details="",  # Extracted from distillation objective or logs
+            attn_loss_details="",  # Extracted from distillation objective or logs
+            hyperparameters="\n".join([f"- {name}: {value}" for name, value in hyperparameters.items()]),
             framework_versions=framework_versions
         )
         model_card.save(model_card_filepath)
