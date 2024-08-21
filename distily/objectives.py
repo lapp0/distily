@@ -409,4 +409,4 @@ class DistillationObjective:
             res.append(f"hs_loss_component={self.hs_loss_component}")
         if self.attn_loss_component.is_measured:
             res.append(f"attn_loss_component={self.attn_loss_component}")
-        res = f"{self.__class__.__name__}({', '.join(res)})"
+        return f"{self.__class__.__name__}({', '.join(res)})"
