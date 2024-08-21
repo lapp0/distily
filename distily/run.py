@@ -61,8 +61,8 @@ def benchmark(params=None, **kwargs):
         )
 
         try:
-            # TODO: do_train should return training results
-            res = distily.cli.do_train(*parsed_args_tuple)
+            # TODO: train should return training results
+            res = train(*parsed_args_tuple)
 
             open(completion_flag, 'a').close()  # write completion flag
 
