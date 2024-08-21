@@ -125,7 +125,7 @@ class DistillationTrainer(transformers.Trainer):
 
         self.log_trainer_details()
 
-,    @classmethod
+    @classmethod
     def from_args(
             cls,
             training_args,
