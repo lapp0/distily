@@ -125,7 +125,7 @@ class DistillationTrainer(transformers.Trainer):
 
         self.log_trainer_details()
 
-    @classmethod
+,    @classmethod
     def from_args(
             cls,
             training_args,
@@ -282,13 +282,29 @@ class DistillationTrainer(transformers.Trainer):
         model_card_filepath = os.path.join(self.args.output_dir, "README.md")
         model_card = ModelCard.load(model_card_filepath)
         model_card.data["library_name"] = "Distily"
+
         if self.all_args.get("train_dataset"):
             model_card.data["datasets"] = [self.all_args["train_dataset"].dataset_uri]
+            dataset_kwargs = dict(
+                dataset_name=self.all_args["train_dataset"].dataset_uri,
+                token_count=self.all_args["train_dataset"].dataset_sample_size,
+                dataset_subset_name=self.all_args["train_dataset"].dataset_subset,
+                dataset_split_name=self.all_args["train_dataset"].dataset_split,
+            )
+        else:
+            dataset_kwargs = dict(
+                dataset_name="unspecified",
+                dataset_subset_name="unspecified",
+                dataset_split_name="unspecified",
+            )
+
+        token_count = self.all_args["train_dataset"].dataset_sample_size,
+
+        import pdb;pdb.set_trace()
 
         model_card.text = MODEL_CARD_TEMPLATE.format(
             model_name=self.args.output_dir,
             teacher_model=self.teacher_model.config._name_or_path,
-            dataset_name=self.all_args["train_dataset"].dataset_uri if self.all_args.get("train_dataset") else "(unspecified)",
             student_model_architecture=student_model_architecture,
             student_total_params=f"{student_total_params:,}",
             student_model_dtype=str(student_model_dtype),
@@ -304,9 +320,6 @@ class DistillationTrainer(transformers.Trainer):
             model_diff_repr="",  # Needs custom implementation if required
             eval_table=self._to_markdown_table(eval_lines),
             resource_table="",  # Implement based on your resource metrics
-            token_count=self.train_dataset.args.dataset_sample_size,
-            dataset_subset_name=self.train_dataset.args.dataset_subset,
-            dataset_split_name=self.train_dataset.args.dataset_split,
             num_train_samples=len(self.train_dataset),
             logit_details="",  # Extracted from distillation objective or logs
             hs_loss_details="",  # Extracted from distillation objective or logs
