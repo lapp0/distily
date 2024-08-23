@@ -48,7 +48,7 @@ class DistillationTrainer(transformers.Trainer):
         student_model = distily.models.get_student_model(student_model_args, teacher_model)
 
         evaluators = {
-            metric["name"]: distily.metrics.get_ppl_metric(tokenizer=tokenizer, **asdict(metric))
+            metric["name"]: distily.metrics.get_ppl_metric(tokenizer=tokenizer, **metric)
             for metric in (eval_args.ppl_evaluators + eval_args.ppl_extra_evaluators)
         }
 

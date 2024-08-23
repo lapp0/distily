@@ -61,7 +61,7 @@ class PerplexityEvalCallback(TrainerCallback):
         return mean_perplexity.item()
 
 
-def get_ppl_metric(tokenizer, dataset_name, subset, split, sample_size, **kwargs):
-    dataset = load_dataset(dataset_name, subset, split=split)
-    dataset = dataset.select(range(len(dataset) - sample_size, len(dataset)))
-    return PerplexityEvalCallback(dataset, tokenizer=tokenizer).do_eval
+def get_ppl_metric(tokenizer, dataset, subset, split, sample_size, **kwargs):
+    ds = load_dataset(dataset, subset, split=split)
+    ds = dataset.select(range(len(ds) - sample_size, len(ds)))
+    return PerplexityEvalCallback(ds, tokenizer=tokenizer).do_eval
