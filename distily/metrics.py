@@ -63,5 +63,5 @@ class PerplexityEvalCallback(TrainerCallback):
 
 def get_ppl_metric(tokenizer, dataset, subset, split, sample_size, **kwargs):
     ds = load_dataset(dataset, subset, split=split)
-    ds = dataset.select(range(len(ds) - sample_size, len(ds)))
+    ds = ds.select(range(len(ds) - sample_size, len(ds)))
     return PerplexityEvalCallback(ds, tokenizer=tokenizer).do_eval
