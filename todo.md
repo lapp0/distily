@@ -7,19 +7,31 @@
 # TODO
 
 ## v0.3.1
-- [ ] parameterized eval_step metrics, and final metrics
-- [ ] eval for HotpotQA, TriviaQA, GLUE, SQUAD, CoNLL-2003, CoLA, MNLI
-- [ ] fix log output so the loss/logits and loss/activations respects logging_steps
+- [x] parameterized eval_step metrics
+- [x] fix log output so the loss/logits and loss/activations respects logging_steps
+
+## v0.3.2
+performance:
+- [ ] smoke test `torch.compile`
+- [ ] smoke test `torch.optim._multi_tensor` https://github.com/huggingface/transformers/issues/9965
+- [ ] smoke test with `dynamo.optimize("inductor")`
 
 ## v0.4.0
 - [ ] Implement synthetic datasets: randomly sampled
+
+## v0.4.1
+- [ ] `debug` mode: more overhead and slower, but can help debug loss functions. Calculate the following:
+      - grad_norm of each individual loss component (determine magnitude)
+	  - correlation between each loss components gradient (determine relatedness)
+
 
 ## v0.5.0
 - [ ] synthetic datasets: custom generators focusing on OOD sequences
 - [ ] vllm?
 
 ## v0.5.1
-- [ ] add eval tool for MMLU-PRO / MATH / etc
+- [ ] benchmark_harness for HotpotQA, TriviaQA, GLUE, SQUAD, CoNLL-2003, CoLA, MNLI
+  - [ ] additional: MMLU-PRO / MATH / etc
 
 **Training Quality Improvements**
 - [ ] add ability to transfer / freeze embeddings

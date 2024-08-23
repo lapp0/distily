@@ -48,7 +48,7 @@ class DistillationTrainer(transformers.Trainer):
         student_model = distily.models.get_student_model(student_model_args, teacher_model)
 
         evaluators = {
-            metric["name"]: distily.metrics.get_ppl_metric(**metric)
+            metric["name"]: distily.metrics.get_ppl_metric(tokenizer=tokenizer, **metric)
             for metric in (eval_args.ppl_evaluators + eval_args.ppl_extra_evaluators)
         }
 
@@ -132,7 +132,7 @@ class DistillationTrainer(transformers.Trainer):
         metrics = {}
         if metric_key_prefix == "eval":
             with torch.no_grad():
-                for evaluator_name, evaluator in self.args.extra_evaluators.items():
+                for evaluator_name, evaluator in self.evaluators.items():
                     metrics[f"eval_{evaluator_name}"] = float(evaluator(
                         self.model,
                         self.args.per_device_eval_batch_size

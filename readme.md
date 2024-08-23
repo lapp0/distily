@@ -34,6 +34,17 @@ The [Resulting `distily_gpt2` Model](https://huggingface.co/distily/distily_gpt2
 
 For more examples, review the [Examples](./docs/examples.md) documentation.
 
+#### Note on Hub Credentials
+To push to hub, you must prepare your hub token
+```
+HF_WRITE=<your hub token> python3 -c "from huggingface_hub.hf_api import HfFolder; HfFolder.save_token('${HF_WRITE}')"
+```
+
+#### Compiling
+To use the `student_compile` flag you need to run
+```
+pip install --pre torch --index-url https://download.pytorch.org/whl/nightly/cu121 --force-reinstall
+```
 
 ## Further Reading
 
@@ -56,3 +67,5 @@ Features to enable:
 - [x] Layer removal through advanced [layer mapping techniques](https://arxiv.org/pdf/2310.08797).
 - [x] Dimension shrinking through the use of [projectors](https://arxiv.org/abs/2403.06213).
 - [ ] Improve sampling efficiency through synthetic data generation.
+- [ ] Distill to State-Space / Mamba
+- [ ] Distill to MoE
