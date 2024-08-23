@@ -27,8 +27,8 @@ performance:
 - [ ] batch norm layer independent of projector
 
 ## v0.5.0
-- [ ] synthetic datasets: custom generators focusing on OOD sequences
-- [ ] vllm?
+- [ ] synthetic datasets: custom generators focusing on OOD sequences with vllm
+- [ ] update benchmarks so they run in vllm, not hf
 
 ## v0.5.1
 - [ ] benchmark_harness for HotpotQA, TriviaQA, GLUE, SQUAD, CoNLL-2003, CoLA, MNLI

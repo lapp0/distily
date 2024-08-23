@@ -88,7 +88,9 @@ class EvalArguments:
         metadata={"help": "Additional evaluation metrics to be used."}
     )
     harness_benchmarks: typing.List[typing.Dict] = field(
-        default_factory=lambda: ["wikitext", "boolq", "hellaswag", "glue", "ai2_arc"],
+        default_factory=lambda: ["boolq", "hellaswag", "glue", "ai2_arc"],
+        # recommendations for official models
+        # default_factory=lambda: ["wikitext", "boolq", "hellaswag", "glue", "ai2_arc"],
         metadata={"help": "Benchmarks to compare student and teacher models at end of training."}
     )
 
