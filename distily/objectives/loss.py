@@ -88,6 +88,21 @@ def jsd_loss(feat_s, feat_t, beta_prob=0.5):
     return jsd
 
 
+def logsum_loss(student_proj, teacher_features, alpha=4.0):
+    """
+    Based on https://arxiv.org/pdf/2303.11098
+    Experimentally they determine 4.0 to 5.0 performs well
+    """
+    # Calculate the absolute difference between the projected student features and teacher features
+    diff = torch.abs(student_proj - teacher_features)
+
+    # Apply the LogSum function
+    loss = torch.logsumexp(alpha * torch.log(diff + 1e-12), dim=-1)
+
+    # Return the mean loss over the batch
+    return loss.mean()
+
+
 def cosine_distance_loss(feat_s, feat_t):
     cosine_sim = F.cosine_similarity(feat_s, feat_t, dim=-1)
     cosine_distance = 1 - cosine_sim
@@ -136,6 +151,7 @@ LOSS_FUNCTIONS = {
     "reverse_kl": reverse_kl_divergence_loss,
     "cakld": cakld_loss,
     "jsd": jsd_loss,
+    "logsum": logsum_loss,
     "cos": cosine_distance_loss,
     "ce": soft_cross_entropy_loss,
     "mse_sum": soft_mse_sum_loss,

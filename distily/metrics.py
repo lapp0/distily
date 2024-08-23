@@ -89,5 +89,5 @@ def run_benchmarks(model, tokenizer, benchmarks):
     return lm_eval.simple_evaluate(
         model=lm_eval_model,
         tasks=benchmarks,
-        max_batch_size=16,
+        max_batch_size=1024,
     )

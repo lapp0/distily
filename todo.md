@@ -6,10 +6,11 @@
 
 # TODO
 
-- [ ] revert - include logs
+- [x] revert - include logs
 - [ ] fix model card
 
 ## v0.4.0
+- [x] add logsum distance from https://arxiv.org/pdf/2303.11098
 - [ ] Implement synthetic datasets: randomly sampled
 
 ## v0.4.1
