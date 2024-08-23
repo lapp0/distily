@@ -54,21 +54,19 @@ TODO: commit the linked docs
 
 ## Roadmap
 
-Improved performance / sampling efficiency:
+#### Improved performance / sampling efficiency:
 - [X] Standard knowledge distillation using logits.
 - [x] Distill using intermediate features including hidden states and attentions.
 - [ ] Improve sampling efficiency through synthetic data generation.
 - [ ] Implement cross-entropy classification loss (traditional LLM loss function)
 - [ ] Apply projector to logits (https://arxiv.org/pdf/2310.17183)
 
-Distill to a different model shape / size:
+#### Distill to a different model shape / size:
 - [x] Distill to model with fewer `num_hidden_layers` by implementing layer mappers.
 - [x] Distill to a model with modified module dimensions and behaviors (e.g., `intermediate_size`, `hidden_act`) by employing projectors.
 - [ ] Distill to a model with modified `num_attention_heads` and `num_key_value_heads` by extending the projectors implementation.
 
-Distill to a different architecture:
+#### Distill to a different architecture:
 - [x] Distill to bitnet
 - [ ] Distill to State-Space / Mamba
 - [ ] Distill to MoE
-
-Features for consideration:
