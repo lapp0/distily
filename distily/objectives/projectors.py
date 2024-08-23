@@ -88,10 +88,37 @@ class EnsembleProjector(nn.Module):
         return torch.mean(outputs, dim=0), teacher_features
 
 
+class MilesProjector(nn.Module):
+    """Applies projector based on paper https://arxiv.org/pdf/2303.11098"""
+    def __init__(self, student_features, teacher_features, use_batchnorm=True):
+        super().__init__()
+        self.use_batchnorm = use_batchnorm
+
+        # Define the linear projection layer
+        self.embed = nn.Linear(
+            student_features.size(-1),
+            teacher_features.size(-1),
+        )
+
+        if use_batchnorm:
+            self.bn_s = nn.BatchNorm1d(teacher_features.size(-1), eps=0.0001, affine=False)
+            self.bn_t = nn.BatchNorm1d(teacher_features.size(-1), eps=0.0001, affine=False)
+
+    def forward(self, student_features, teacher_features):
+        student_projected = self.embed(student_features)
+
+        if self.use_batchnorm:
+            student_projected = self.bn_s(student_projected)
+            teacher_features = self.bn_t(teacher_features)
+
+        return student_projected, teacher_features
+
+
 PROJECTORS = {
     "identity": IdentityProjector,
     "linear": LinearProjector,
     "orthogonal": OrthogonalProjector,
     "mlp": MLPProjector,
     "ensemble": EnsembleProjector,
+    "miles": MilesProjector,
 }
