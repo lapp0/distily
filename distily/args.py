@@ -93,6 +93,10 @@ class EvalArguments:
         # default_factory=lambda: ["wikitext", "boolq", "hellaswag", "glue", "ai2_arc"],
         metadata={"help": "Benchmarks to compare student and teacher models at end of training."}
     )
+    harness_benchmark_limit: int = field(
+        default=5000,
+        metadata={"help": "Limit the number of examples per task (only use this for testing), If <1, limit is %."}
+    )
 
 @dataclass
 class DistillationObjectiveArguments:

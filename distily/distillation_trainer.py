@@ -152,6 +152,7 @@ class DistillationTrainer(transformers.Trainer):
             return
 
         benchmarks = self.all_args["eval_args"].harness_benchmarks
+        limit = self.all_args["eval_args"].harness_benchmark_limit
 
         self.model.eval()
         self.teacher_model.eval()
@@ -161,10 +162,10 @@ class DistillationTrainer(transformers.Trainer):
         with shelve.open(self.benchmarks_shelf) as db:
             if "teacher" not in db:
                 db["teacher"] = distily.metrics.run_benchmarks(
-                    self.teacher_model, self.tokenizer, benchmarks
+                    self.teacher_model, self.tokenizer, benchmarks, limit
                 )
             student_metrics = distily.metrics.run_benchmarks(
-                self.model, self.tokenizer, benchmarks
+                self.model, self.tokenizer, benchmarks, limit
             )
             db[self.args.run_name] = student_metrics
 
