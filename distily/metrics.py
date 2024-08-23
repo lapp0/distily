@@ -2,7 +2,7 @@ from transformers import TrainerCallback
 from datasets import load_dataset
 import torch
 from torch.nn import CrossEntropyLoss
-from tqdm import tqdm
+import logging
 
 
 class PerplexityEvalCallback(TrainerCallback):
@@ -65,3 +65,27 @@ def get_ppl_metric(tokenizer, dataset, subset, split, sample_size, **kwargs):
     ds = load_dataset(dataset, subset, split=split)
     ds = ds.select(range(len(ds) - sample_size, len(ds)))
     return PerplexityEvalCallback(ds, tokenizer=tokenizer).do_eval
+
+
+def run_benchmarks(model, tokenizer, benchmarks):
+    """
+    Run a list of EleutherAI LM Harness benchmarks on a provided model.
+
+    Args:
+        model (PreTrainedModel): The model to evaluate.
+        tokenizer (PreTrainedTokenizer): The tokenizer associated with the model.
+        benchmarks (List[str]): A list of benchmark names to run (e.g., ['mmlu', 'lambada']).
+
+    Returns:
+        Dict: A dictionary containing the results of all the benchmarks.
+    """
+    logging.debug(f"Running benchmarks: {benchmarks}")
+    import lm_eval
+    lm_eval_model = lm_eval.models.huggingface.HFLM(
+        pretrained=model,
+        tokenizer=tokenizer
+    )
+    return lm_eval.simple_evaluate(
+        model=lm_eval_model,
+        tasks=benchmarks
+    )

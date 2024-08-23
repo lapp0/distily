@@ -45,6 +45,7 @@ def benchmark(params=None, **kwargs):
         run_name = get_run_name(product_args)
         print(run_name)
         current_args = {
+            "run_name": run_name,
             **product_args,
             **kwargs
         }
@@ -57,7 +58,7 @@ def benchmark(params=None, **kwargs):
 
         parsed_args_tuple = distily.args.parser.parse_dict(
             current_args,
-            allow_extra_keys=True
+            allow_extra_keys=False
         )
 
         try:

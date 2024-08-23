@@ -1,7 +1,7 @@
 from dataclasses import asdict
-import logging
 import os
 import gc
+import shelve
 
 import transformers
 import torch
@@ -31,8 +31,6 @@ class DistillationTrainer(transformers.Trainer):
 
         self.evaluators = evaluators
 
-        self.log_trainer_details()
-
     @classmethod
     def from_args(
             cls,
@@ -52,12 +50,6 @@ class DistillationTrainer(transformers.Trainer):
             for metric in (eval_args.ppl_evaluators + eval_args.ppl_extra_evaluators)
         }
 
-        # TODO: benchmarks run at end
-        #benchmarks = {
-        #    metric["name"]: distily.metrics.get_benchmark(metric["name"], **metric)
-        #    for metric in eval_args.harness_benchmarks
-        #}
-
         max_seq_len = min(
             student_model.config.max_position_embeddings,
             teacher_model.config.max_position_embeddings
@@ -76,12 +68,12 @@ class DistillationTrainer(transformers.Trainer):
             eval_dataset=test_dataset,
             distillation_objective=distillation_objective,
             evaluators=evaluators,
-            #benchmarks=benchmarks,
             all_args=dict(
                 distillation_objective_args=distillation_objective_args,
                 student_model_args=student_model_args,
                 teacher_model_args=teacher_model_args,
                 dataset_args=dataset_args,
+                eval_args=eval_args,
             )
         )
 
@@ -93,16 +85,15 @@ class DistillationTrainer(transformers.Trainer):
         return cls.from_args(*parsed_args_tuple)
 
     def train(self, *args, **kwargs):
-        super().train(*args, **kwargs)
-        if self.args.eval_on_end:
-            self.evaluate()
-
-    def log_trainer_details(self):
-        logging.info("Student model: `{TODO}`")
-        # TODO:
-        # student / teacher model names / shapes
-        # logits (y/n)
-        # activation pair transfers
+        train_output = super().train(*args, **kwargs)
+        bench_metrics_out = self._maybe_benchmark()
+        if bench_metrics_out is None:
+            return train_output
+        return transformers.trainer_utils.TrainOutput(
+            train_output.global_step,
+            train_output.training_loss,
+            {**train_output.metrics, **bench_metrics_out}
+        )
 
     def compute_loss(self, model, inputs, return_outputs=False):
         loss_dict = self.distillation_objective(self.teacher_model, model, inputs)
@@ -156,12 +147,26 @@ class DistillationTrainer(transformers.Trainer):
 
         model_card.save(model_card_filepath)
 
-    def eval_teacher_metrics(self):
-        teacher_model_results = {}
-        with torch.no_grad():
-            for evaluator_name, evaluator in self.evaluators.items():
-                teacher_model_results[f"eval_{evaluator_name}"] = float(evaluator(
-                    self.teacher_model,
-                    self.args.per_device_eval_batch_size
-                ))
-        return teacher_model_results
+    def _maybe_benchmark(self):
+        if not self.all_args.get("eval_args") or not self.all_args["eval_args"].harness_benchmarks:
+            return
+
+        benchmarks = self.all_args["eval_args"].harness_benchmarks
+
+        self.model.eval()
+        self.teacher_model.eval()
+        gc.collect()
+        torch.cuda.empty_cache()
+
+        benchmarks_path = os.path.join(self.args.output_dir, "benchmarks.shelve")
+        with shelve.open(benchmarks_path) as db:
+            if "teacher" not in db:
+                db["teacher"] = distily.metrics.run_benchmarks(
+                    self.teacher_model, self.tokenizer, benchmarks
+                )
+            student_metrics = distily.metrics.run_benchmarks(
+                self.model, self.tokenizer, benchmarks
+            )
+            db[self.args.run_name] = student_metrics
+
+        return student_metrics

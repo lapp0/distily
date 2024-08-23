@@ -146,12 +146,6 @@ def create_model_card_text(trainer):
                 **extracted_logs
             })
 
-    if trainer.args.eval_teacher_metrics:
-        step_evals["**teacher eval**"] = {
-            k: transformers.modelcard._maybe_round(v)
-            for k, v in trainer.eval_teacher_metrics().items()
-        }
-
     eval_lines = [{"step": step, **value} for step, value in sorted(step_evals.items())]
 
     eval_results = dict(eval_lines[-1])
