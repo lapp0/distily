@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "distily"
-version = "0.2.0"
+version = "0.3.0"
 description = "Distily: Language Model Distillation Toolkit and Library"
 authors = ["Andrew Lapp <andrew@github.rew.la>"]
 license = "MIT"

@@ -101,7 +101,7 @@ class DistillationTrainer(transformers.Trainer):
 
         # if train step, add to log history
         if not return_outputs:
-            self.state.log_history.append({
+            self.log({
                 "step": self.state.global_step,
                 **{k: float(v) for k, v in loss_dict.items()},
             })

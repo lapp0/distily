@@ -6,24 +6,25 @@
 
 # TODO
 
-## v0.3.1
-- [x] parameterized eval_step metrics
-- [x] fix log output so the loss/logits and loss/activations respects logging_steps
-
-## v0.3.2
-performance:
-- [ ] smoke test `torch.compile`
-- [ ] smoke test `torch.optim._multi_tensor` https://github.com/huggingface/transformers/issues/9965
-- [ ] smoke test with `dynamo.optimize("inductor")`
+- [ ] revert - include logs
+- [ ] fix model card
 
 ## v0.4.0
 - [ ] Implement synthetic datasets: randomly sampled
 
 ## v0.4.1
+performance:
+- [ ] smoke test `torch.compile`
+- [ ] smoke test `torch.optim._multi_tensor` https://github.com/huggingface/transformers/issues/9965
+- [ ] smoke test with `dynamo.optimize("inductor")`
+
+## v0.4.2
 - [ ] `debug` mode: more overhead and slower, but can help debug loss functions. Calculate the following:
       - grad_norm of each individual loss component (determine magnitude)
 	  - correlation between each loss components gradient (determine relatedness)
 
+## v0.4.3
+- [ ] batch norm layer independent of projector
 
 ## v0.5.0
 - [ ] synthetic datasets: custom generators focusing on OOD sequences
@@ -33,8 +34,13 @@ performance:
 - [ ] benchmark_harness for HotpotQA, TriviaQA, GLUE, SQUAD, CoNLL-2003, CoLA, MNLI
   - [ ] additional: MMLU-PRO / MATH / etc
 
+## v0.5.2
+- [ ] fix log output so the loss/logits and loss/activations respects logging_steps
+
+
+## v0.5.3
 **Training Quality Improvements**
-- [ ] add ability to transfer / freeze embeddings
+- [x] add ability to transfer / freeze embeddings
 - [ ] gradient weighted loss (review paper, see if there's ways to handle case where activations gradients push model in opposite direction as logit gradients / are orthogonal)
 - [ ] add stochastic noise / batch regularization and experiment since smaller batch size performrs so much better
 
