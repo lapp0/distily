@@ -84,6 +84,7 @@ def run_benchmarks(model, tokenizer, benchmarks):
     lm_eval_model = lm_eval.models.huggingface.HFLM(
         pretrained=model,
         tokenizer=tokenizer,
+        trust_remote_code=True,
     )
     return lm_eval.simple_evaluate(
         model=lm_eval_model,
