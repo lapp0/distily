@@ -89,5 +89,4 @@ def run_benchmarks(model, tokenizer, benchmarks):
         model=lm_eval_model,
         tasks=benchmarks,
         max_batch_size=16,
-        trust_remote_code=True,
     )
