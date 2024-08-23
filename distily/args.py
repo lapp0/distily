@@ -80,7 +80,7 @@ class EvalArguments:
             dict(name="enwikippl", dataset="wikimedia/wikipedia", subset="20231101.en", split="train", sample_size=1000),
             dict(name="frwikippl", dataset="wikimedia/wikipedia", subset="20231101.fr", split="train", sample_size=1000),
             dict(name="zhwikippl", dataset="wikimedia/wikipedia", subset="20231101.zh", split="train", sample_size=1000),
-            dict(name="tinystoriesppl", dataset="roneneldan/TinyStories", split="validation", sample_size=2000)
+            dict(name="tinystoriesppl", dataset="roneneldan/TinyStories", subset="default", split="validation", sample_size=2000)
         ],
         metadata={"help": "Default evaluation metrics with their parameters."}
     )
