@@ -89,18 +89,17 @@ class EvalArguments:
     )
     harness_benchmarks: typing.List[typing.Dict] = field(
         default_factory=lambda: ["wikitext", "boolq", "hellaswag", "glue", "ai2_arc"],
-        # recommendations for official models
-        # default_factory=lambda: ["wikitext", "boolq", "hellaswag", "glue", "ai2_arc"],
+        # official model release recommendation: include mmlu, math, etc
         metadata={"help": "Benchmarks to compare student and teacher models at end of training."}
     )
     harness_benchmark_limit: int = field(
         default=5000,
-        # recommend: set to None for official releases
+        # official model release recommendation: set to None for official releases to measure all data points
         metadata={"help": "Limit the number of examples per task (only use this for testing), If <1, limit is %."}
     )
     harness_benchmark_bootstrap_iters: int = field(
         default=0,
-        # recommend: set to None for official releases
+        # official model release recommendation: set to None for official releases to measure error
         metadata={"help": "Number iter for bootstrap stats for stderr. Set to 0 to skip stderr calc. "}
     )
 

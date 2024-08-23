@@ -6,15 +6,12 @@
 
 # TODO
 
-- [x] revert - include logs
-- [ ] fix model card
-
 ## v0.4.0
-- [x] add logsum distance from https://arxiv.org/pdf/2303.11098
 - [ ] Implement synthetic datasets: randomly sampled
 
 ## v0.4.1
 performance:
+- [ ] replace `student/teacher_model_compile` with `training_args.compile`
 - [ ] smoke test `torch.compile`
 - [ ] smoke test `torch.optim._multi_tensor` https://github.com/huggingface/transformers/issues/9965
 - [ ] smoke test with `dynamo.optimize("inductor")`

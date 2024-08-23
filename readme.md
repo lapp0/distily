@@ -40,12 +40,6 @@ To push to hub, you must prepare your hub token
 HF_WRITE=<your hub token> python3 -c "from huggingface_hub.hf_api import HfFolder; HfFolder.save_token('${HF_WRITE}')"
 ```
 
-#### Compiling
-To use the `student_compile` flag you need to run
-```
-pip install --pre torch --index-url https://download.pytorch.org/whl/nightly/cu121 --force-reinstall
-```
-
 ## Further Reading
 
 TODO: commit the linked docs
@@ -60,12 +54,21 @@ TODO: commit the linked docs
 
 ## Roadmap
 
-Features to enable:
+Improved performance / sampling efficiency:
 - [X] Standard knowledge distillation using logits.
 - [x] Distill using intermediate features including hidden states and attentions.
-- [x] Distill to bitnet.
-- [x] Layer removal through advanced [layer mapping techniques](https://arxiv.org/pdf/2310.08797).
-- [x] Dimension shrinking through the use of [projectors](https://arxiv.org/abs/2403.06213).
 - [ ] Improve sampling efficiency through synthetic data generation.
+- [ ] Implement cross-entropy classification loss (traditional LLM loss function)
+- [ ] Apply projector to logits (https://arxiv.org/pdf/2310.17183)
+
+Distill to a different model shape / size:
+- [x] Distill to model with fewer `num_hidden_layers` by implementing layer mappers.
+- [x] Distill to a model with modified module dimensions and behaviors (e.g., `intermediate_size`, `hidden_act`) by employing projectors.
+- [ ] Distill to a model with modified `num_attention_heads` and `num_key_value_heads` by extending the projectors implementation.
+
+Distill to a different architecture:
+- [x] Distill to bitnet
 - [ ] Distill to State-Space / Mamba
 - [ ] Distill to MoE
+
+Features for consideration:

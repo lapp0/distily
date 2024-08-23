@@ -17,6 +17,7 @@ accelerate = ">=0.21.0"
 bitsandbytes = ">=0.43.3 "
 flash-attn = ">=2.6.3"
 tensorboardX = "*"
+lm_eval = "*"
 
 [build-system]
 requires = ["poetry-core"]

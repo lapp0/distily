@@ -96,7 +96,7 @@ def _flatten_harness_results(model_results):
         f"{key} ({metric_key.split(',')[0]})": float(value)
         for key, metrics in model_results.items()
         for metric_key, value in metrics.items()
-        if isinstance(value, (int, float))
+        if isinstance(value, (int, float))  # ignore aliases
     }
 
 
