@@ -159,7 +159,7 @@ class DistillationTrainer(transformers.Trainer):
     def eval_teacher_metrics(self):
         teacher_model_results = {}
         with torch.no_grad():
-            for evaluator_name, evaluator in self.args.extra_evaluators.items():
+            for evaluator_name, evaluator in self.evaluators.items():
                 teacher_model_results[f"eval_{evaluator_name}"] = float(evaluator(
                     self.teacher_model,
                     self.args.per_device_eval_batch_size
