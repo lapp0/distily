@@ -1,5 +1,5 @@
 from dataclasses import asdict
-import collections
+import shelve
 import difflib
 import torch
 import transformers
@@ -35,9 +35,9 @@ More information needed
 - **Model Size**: {student_model_size}
 
 
-# Evaluation Metrics Comparison
+# Benchmark Metrics Comparison
 
-{eval_table}
+{benchmark_table}
 
 # Resource Usage Comparison
 
@@ -133,24 +133,18 @@ def create_model_card_text(trainer):
     teacher_model_dtype = next(trainer.model.parameters()).dtype
     teacher_model_size = trainer.teacher_model.get_memory_footprint() / (1024 ** 3)
 
-    step_evals = collections.defaultdict(dict)
+    eval_results = dict()
     for log_line in trainer.state.log_history:
-        extracted_logs = {
-            k: transformers.modelcard._maybe_round(v)
-            for k, v in log_line.items()
-            if k.startswith('eval_')
-        }
-        if extracted_logs:
-            step_evals[transformers.modelcard._maybe_round(log_line["step"])].update({
-                "epoch": transformers.modelcard._maybe_round(log_line.get("epoch")),
-                **extracted_logs
-            })
+        eval_results.update(log_line)
 
-    eval_lines = [{"step": step, **value} for step, value in sorted(step_evals.items())]
-
-    eval_results = dict(eval_lines[-1])
     eval_results.pop("step", None)
     eval_results.pop("epoch", None)
+
+    with shelve.open(trainer.benchmarks_shelf) as db:
+        benchmark_table = [
+            {"model": key, **value}
+            for key, value in db.items()
+        ]
 
     framework_versions = "\n".join([
         f"- Distily {distily.__version__}",
@@ -222,7 +216,7 @@ def create_model_card_text(trainer):
         teacher_model_dtype=str(teacher_model_dtype),
         teacher_model_size=f"{teacher_model_size:.2f} GB",
         model_diff_repr=model_diff_repr,
-        eval_table=_to_markdown_table(eval_lines),
+        benchmark_table=benchmark_table,
         resource_table=resource_table,
         num_train_samples=len(trainer.train_dataset),
         objective_details=trainer.distillation_objective,

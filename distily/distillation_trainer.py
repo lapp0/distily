@@ -158,8 +158,7 @@ class DistillationTrainer(transformers.Trainer):
         gc.collect()
         torch.cuda.empty_cache()
 
-        benchmarks_path = os.path.join(self.args.output_dir, "benchmarks.shelve")
-        with shelve.open(benchmarks_path) as db:
+        with shelve.open(self.benchmarks_shelf) as db:
             if "teacher" not in db:
                 db["teacher"] = distily.metrics.run_benchmarks(
                     self.teacher_model, self.tokenizer, benchmarks
@@ -170,3 +169,7 @@ class DistillationTrainer(transformers.Trainer):
             db[self.args.run_name] = student_metrics
 
         return student_metrics
+
+    @property
+    def benchmarks_shelf(self):
+        return os.path.join(self.args.output_dir, "benchmarks.shelve")
