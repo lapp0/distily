@@ -145,6 +145,7 @@ def create_model_card_text(trainer):
             {"model": key, **value}
             for key, value in db.items()
         ]
+    import pdb;pdb.set_trace()
 
     framework_versions = "\n".join([
         f"- Distily {distily.__version__}",

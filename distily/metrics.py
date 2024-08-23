@@ -67,7 +67,7 @@ def get_ppl_metric(tokenizer, dataset, subset, split, sample_size, **kwargs):
     return PerplexityEvalCallback(ds, tokenizer=tokenizer).do_eval
 
 
-def run_benchmarks(model, tokenizer, benchmarks, limit=None):
+def run_benchmarks(model, tokenizer, benchmarks, limit=None, bootstrap_iters=None):
     """
     Run a list of EleutherAI LM Harness benchmarks on a provided model.
 
@@ -90,5 +90,6 @@ def run_benchmarks(model, tokenizer, benchmarks, limit=None):
         model=lm_eval_model,
         tasks=benchmarks,
         max_batch_size=1024,
-        limit=limit
+        limit=limit,
+        bootstrap_iters=bootstrap_iters,
     )
