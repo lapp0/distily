@@ -108,13 +108,9 @@ class DistillationTrainer(transformers.Trainer):
         loss_dict = self.distillation_objective(self.teacher_model, model, inputs)
         loss = loss_dict.pop("loss")
 
-        # if train step, log metrics
-        if (
-                not return_outputs and
-                self.control.should_log and
-                self.state.global_step > self._globalstep_last_logged
-        ):
-            self.log({
+        # if train step, add to log history
+        if not return_outputs:
+            self.state.log_history.append({
                 "step": self.state.global_step,
                 **{k: float(v) for k, v in loss_dict.items()},
             })
