@@ -61,22 +61,7 @@ class PerplexityEvalCallback(TrainerCallback):
         return mean_perplexity.item()
 
 
-def get_all_metric_evaluators(tokenizer):
-    return {
-        "enwikippl": PerplexityEvalCallback(
-            dataset=load_dataset("wikimedia/wikipedia", "20231101.en", split="train").select(range(2000000, 2001000)),
-            tokenizer=tokenizer,
-        ).do_eval,
-        "frwikippl": PerplexityEvalCallback(
-            dataset=load_dataset("wikimedia/wikipedia", "20231101.fr", split="train").select(range(1000)),
-            tokenizer=tokenizer,
-        ).do_eval,
-        "zhwikippl": PerplexityEvalCallback(
-            dataset=load_dataset("wikimedia/wikipedia", "20231101.zh", split="train").select(range(1000)),
-            tokenizer=tokenizer,
-        ).do_eval,
-        "tinystoriesppl": PerplexityEvalCallback(
-            dataset=load_dataset("roneneldan/TinyStories", None, split="validation").select(range(2000)),
-            tokenizer=tokenizer,
-        ).do_eval,
-    }
+def get_ppl_metric(tokenizer, dataset_name, subset, split, sample_size, **kwargs):
+    dataset = load_dataset(dataset_name, subset, split=split)
+    dataset = dataset.select(range(len(dataset) - sample_size, len(dataset)))
+    return PerplexityEvalCallback(dataset, tokenizer=tokenizer).do_eval

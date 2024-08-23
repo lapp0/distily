@@ -78,9 +78,9 @@ def benchmark(params=None, **kwargs):
         torch.cuda.empty_cache()
 
 
-def train(training_args, distillation_objective_args, student_model_args, teacher_model_args, dataset_args):
+def train(training_args, distillation_objective_args, student_model_args, teacher_model_args, dataset_args, eval_args):
     trainer = distily.distillation_trainer.DistillationTrainer.from_args(
-        training_args, distillation_objective_args, student_model_args, teacher_model_args, dataset_args
+        training_args, distillation_objective_args, student_model_args, teacher_model_args, dataset_args, eval_args
     )
     trainer.train()
     if training_args.push_to_hub:

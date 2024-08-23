@@ -17,6 +17,7 @@ class DistillationTrainer(transformers.Trainer):
         student_model,
         teacher_model,
         tokenizer,
+        evaluators,
         all_args=None,
         *args,
         **kwargs
@@ -28,6 +29,8 @@ class DistillationTrainer(transformers.Trainer):
         self.teacher_model = teacher_model
         self.distillation_objective = distillation_objective
 
+        self.evaluators = evaluators
+
         self.log_trainer_details()
 
     @classmethod
@@ -37,17 +40,28 @@ class DistillationTrainer(transformers.Trainer):
             distillation_objective_args,
             student_model_args,
             teacher_model_args,
-            dataset_args
+            dataset_args,
+            eval_args
     ):
 
         teacher_model, tokenizer = distily.models.get_teacher_model_tokenizer(teacher_model_args)
         student_model = distily.models.get_student_model(student_model_args, teacher_model)
 
-        # TODO: don't hardcode max length
-        max_seq_len = 1024
-        # TODO: don't hardcode this
-        training_args.extra_evaluators = distily.metrics.get_all_metric_evaluators(tokenizer)
+        evaluators = {
+            metric["name"]: distily.metrics.get_ppl_metric(**metric)
+            for metric in (eval_args.ppl_evaluators + eval_args.ppl_extra_evaluators)
+        }
 
+        # TODO: benchmarks run at end
+        #benchmarks = {
+        #    metric["name"]: distily.metrics.get_benchmark(metric["name"], **metric)
+        #    for metric in eval_args.harness_benchmarks
+        #}
+
+        max_seq_len = min(
+            student_model.config.max_position_embeddings,
+            teacher_model.config.max_position_embeddings
+        )
         train_dataset, test_dataset = distily.data.get_dataset(dataset_args, tokenizer, max_seq_len)
 
         distillation_objective = distily.objectives.DistillationObjective(**asdict(distillation_objective_args))
@@ -61,6 +75,8 @@ class DistillationTrainer(transformers.Trainer):
             train_dataset=train_dataset,
             eval_dataset=test_dataset,
             distillation_objective=distillation_objective,
+            evaluators=evaluators,
+            #benchmarks=benchmarks,
             all_args=dict(
                 distillation_objective_args=distillation_objective_args,
                 student_model_args=student_model_args,

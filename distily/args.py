@@ -74,6 +74,27 @@ class DatasetArguments:
 
 
 @dataclass
+class EvalArguments:
+    ppl_evaluators: typing.List[typing.Dict] = field(
+        default_factory=lambda: [
+            dict(name="enwikippl", dataset="wikimedia/wikipedia", subset="20231101.en", split="train", sample_size=1000),
+            dict(name="frwikippl", dataset="wikimedia/wikipedia", subset="20231101.fr", split="train", sample_size=1000),
+            dict(name="zhwikippl", dataset="wikimedia/wikipedia", subset="20231101.zh", split="train", sample_size=1000),
+            dict(name="tinystoriesppl", dataset="roneneldan/TinyStories", split="validation", sample_size=2000)
+        ],
+        metadata={"help": "Default evaluation metrics with their parameters."}
+    )
+    ppl_extra_evaluators: typing.List[typing.Dict] = field(
+        default_factory=list,
+        metadata={"help": "Additional evaluation metrics to be used."}
+    )
+    # TODO:
+    #harness_benchmarks: typing.List[typing.Dict] = field(
+    #    default_factory=list,
+    #    metadata={"help": "Benchmarks to compare student and teacher models at end of training."}
+    #)
+
+@dataclass
 class DistillationObjectiveArguments:
     # TODO: make fields, clean up
     logits_weight: float = 1
@@ -144,7 +165,8 @@ parser = HfArgumentParser((
     DistillationObjectiveArguments,
     StudentModelArguments,
     TeacherModelArguments,
-    DatasetArguments
+    DatasetArguments,
+    EvalArguments
 ))
 
 
