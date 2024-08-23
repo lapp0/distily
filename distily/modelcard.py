@@ -91,23 +91,27 @@ The following hyperparameters were used during training:
 """
 
 
-def _to_markdown_table(lines: typing.List[typing.Dict]) -> str:
-    all_keys = sorted(
-        set(key for row in lines for key in row),
-        key=lambda s: (s != "step", s != "epoch", s)
-    )
-    header = "| " + " | ".join([k.removeprefix("eval_") for k in all_keys]) + " |"
-    separator = "| " + " | ".join(":---:" for _ in all_keys) + " |"
-    sorted_lines = sorted(
-        lines,
-        key=lambda line: (
-            line["step"].isnumeric(),
-            float(line["step"]) if line["step"].isnumeric() else line["step"]
-        )
-    )
+def _flatten_harness_results(model_results):
+    return {
+        f"{key} ({metric_key.split(',')[0]})": float(value)
+        for key, metrics in model_results.items()
+        for metric_key, value in metrics.items()
+        if isinstance(value, (int, float))
+    }
+
+
+def _to_markdown_table(data: typing.Dict[str, typing.Dict], sigfig=4) -> str:
+
+    def format_value(value):
+        return f"{round(value, sigfig - len(str(int(value))))}" if isinstance(value, (int, float)) else value
+
+    columns = sorted(data)
+    metrics = sorted({m for v in data.values() for m in v})
+    header = f"| Metric | {' | '.join(columns)} |"
+    separator = "| :--- |" + " :--- |" * len(columns)
     rows = [
-        "| " + " | ".join(str(row.get(key, "")) for key in all_keys) + " |"
-        for row in sorted_lines
+        f"| {m} | " + " | ".join(format_value(data[c].get(m, "")) for c in columns) + " |"
+        for m in metrics
     ]
     return "\n".join([header, separator] + rows)
 
@@ -141,11 +145,11 @@ def create_model_card_text(trainer):
     eval_results.pop("epoch", None)
 
     with shelve.open(trainer.benchmarks_shelf) as db:
-        benchmark_table = [
-            {"model": key, **value}
-            for key, value in db.items()
-        ]
-    import pdb;pdb.set_trace()
+        benchmark_results = {
+            model_label: _flatten_harness_results(db[model_label]["results"])
+            for model_label in db.keys()
+        }
+        benchmark_table = _to_markdown_table(benchmark_results)
 
     framework_versions = "\n".join([
         f"- Distily {distily.__version__}",
