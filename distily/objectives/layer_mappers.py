@@ -34,7 +34,7 @@ def sequential_layer_mapper(feat_s, feat_t, start, end):
 
 
 def single_layer_mapper(feat_s, feat_t, layer):
-    end_idx = (layer, layer + 1) if layer != -1 else (-1, None)
+    end_idx = layer + 1 if layer != -1 else None
     return sequential_layer_mapper(feat_s, feat_t, start=layer, end=end_idx)
 
 
