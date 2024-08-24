@@ -51,7 +51,11 @@ class OrthogonalProjector(nn.Module):
         self.weight = nn.Parameter((weight - weight.T) / 2)
 
     def forward(self, student_features, teacher_features):
-        A = torch.linalg.matrix_exp(self.weight)
+
+        # experiment: to prevent NaN, regularize with I
+        epsilon = 1e-5
+        perturbation = torch.eye(self.weight.size(0), self.weight.size(1), device=self.weight.device) * epsilon
+        A = torch.linalg.matrix_exp(self.weight + perturbation)
 
         if self.student_dim != A.size(0):
             # Truncate A to match the student dimension
