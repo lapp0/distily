@@ -46,8 +46,8 @@ class DistillationTrainer(transformers.Trainer):
         student_model = distily.models.get_student_model(student_model_args, teacher_model)
 
         if training_args.torch_compile:
-            student_model.forward = torch.compile(student_model.forward, mode="reduce-overhead", fullgraph=True)
-            teacher_model.forward = torch.compile(teacher_model.forward, mode="reduce-overhead", fullgraph=True)
+            student_model.forward = torch.compile(student_model.forward, mode="reduce-overhead")
+            teacher_model.forward = torch.compile(teacher_model.forward, mode="reduce-overhead")
 
         evaluators = {
             metric["name"]: distily.metrics.get_ppl_metric(tokenizer=tokenizer, **metric)
