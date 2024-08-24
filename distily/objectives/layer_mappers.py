@@ -39,7 +39,7 @@ def single_layer_mapper(feat_s, feat_t, layer):
 
 
 def last_k_layers_mapper(feat_s, feat_t, num_layers):
-    return sequential_layer_mapper(feat_s, feat_t, start=(-num_layers))
+    return sequential_layer_mapper(feat_s, feat_t, start=(-num_layers), end=None)
 
 
 def uniform_consecutive_layer_mapper(feat_s, feat_t):
