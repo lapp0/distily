@@ -1,3 +1,4 @@
+import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -40,7 +41,7 @@ class OrthogonalProjector(nn.Module):
             teacher_features.size(-1),
             teacher_features.size(-1)
         ))
-        torch.nn.init.kaiming_uniform_(self.weight, a=torch.sqrt(torch.tensor(5.0)))
+        torch.nn.init.kaiming_uniform_(self.weight, a=math.sqrt(5))
 
     def forward(self, student_features, teacher_features):
         # Enforce skew-symmetry on the weight matrix
