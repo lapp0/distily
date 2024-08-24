@@ -49,9 +49,9 @@ class DistillationTrainer(transformers.Trainer):
             student_model.forward = torch.compile(student_model.forward, mode="reduce-overhead")
             teacher_model.forward = torch.compile(teacher_model.forward, mode="reduce-overhead")
 
-        if training_args.liger_kernel:
-            from liger_kernel.transformers import apply_liger_kernel_to_llama
-            apply_liger_kernel_to_llama()
+        #if training_args.liger_kernel:
+        #    from liger_kernel.transformers import apply_liger_kernel_to_llama
+        #    apply_liger_kernel_to_llama()
 
         evaluators = {
             metric["name"]: distily.metrics.get_ppl_metric(tokenizer=tokenizer, **metric)
