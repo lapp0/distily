@@ -6,12 +6,15 @@
 
 # TODO
 
+
+
 ## v0.4.0
 - [ ] Implement synthetic datasets: randomly sampled
 
 ## v0.4.1
 performance:
 - [ ] replace `student/teacher_model_compile` with `training_args.compile`
+- [ ] integrate liger kernel https://github.com/linkedin/Liger-Kernel
 - [ ] smoke test `torch.compile`
 - [ ] smoke test `torch.optim._multi_tensor` https://github.com/huggingface/transformers/issues/9965
 - [ ] smoke test with `dynamo.optimize("inductor")`

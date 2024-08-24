@@ -39,9 +39,6 @@ class StudentModelArguments:
     )
 
     # TODO: Full field
-    # TODO: validator, require pytorch 2.5.0 for compile
-    student_model_compile: bool = False
-
     dropout: typing.Optional[float] = None
 
 
@@ -58,9 +55,6 @@ class TeacherModelArguments:
         default=False,
         metadata={"help": "Load the teacher model in 4 bits precision"}
     )
-    # TODO: Full field
-    # TODO: validator, require pytorch 2.5.0 for compile
-    teacher_model_compile: bool = False
 
 
 @dataclass

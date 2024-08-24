@@ -1,7 +1,7 @@
 # Distily
 
 
-#### In one command, distill an existing model into a smaller or different architecture.
+#### In one command, distill an existing LLM into a smaller or different architecture.
 
 
 ## Install
