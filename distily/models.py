@@ -60,9 +60,6 @@ def get_teacher_model_tokenizer(teacher_model_args):
     for p in model.parameters():
         p.requires_grad = False
 
-    if teacher_model_args.teacher_model_compile:
-        model.forward = torch.compile(model.forward, mode="reduce-overhead", fullgraph=True)
-
     tokenizer = transformers.AutoTokenizer.from_pretrained(teacher_model_args.teacher_model_name_or_path)
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token_id = tokenizer.eos_token_id
@@ -111,8 +108,5 @@ def get_student_model(student_model_args, teacher_model):
             # TODO: use a different method which is better supported, an official third party library
             convert_to_bitnet(student_model, copy_weights=False)
             student_model.model_tags = ["bitnet", "1.58b"]
-
-    if student_model_args.student_model_compile:
-        student_model.forward = torch.compile(student_model.forward, mode="reduce-overhead", fullgraph=True)
 
     return student_model
