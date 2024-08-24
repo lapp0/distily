@@ -80,12 +80,14 @@ class DistillationObjective:
             weight=hs_weight,
             loss_fn=hs_loss_fn,
             layer_mapper=hs_layer_mapper,
+            projector=hs_projector,
         )
         self.attn_loss_component = LossComponent(
             "attn",
             weight=attn_weight,
             loss_fn=attn_loss_fn,
             layer_mapper=attn_layer_mapper,
+            projector=attn_projector,
         )
 
         self._projectors: dict = {}
@@ -120,7 +122,7 @@ class DistillationObjective:
         if not loss_component.is_measured:
             return torch.tensor(0, device=device)
 
-        if loss_component.projector:
+        if loss_component.layer_mapper:
             feat_s, feat_t = loss_component.apply_layer_mapper(feat_s, feat_t)
         elif isinstance(feat_s, tuple):
             feat_s, feat_t = torch.vstack(feat_s), torch.vstack(feat_t)
