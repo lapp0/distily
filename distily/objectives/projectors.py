@@ -127,8 +127,13 @@ class MilesProjector(nn.Module):
         student_projected = self.proj(student_features)
 
         if self.use_batchnorm:
-            student_projected = self.bn_s(student_projected)
-            teacher_features = self.bn_t(teacher_features)
+            # apply 1d batchnorm on 4d tensor
+            student_projected = self.bn_s(
+                student_projected.reshape(-1, student_projected.size(-1))
+            ).reshape_as(student_projected)
+            teacher_features = self.bn_t(
+                teacher_features.reshape(-1, teacher_features.size(-1))
+            ).reshape_as(teacher_features)
 
         return student_projected, teacher_features
 
