@@ -52,15 +52,15 @@ class OrthogonalProjector(nn.Module):
 
     def forward(self, student_features, teacher_features):
 
-        # experiment: to prevent NaN, regularize with I
+        # experiment: to prevent NaN, regularize with perturbation
         epsilon = 1e-5
-        perturbation = torch.eye(self.weight.size(0), self.weight.size(1), device=self.weight.device) * epsilon
+        perturbation = torch.eye(self.weight.size(0), self.weight.size(1), device=self.weight.device, dtype=self.weight.dtype) * epsilon
         A = torch.linalg.matrix_exp(self.weight + perturbation)
 
         if self.student_dim != A.size(0):
             # Truncate A to match the student dimension
             A = A[:self.student_dim, :]
-            # Apply QR decomposition to project onto the Stiefel manifold
+            # project onto the Stiefel manifold (Section 3.1)
             Q, _ = torch.linalg.qr(A)
         else:
             Q = A
