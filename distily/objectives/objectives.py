@@ -130,7 +130,9 @@ class DistillationObjective:
         if loss_component.projector:
             # projectors are trainable, therefore we lazy-load, then re-use the same projector
             if loss_component.label not in self._projectors:
-                self._projectors[loss_component.label] = loss_component.get_projector(feat_s, feat_t).to(device=device)
+                self._projectors[loss_component.label] = loss_component\
+                    .get_projector(feat_s, feat_t)\
+                    .to(device=feat_s.device, dtype=feat_s.dtype)
             feat_s, feat_t = self._projectors[loss_component.label].forward(feat_s, feat_t)
 
         loss = loss_component.get_loss(feat_s, feat_t)
