@@ -18,10 +18,11 @@ class LinearProjector(nn.Module):
 
     def __init__(self, student_features, teacher_features):
         super().__init__()
-        self.proj = nn.Linear(
+        proj = nn.Parameter(nn.Linear(
             student_features.size(-1),
             teacher_features.size(-1)
-        )
+        ))
+        self.register_parameter('proj', proj)
 
     def forward(self, student_features, teacher_features):
         return self.proj(student_features), teacher_features
@@ -36,11 +37,12 @@ class OrthogonalProjector(nn.Module):
 
     def __init__(self, student_features, teacher_features):
         super().__init__()
-        self.weight = nn.Parameter(torch.empty(
+        weight = nn.Parameter(torch.empty(
             teacher_features.size(-1),
             teacher_features.size(-1)
         ))
-        torch.nn.init.kaiming_uniform_(self.weight, a=torch.sqrt(torch.tensor(5.0)))
+        torch.nn.init.kaiming_uniform_(weight, a=torch.sqrt(torch.tensor(5.0)))
+        self.register_parameter('weight', weight)
 
     def forward(self, student_features, teacher_features):
         # Enforce skew-symmetry on the weight matrix
@@ -60,11 +62,12 @@ class MLPProjector(nn.Module):
         super().__init__()
         in_features = student_features.size(-1)
         out_features = teacher_features.size(-1)
-        self.proj = nn.Sequential(
+        proj = nn.Parameter(nn.Sequential(
             nn.Linear(in_features, hidden_dim),
             nn.ReLU(),
             nn.Linear(hidden_dim, out_features)
-        )
+        ))
+        self.register_parameter('proj', proj)
 
     def forward(self, student_features, teacher_features):
         return self.proj(student_features), teacher_features
@@ -75,13 +78,14 @@ class EnsembleProjector(nn.Module):
 
     def __init__(self, student_features, teacher_features, num_projectors=3):
         super().__init__()
-        self.proj = nn.ModuleList([
+        proj = nn.ParameterList([
             nn.Linear(
                 student_features.size(-1),
                 teacher_features.size(-1),
             )
             for _ in range(num_projectors)
         ])
+        self.register_parameter('proj', proj)
 
     def forward(self, student_features, teacher_features):
         outputs = torch.stack([proj(student_features) for proj in self.proj], dim=0)
@@ -95,17 +99,20 @@ class MilesProjector(nn.Module):
         self.use_batchnorm = use_batchnorm
 
         # Define the linear projection layer
-        self.embed = nn.Linear(
+        proj = nn.Parameter(nn.Linear(
             student_features.size(-1),
             teacher_features.size(-1),
-        )
+        ))
+        self.register_parameter('proj', proj)
 
         if use_batchnorm:
-            self.bn_s = nn.BatchNorm1d(teacher_features.size(-1), eps=0.0001, affine=False)
-            self.bn_t = nn.BatchNorm1d(teacher_features.size(-1), eps=0.0001, affine=False)
+            bn_s = nn.BatchNorm1d(teacher_features.size(-1), eps=0.0001, affine=False)
+            bn_t = nn.BatchNorm1d(teacher_features.size(-1), eps=0.0001, affine=False)
+            self.register_module('bn_s', bn_s)
+            self.register_module('bn_t', bn_t)
 
     def forward(self, student_features, teacher_features):
-        student_projected = self.embed(student_features)
+        student_projected = self.proj(student_features)
 
         if self.use_batchnorm:
             student_projected = self.bn_s(student_projected)
