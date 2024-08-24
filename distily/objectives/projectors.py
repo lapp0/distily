@@ -35,21 +35,33 @@ class OrthogonalProjector(nn.Module):
     Based on: https://github.com/roymiles/vkd/issues/1#issuecomment-2135090288
     """
 
-    def __init__(self, student_features, teacher_features):
+    def __init__(self, student_features, teacher_features, pade_approx=False):
         super().__init__()
-        self.weight = nn.Parameter(torch.empty(
-            teacher_features.size(-1),
-            teacher_features.size(-1)
-        ))
-        torch.nn.init.kaiming_uniform_(self.weight, a=math.sqrt(5))
+
+        if pade_approx:
+            raise NotImplementedError("Pade Approximation is not implemented")
+
+        teacher_dim = teacher_features.size(-1)
+        self.student_dim = student_features.size(-1)
+
+        weight = torch.empty((teacher_dim, teacher_dim))
+        torch.nn.init.kaiming_uniform_(weight, a=math.sqrt(5))
+
+        # Ensure skew-symmetry
+        self.weight = nn.Parameter((weight - weight.T) / 2)
 
     def forward(self, student_features, teacher_features):
-        # Enforce skew-symmetry on the weight matrix
-        W_skew = (self.weight - self.weight.T) / 2
-        # Apply matrix exponential to obtain an orthogonal matrix
-        A = torch.linalg.matrix_exp(W_skew)
-        # Apply the orthogonal projection to the student features
-        projected_student_features = F.linear(student_features, A)
+        A = torch.linalg.matrix_exp(self.weight)
+
+        if self.student_dim != A.size(0):
+            # Truncate A to match the student dimension
+            A = A[:self.student_dim, :]
+            # Apply QR decomposition to project onto the Stiefel manifold
+            Q, _ = torch.linalg.qr(A)
+        else:
+            Q = A
+
+        projected_student_features = F.linear(student_features, Q)
 
         return projected_student_features, teacher_features
 
