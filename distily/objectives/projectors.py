@@ -1,3 +1,4 @@
+from functools import partial
 import math
 import torch
 import torch.nn as nn
@@ -51,11 +52,7 @@ class OrthogonalProjector(nn.Module):
         self.weight = nn.Parameter((weight - weight.T) / 2)
 
     def forward(self, student_features, teacher_features):
-
-        # experiment: to prevent NaN, regularize with perturbation
-        epsilon = 1e-5
-        perturbation = torch.eye(self.weight.size(0), self.weight.size(1), device=self.weight.device, dtype=self.weight.dtype) * epsilon
-        A = torch.linalg.matrix_exp(self.weight + perturbation)
+        A = torch.linalg.matrix_exp(self.weight)
 
         if self.student_dim != A.size(0):
             # Truncate A to match the student dimension
@@ -73,15 +70,16 @@ class OrthogonalProjector(nn.Module):
 class MLPProjector(nn.Module):
     """Applies a multi-layer perceptron (MLP) transformation to student features."""
 
-    def __init__(self, student_features, teacher_features, hidden_dim=256):
+    def __init__(self, student_features, teacher_features, hidden_dim=256, num_layers=2):
         super().__init__()
         in_features = student_features.size(-1)
         out_features = teacher_features.size(-1)
-        self.proj = nn.Sequential(
-            nn.Linear(in_features, hidden_dim),
-            nn.ReLU(),
-            nn.Linear(hidden_dim, out_features)
-        )
+
+        layers = [nn.Linear(in_features, hidden_dim), nn.ReLU()]
+        layers += [nn.Sequential(nn.Linear(hidden_dim, hidden_dim), nn.ReLU()) for _ in range(num_layers - 2)]
+        layers.append(nn.Linear(hidden_dim, out_features))
+
+        self.proj = nn.Sequential(*layers)
 
     def forward(self, student_features, teacher_features):
         return self.proj(student_features), teacher_features
@@ -154,7 +152,15 @@ PROJECTORS = {
     "identity": IdentityProjector,
     "linear": LinearProjector,
     "orthogonal": OrthogonalProjector,
-    "mlp": MLPProjector,
     "ensemble": EnsembleProjector,
     "miles": MilesProjector,
+
+    # mlp
+    "mlp": MLPProjector,
+    "mlp_256_l2": partial(MLPProjector, hidden_dim=256, num_layers=2),
+    "mlp_64_l2": partial(MLPProjector, hidden_dim=256, num_layers=2),
+    "mlp_256_l3": partial(MLPProjector, hidden_dim=256, num_layers=3),
+    "mlp_64_l3": partial(MLPProjector, hidden_dim=64, num_layers=3),
+    "mlp_256_l4": partial(MLPProjector, hidden_dim=256, num_layers=3),
+    "mlp_64_l4": partial(MLPProjector, hidden_dim=64, num_layers=3),
 }
