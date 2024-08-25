@@ -103,6 +103,18 @@ def logsum_loss(student_proj, teacher_features, alpha=4.0):
     return loss.mean()
 
 
+def logsum_v2_loss(student_proj, teacher_features, alpha=4.0):
+    """
+    Based on https://arxiv.org/pdf/2303.11098
+    Compute the LogSum loss based on the paper, with an adjustable smoothing factor alpha.
+    Experimentally they determine 4.0 to 5.0 performs well
+    """
+    diff = torch.abs(student_proj - teacher_features)
+    diff_pow = torch.pow(diff, alpha)
+    sum_diff = torch.sum(diff_pow, dim=-1)
+    return torch.log(sum_diff).mean()
+
+
 def cosine_distance_loss(feat_s, feat_t):
     cosine_sim = F.cosine_similarity(feat_s, feat_t, dim=-1)
     cosine_distance = 1 - cosine_sim
@@ -152,6 +164,7 @@ LOSS_FUNCTIONS = {
     "cakld": cakld_loss,
     "jsd": jsd_loss,
     "logsum": logsum_loss,
+    "logsum_v2": logsum_v2_loss,
     "cos": cosine_distance_loss,
     "ce": soft_cross_entropy_loss,
     "mse_sum": soft_mse_sum_loss,
