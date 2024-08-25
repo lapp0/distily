@@ -111,8 +111,8 @@ def logsum_v2_loss(student_proj, teacher_features, alpha=4.0):
     """
     diff = torch.abs(student_proj - teacher_features)
     diff_pow = torch.pow(diff, alpha)
-    sum_diff = torch.sum(diff_pow, dim=-1)
-    return torch.log(sum_diff).mean()
+    sum_diff = torch.sum(diff_pow)
+    return torch.log(sum_diff)
 
 
 def cosine_distance_loss(feat_s, feat_t):

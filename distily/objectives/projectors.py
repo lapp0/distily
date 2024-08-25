@@ -127,13 +127,25 @@ class MilesProjector(nn.Module):
         student_projected = self.proj(student_features)
 
         if self.use_batchnorm:
-            # apply 1d batchnorm on 4d tensor
+            # apply 1d batchnorm on 4d tensor with layers coupled
             student_projected = self.bn_s(
                 student_projected.reshape(-1, student_projected.size(-1))
             ).reshape_as(student_projected)
             teacher_features = self.bn_t(
                 teacher_features.reshape(-1, teacher_features.size(-1))
             ).reshape_as(teacher_features)
+        elif self.use_decoupled_batchnorm:
+            # layer-decoupled batchnorm
+            # TODO: enable and test
+            for i in range(student_projected.size(0)):  # Iterate over num_layers
+                student_projected[i] = self.bn_s(
+                    student_projected[i].reshape(-1, student_projected[i].size(-1))
+                ).reshape_as(student_projected[i])
+
+            for i in range(teacher_features.size(0)):  # Iterate over num_layers
+                teacher_features[i] = self.bn_t(
+                    teacher_features[i].reshape(-1, teacher_features[i].size(-1))
+                ).reshape_as(teacher_features[i])
 
         return student_projected, teacher_features
 

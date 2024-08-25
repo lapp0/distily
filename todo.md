@@ -8,6 +8,7 @@
 
 ## v0.4.0
 - [ ] Implement synthetic datasets: randomly sampled
+- [ ] Implement synthetic datasets: dynamic temperature
 
 ## v0.4.2
 - [ ] `debug` mode: more overhead and slower, but can help debug loss functions. Calculate the following:
