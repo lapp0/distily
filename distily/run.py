@@ -83,9 +83,10 @@ def train(training_args, distillation_objective_args, student_model_args, teache
     trainer = distily.distillation_trainer.DistillationTrainer.from_args(
         training_args, distillation_objective_args, student_model_args, teacher_model_args, dataset_args, eval_args
     )
-    trainer.train()
+    trainer_results = trainer.train()
     if training_args.push_to_hub:
         trainer.push_to_hub()
+    return trainer_results
 
 
 def train_entry():
