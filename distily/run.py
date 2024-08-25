@@ -46,8 +46,8 @@ def benchmark(params=None, **kwargs):
         print(run_name)
         current_args = {
             "run_name": run_name,
+            **kwargs,
             **product_args,
-            **kwargs
         }
         current_args["logging_dir"] = os.path.join(current_args["output_dir"], "logs", run_name)
 
