@@ -105,7 +105,9 @@ def logsum_loss(student_proj, teacher_features, alpha=4.0):
 
 def logsum_v2_loss(student_proj, teacher_features, alpha=4.0):
     """
-    Based on https://arxiv.org/pdf/2303.11098
+    Found in https://arxiv.org/pdf/2303.11098
+    Based on
+    https://github.com/roymiles/Simple-Recipe-Distillation/blob/31e8477cfd/imagenet/torchdistill/losses/single.py
     Compute the LogSum loss based on the paper, with an adjustable smoothing factor alpha.
     Experimentally they determine 4.0 to 5.0 performs well
     """
@@ -159,21 +161,21 @@ def sinkhorn_loss(feat_s, feat_t, epsilon=0.1, n_iters=20):
 
 LOSS_FUNCTIONS = {
     "kl": kl_divergence_loss,
+    "raw_mse": F.mse_loss,
     "mse": soft_mse_loss,
     "reverse_kl": reverse_kl_divergence_loss,
     "cakld": cakld_loss,
     "jsd": jsd_loss,
-    "logsum": logsum_loss,
     "logsum_v2": logsum_v2_loss,
     "cos": cosine_distance_loss,
     "ce": soft_cross_entropy_loss,
-    "mse_sum": soft_mse_sum_loss,
 
     # TODO: fix
     "mi": mutual_information_loss,
     "sinkhorn": sinkhorn_loss,
 
     # not recommended (TODO: delete?)
-    "raw_mse": F.mse_loss,
-    "raw_ce": F.cross_entropy,
+    "mse_sum": soft_mse_sum_loss,
+    #"raw_ce": F.cross_entropy,
+    #"logsum": logsum_loss,
 }
