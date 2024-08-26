@@ -99,6 +99,7 @@ def create_empty_dataset_repo_with_description(
     )
     api.upload_file(
         repo_id=dataset_uri,
+        repo_type="dataset",
         path_or_fileobj=io.BytesIO(description.encode('utf-8')),
         path_in_repo="README.md",
     )
