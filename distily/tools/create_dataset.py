@@ -3,6 +3,14 @@ import typing
 import torch
 from dataclasses import dataclass, asdict
 
+"""
+TODO: Remove
+
+Might need
+pip uninstall -y typing_extensions
+pip install typing_extensions==4.11.0
+"""
+
 
 @dataclass
 class ExponentialDecayArguments:
@@ -60,7 +68,7 @@ def gen_seq_vllm(args: DatasetGenerationArguments) -> typing.List[str]:
         raise ValueError("Need temperature or decayed_decayed_temperature")
 
     sequences = llm.generate(
-        prompt=[""],
+        [""],  # start with no prompt
         n_samples=args.n_samples,
         max_length=args.max_length,
         batch_size=args.batch_size,
