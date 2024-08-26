@@ -60,12 +60,9 @@ def gen_seq_vllm(args: DatasetGenerationArguments) -> typing.List[str]:
     from vllm import LLM
     from vllm.sampling_params import SamplingParams
 
-    bs = 64
+    bs = 8
 
-    llm = LLM(
-        args.model_uri,
-        enable_chunked_prefill=True,
-    )
+    llm = LLM(args.model_uri)
 
     sampling_params = SamplingParams(
         n=bs,
