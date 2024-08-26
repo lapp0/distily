@@ -67,7 +67,7 @@ def gen_seq_vllm(args: DatasetGenerationArguments) -> typing.List[str]:
         max_tokens=args.max_length,
     )
     if args.decayed_temperature:
-        sampling_params.logits_processors = [TemperatureDecayLogitsProcessor(**asdict(args.decayed_temperature))]
+        sampling_params.logits_processors = [TemperatureDecayLogitsProcessor(args.decayed_temperature)]
     elif args.temperature:
         sampling_params.temperature = args.temperature
     else:
@@ -148,12 +148,12 @@ def create_seq_dataset(args: DatasetGenerationArguments):
 
 if __name__ == "__main__":
     args = DatasetGenerationArguments(
-        dataset_uri="distily/synthetic_gpt2_sequences_1K",
+        dataset_uri="distily/synth_tdecay_gpt2_seq_1K",
         model_uri="gpt2",
         n_samples=1000,
         max_length=1024,
         private=False,
-        temperature=1.0,
-        decayed_temperature=None
+        temperature=None,
+        decayed_temperature=ExponentialDecayArguments(),
     )
     create_seq_dataset(args)
