@@ -40,11 +40,13 @@ class TemperatureDecayLogitsProcessor:
     - N: max sequence length
     - scale_factor: Increase this to make the distribution drop faster initially
     """
+    @torch.no_grad()
     def __init__(self, decay_args: ExponentialDecayArguments):
         k = (1 / decay_args.N) * torch.log(torch.tensor(decay_args.end_t / decay_args.start_t)) * decay_args.scale_factor
         self.k = torch.tensor(k)
         self.start_t = torch.tensor(decay_args.start_t)
 
+    @torch.no_grad()
     def __call__(self, input_ids, logits):
         temperature = torch.tensor(
             self.start_t * torch.exp(self.k * torch.tensor(len(input_ids))),
