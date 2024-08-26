@@ -57,7 +57,9 @@ def gen_seq_vllm(args: DatasetGenerationArguments) -> typing.List[str]:
 
     llm = LLM(
         args.model_uri,
-        gpu_memory_utilization=0.5,
+        max_num_seqs=1024,
+        enable_chunked_prefill=True,
+        max_num_batched_tokens=4096,
     )
 
     sampling_params = SamplingParams(
@@ -91,7 +93,7 @@ def create_dataset_card(model_uri, n_samples, max_length, temperature_config):
     ])
 
     card = DatasetCard(content)
-    #card.data["license"] = TODO
+    # card.data["license"] = TODO
     card.data["library_name"] = "Distily"
     card.data["tags"] = ["Distily"]
     card.data["source_datasets"] = ["Original", "Synthetic"]
