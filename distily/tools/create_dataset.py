@@ -42,11 +42,14 @@ class TemperatureDecayLogitsProcessor:
     """
     def __init__(self, decay_args: ExponentialDecayArguments):
         k = (1 / decay_args.N) * torch.log(torch.tensor(decay_args.end_t / decay_args.start_t)) * decay_args.scale_factor
-        self.k = k
+        self.k = torch.tensor(k)
         self.start_t = torch.tensor(decay_args.start_t)
 
     def __call__(self, input_ids, logits):
-        temperature = self.start_t * torch.exp(self.k * torch.tensor(logits.size(-1)))
+        temperature = torch.tensor(
+            self.start_t * torch.exp(self.k * torch.tensor(len(input_ids))),
+            device=logits.device
+        )
         logits /= temperature
         return logits
 
