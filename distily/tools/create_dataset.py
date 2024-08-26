@@ -57,9 +57,7 @@ def gen_seq_vllm(args: DatasetGenerationArguments) -> typing.List[str]:
 
     llm = LLM(
         args.model_uri,
-        max_num_seqs=1024,
         enable_chunked_prefill=True,
-        max_num_batched_tokens=4096,
     )
 
     sampling_params = SamplingParams(
@@ -78,7 +76,7 @@ def gen_seq_vllm(args: DatasetGenerationArguments) -> typing.List[str]:
         sampling_params=sampling_params,
         use_tqdm=True,
     )
-    return [r.outputs[0].text for r in responses]
+    return [out.text for r in responses for out in r.outputs]
 
 
 def create_dataset_card(model_uri, n_samples, max_length, temperature_config):
@@ -97,7 +95,6 @@ def create_dataset_card(model_uri, n_samples, max_length, temperature_config):
     card.data["library_name"] = "Distily"
     card.data["tags"] = ["Distily"]
     card.data["source_datasets"] = ["Original", "Synthetic"]
-    card.data["task_categories"] = ["distillation"]
 
     return card
 
