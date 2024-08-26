@@ -55,10 +55,13 @@ def gen_seq_vllm(args: DatasetGenerationArguments) -> typing.List[str]:
     from vllm import LLM
     from vllm.sampling_params import SamplingParams
 
-    llm = LLM(args.model_uri)
+    llm = LLM(
+        args.model_uri,
+        gpu_memory_utilization=0.5,
+    )
 
     sampling_params = SamplingParams(
-        n=args.n_samples,
+        n=1,
         max_tokens=args.max_length,
     )
     if args.decayed_temperature:
@@ -68,11 +71,12 @@ def gen_seq_vllm(args: DatasetGenerationArguments) -> typing.List[str]:
     else:
         raise ValueError("Need temperature or decayed_decayed_temperature")
 
-    return llm.generate(
-        [""],  # start with no prompt
+    responses = llm.generate(
+        [llm.get_tokenizer().bos_token] * args.n_samples,
         sampling_params=sampling_params,
         use_tqdm=True,
     )
+    return [r.outputs[0].text for r in responses]
 
 
 def create_model_card(model_uri, n_samples, max_length):
@@ -87,7 +91,6 @@ def create_model_card(model_uri, n_samples, max_length):
         f"- **Number of Samples**: {n_samples}\n"
         f"- **Maximum Sequence Length**: {max_length}\n"
     ])
-
 
 
 def create_empty_dataset_repo_with_description(
