@@ -119,14 +119,8 @@ def create_empty_dataset_repo_with_description(
         private=private,
         exist_ok=True,
     )
-    api.upload_file(
-        repo_id=dataset_uri,
-        repo_type="dataset",
-        path_or_fileobj=io.BytesIO(
-            create_dataset_card(model_uri, n_samples, max_length, temperature or decayed_temperature).encode('utf-8')
-        ),
-        path_in_repo="README.md",
-    )
+    dataset_card = create_dataset_card(model_uri, n_samples, max_length, temperature or decayed_temperature)
+    dataset_card.push_to_hub(dataset_uri)
 
     print(f"Empty dataset repository {dataset_uri} with dataset card created successfully.")
 
