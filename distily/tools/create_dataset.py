@@ -69,9 +69,10 @@ def gen_seq_vllm(args: DatasetGenerationArguments) -> typing.List[str]:
 
     sequences = llm.generate(
         [""],  # start with no prompt
-        n_samples=args.n_samples,
+        n=args.n_samples,
         max_length=args.max_length,
         batch_size=args.batch_size,
+        use_tqdm=True,
         **sampling_kwargs
     )
     return sequences
