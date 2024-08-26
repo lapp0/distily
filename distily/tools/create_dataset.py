@@ -1,4 +1,4 @@
-import io
+import math
 import typing
 import torch
 from dataclasses import dataclass, asdict
@@ -55,13 +55,15 @@ def gen_seq_vllm(args: DatasetGenerationArguments) -> typing.List[str]:
     from vllm import LLM
     from vllm.sampling_params import SamplingParams
 
+    bs = 64
+
     llm = LLM(
         args.model_uri,
         enable_chunked_prefill=True,
     )
 
     sampling_params = SamplingParams(
-        n=1,
+        n=bs,
         max_tokens=args.max_length,
     )
     if args.decayed_temperature:
@@ -72,7 +74,7 @@ def gen_seq_vllm(args: DatasetGenerationArguments) -> typing.List[str]:
         raise ValueError("Need temperature or decayed_decayed_temperature")
 
     responses = llm.generate(
-        [llm.get_tokenizer().bos_token] * args.n_samples,
+        [llm.get_tokenizer().bos_token] * math.ceil(args.n_samples / bs),
         sampling_params=sampling_params,
         use_tqdm=True,
     )
