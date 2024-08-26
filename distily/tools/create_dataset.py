@@ -84,10 +84,10 @@ def create_dataset_card(model_uri, n_samples, max_length, temperature_config):
 
     content = "\n\n".join([
         "# Distillation dataset created with [Distily](https://github.com/lapp0/distily).",
-        f"- **Method**: Generated sequences randomly with temperature config `{temperature_config}`"
-        f"- **Model URI**: `{model_uri}`"
-        f"- **Number of Samples**: {n_samples}"
-        f"- **Maximum Sequence Length**: {max_length} tokens"
+        f"- **Method**: Generated sequences randomly with temperature config `{temperature_config}`",
+        f"- **Model URI**: `{model_uri}`",
+        f"- **Number of Samples**: {n_samples}",
+        f"- **Maximum Sequence Length**: {max_length} tokens",
     ])
 
     card = DatasetCard(content)
