@@ -139,7 +139,9 @@ def create_seq_dataset(args: DatasetGenerationArguments):
         model_uri=args.model_uri,
         n_samples=args.n_samples,
         max_length=args.max_length,
-        private=args.private
+        private=args.private,
+        temperature=args.temperature,
+        decayed_temperature=args.decayed_temperature,
     )
 
     sequences = gen_seq_vllm(args)
