@@ -60,7 +60,7 @@ def gen_seq_vllm(args: DatasetGenerationArguments) -> typing.List[str]:
         raise ValueError("Need temperature or decayed_decayed_temperature")
 
     sequences = llm.generate(
-        prompt=[],
+        prompt=[""],
         n_samples=args.n_samples,
         max_length=args.max_length,
         batch_size=args.batch_size,
