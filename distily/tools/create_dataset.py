@@ -25,7 +25,6 @@ class DatasetGenerationArguments:
     model_uri: str
     n_samples: int
     max_length: int
-    batch_size: int
     dataset_uri: str
     private: bool = False
     temperature: typing.Optional[float] = 1.0
@@ -61,7 +60,6 @@ def gen_seq_vllm(args: DatasetGenerationArguments) -> typing.List[str]:
     sampling_params = SamplingParams(
         n=args.n_samples,
         max_tokens=args.max_length,
-        batch_size=args.batch_size,
     )
     if args.decayed_temperature:
         sampling_params.logits_processors = [TemperatureDecayLogitsProcessor(**asdict(args.decayed_temperature))]
@@ -144,7 +142,6 @@ if __name__ == "__main__":
         model_uri="gpt2",
         n_samples=1000,
         max_length=1024,
-        batch_size=16,
         private=False,
         temperature=1.0,
         decayed_temperature=None
