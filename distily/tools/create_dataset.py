@@ -46,7 +46,7 @@ class TemperatureDecayLogitsProcessor:
             lambda x: decay_args.start_t * torch.exp(k * x)
         )
 
-    def process_logits(self, input_ids, logits):
+    def __call__(self, input_ids, logits):
         temperature = self.exponential_decay_fn(input_ids.shape[-1])
         return logits / temperature
 
