@@ -60,7 +60,7 @@ def gen_seq_vllm(args: DatasetGenerationArguments) -> typing.List[str]:
 
     sampling_params = SamplingParams(
         n=args.n_samples,
-        max_length=args.max_length,
+        max_tokens=args.max_length,
         batch_size=args.batch_size,
     )
     if args.decayed_temperature:
@@ -127,7 +127,7 @@ def create_seq_dataset(args: DatasetGenerationArguments):
         dataset_uri=args.dataset_uri,
         model_uri=args.model_uri,
         n_samples=args.n_samples,
-        max_tokens=args.max_length,
+        max_length=args.max_length,
         private=args.private
     )
 
