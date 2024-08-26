@@ -117,6 +117,7 @@ def create_empty_dataset_repo_with_description(
         repo_id=dataset_uri,
         repo_type="dataset",
         private=private,
+        exist_ok=True,
     )
     api.upload_file(
         repo_id=dataset_uri,
