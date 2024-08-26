@@ -127,7 +127,7 @@ def create_seq_dataset(args: DatasetGenerationArguments):
         dataset_uri=args.dataset_uri,
         model_uri=args.model_uri,
         n_samples=args.n_samples,
-        max_length=args.max_length,
+        max_tokens=args.max_length,
         private=args.private
     )
 
