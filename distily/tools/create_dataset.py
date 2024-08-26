@@ -47,7 +47,10 @@ class TemperatureDecayLogitsProcessor:
         )
 
     def __call__(self, input_ids, logits):
-        temperature = self.exponential_decay_fn(input_ids.shape[-1])
+        if not input_ids:
+            temperature = self.exponential_decay_fn(0)
+        else:
+            import pdb;pdb.set_trace()
         return logits / temperature
 
 
