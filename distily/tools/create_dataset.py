@@ -1,3 +1,4 @@
+import io
 import typing
 import torch
 from dataclasses import dataclass, asdict
@@ -95,10 +96,14 @@ def create_empty_dataset_repo_with_description(
         repo_id=dataset_uri,
         repo_type="dataset",
         private=private,
-        repo_description=description
+    )
+    api.upload_file(
+        repo_id=dataset_uri,
+        path_or_fileobj=io.StringIO(description),
+        path_in_repo="README.md",
     )
 
-    print(f"Empty dataset repository {dataset_uri} with description created successfully.")
+    print(f"Empty dataset repository {dataset_uri} with dataset card created successfully.")
 
 
 def create_seq_dataset(args: DatasetGenerationArguments):
