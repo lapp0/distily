@@ -48,7 +48,8 @@ class TemperatureDecayLogitsProcessor:
 
     def __call__(self, input_ids, logits):
         temperature = self.exponential_decay_fn(len(input_ids))
-        return logits / temperature
+        logits.div_(temperature)
+        return logits
 
 
 def gen_seq_vllm(args: DatasetGenerationArguments) -> typing.List[str]:
