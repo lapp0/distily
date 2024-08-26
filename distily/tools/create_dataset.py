@@ -79,18 +79,25 @@ def gen_seq_vllm(args: DatasetGenerationArguments) -> typing.List[str]:
     return [r.outputs[0].text for r in responses]
 
 
-def create_model_card(model_uri, n_samples, max_length):
-    # TODO: don't hardcode
-    method = "Generated sequences randomly with `temperature=1.0`"
+def create_dataset_card(model_uri, n_samples, max_length, temperature_config):
+    from huggingface_hub import DatasetCard
 
-    # Create a description for the dataset
-    return "\n\n".join([
+    content = "\n\n".join([
         "# Distillation dataset created with [Distily](https://github.com/lapp0/distily).",
-        f"- **Method**: {method}",
-        f"- **Model URI**: {model_uri}\n"
-        f"- **Number of Samples**: {n_samples}\n"
-        f"- **Maximum Sequence Length**: {max_length}\n"
+        f"- **Method**: Generated sequences randomly with temperature config `{temperature_config}`"
+        f"- **Model URI**: `{model_uri}`"
+        f"- **Number of Samples**: {n_samples}"
+        f"- **Maximum Sequence Length**: {max_length} tokens"
     ])
+
+    card = DatasetCard(content)
+    #card.data["license"] = TODO
+    card.data["library_name"] = "Distily"
+    card.data["tags"] = ["Distily"]
+    card.data["source_datasets"] = ["Original", "Synthetic"]
+    card.data["task_categories"] = ["distillation"]
+
+    return card
 
 
 def create_empty_dataset_repo_with_description(
@@ -98,7 +105,9 @@ def create_empty_dataset_repo_with_description(
     model_uri: str,
     n_samples: int,
     max_length: int,
-    private: bool = False
+    private: bool,
+    temperature: typing.Optional[float],
+    decayed_temperature,
 ) -> None:
     from huggingface_hub import HfApi
     api = HfApi()
@@ -113,7 +122,7 @@ def create_empty_dataset_repo_with_description(
         repo_id=dataset_uri,
         repo_type="dataset",
         path_or_fileobj=io.BytesIO(
-            create_model_card(model_uri, n_samples, max_length).encode('utf-8')
+            create_dataset_card(model_uri, n_samples, max_length, temperature or decayed_temperature).encode('utf-8')
         ),
         path_in_repo="README.md",
     )
