@@ -55,15 +55,13 @@ def gen_seq_vllm(args: DatasetGenerationArguments) -> typing.List[str]:
     from vllm import LLM
     from vllm.sampling_params import SamplingParams
 
-    bs = 64
-
     llm = LLM(
         args.model_uri,
-        enable_chunked_prefill=True,
+        max_num_seqs=16,
     )
 
     sampling_params = SamplingParams(
-        n=bs,
+        n=1,
         max_tokens=args.max_length,
     )
     if args.decayed_temperature:
@@ -74,7 +72,7 @@ def gen_seq_vllm(args: DatasetGenerationArguments) -> typing.List[str]:
         raise ValueError("Need temperature or decayed_decayed_temperature")
 
     responses = llm.generate(
-        [llm.get_tokenizer().bos_token] * math.ceil(args.n_samples / bs),
+        [llm.get_tokenizer().bos_token] * args.n_samples,
         sampling_params=sampling_params,
         use_tqdm=True,
     )
