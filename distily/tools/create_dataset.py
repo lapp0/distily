@@ -33,7 +33,7 @@ class DatasetGenerationArguments:
     description_method: str = "Generated sequences randomly with `temperature=1.0`"
 
 
-class ExponentialDecayTemperatureLogitsProcessor:
+class TemperatureDecayLogitsProcessor:
     """
     Logits processor which decays temperature based on sequence length
     - start_t: temperature for 0th token
@@ -54,28 +54,42 @@ class ExponentialDecayTemperatureLogitsProcessor:
 
 def gen_seq_vllm(args: DatasetGenerationArguments) -> typing.List[str]:
     from vllm import LLM
+    from vllm.sampling_params import SamplingParams
+
     llm = LLM(args.model_uri)
 
-    if args.decayed_temperature:
-        sampling_kwargs = {
-            "logits_processors": [ExponentialDecayTemperatureLogitsProcessor(**asdict(args.decayed_temperature))]
-        }
-    elif args.temperature:
-        sampling_kwargs = {
-            "temperature": args.temperature
-        }
-    else:
-        raise ValueError("Need temperature or decayed_decayed_temperature")
-
-    sequences = llm.generate(
-        [""],  # start with no prompt
+    sampling_params = SamplingParams(
         n=args.n_samples,
         max_length=args.max_length,
         batch_size=args.batch_size,
-        use_tqdm=True,
-        **sampling_kwargs
     )
-    return sequences
+    if args.decayed_temperature:
+        sampling_params.logits_processors = [TemperatureDecayLogitsProcessor(**asdict(args.decayed_temperature))]
+    elif args.temperature:
+        sampling_params.temperature = args.temperature
+    else:
+        raise ValueError("Need temperature or decayed_decayed_temperature")
+
+    return llm.generate(
+        inputs=[""],  # start with no prompt
+        sampling_params=sampling_params,
+        use_tqdm=True,
+    )
+
+
+def create_model_card(model_uri, n_samples, max_length):
+    # TODO: don't hardcode
+    method = "Generated sequences randomly with `temperature=1.0`"
+
+    # Create a description for the dataset
+    return "\n\n".join([
+        "# Distillation dataset created with [Distily](https://github.com/lapp0/distily).",
+        f"- **Method**: {method}",
+        f"- **Model URI**: {model_uri}\n"
+        f"- **Number of Samples**: {n_samples}\n"
+        f"- **Maximum Sequence Length**: {max_length}\n"
+    ])
+
 
 
 def create_empty_dataset_repo_with_description(
@@ -88,18 +102,6 @@ def create_empty_dataset_repo_with_description(
     from huggingface_hub import HfApi
     api = HfApi()
 
-    # TODO: don't hardcode
-    method = "Generated sequences randomly with `temperature=1.0`"
-
-    # Create a description for the dataset
-    description = "\n\n".join([
-        "# Distillation dataset created with [Distily](https://github.com/lapp0/distily).",
-        f"- **Method**: {method}",
-        f"- **Model URI**: {model_uri}\n"
-        f"- **Number of Samples**: {n_samples}\n"
-        f"- **Maximum Sequence Length**: {max_length}\n"
-    ])
-
     # Create a new repository on the Hugging Face Hub with a description
     api.create_repo(
         repo_id=dataset_uri,
@@ -109,7 +111,9 @@ def create_empty_dataset_repo_with_description(
     api.upload_file(
         repo_id=dataset_uri,
         repo_type="dataset",
-        path_or_fileobj=io.BytesIO(description.encode('utf-8')),
+        path_or_fileobj=io.BytesIO(
+            create_model_card(model_uri, n_samples, max_length).encode('utf-8')
+        ),
         path_in_repo="README.md",
     )
 
