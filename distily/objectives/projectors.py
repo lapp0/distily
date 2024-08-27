@@ -41,7 +41,7 @@ class OrthogonalProjector(nn.Module):
     def __init__(self, student_features, teacher_features, pade_approx=False):
         super().__init__()
 
-        self.whiten = distily.objectives.norm.Whiten1d(teacher_features)
+        self.teacher_whitener = distily.objectives.norm.Whitening1d(teacher_features)
 
         if pade_approx:
             raise NotImplementedError("Pade Approximation is not implemented")
@@ -68,7 +68,7 @@ class OrthogonalProjector(nn.Module):
 
         projected_student_features = F.linear(student_features, Q)
 
-        whitened_teacher_features = self.whiten(teacher_features)
+        whitened_teacher_features = self.teacher_whitener(teacher_features)
 
         return projected_student_features, whitened_teacher_features
 
