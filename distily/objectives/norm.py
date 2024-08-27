@@ -12,14 +12,9 @@ class Whitening1d(nn.Module):
     - https://github.com/roymiles/vkd/issues/2#issuecomment-2182980957
     """
     def __init__(self, features: torch.Tensor, eps: float = 0.0):
-        """Whitening layer using Cholesky decomposition for 1D inputs.
-
-        Args:
-            feature_size (int): Dimensionality of each feature vector.
-            eps (float, optional): Small value for numerical stability. Defaults to 0.0.
-        """
+        """Whitening layer using Cholesky decomposition for 1D inputs."""
         super().__init__()
-        self.features_size = features.size(-1)
+        self.feature_size = features.size(-1)
         self.eps = eps
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
