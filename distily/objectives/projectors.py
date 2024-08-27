@@ -68,7 +68,10 @@ class OrthogonalProjector(nn.Module):
 
         projected_student_features = F.linear(student_features, Q)
 
-        whitened_teacher_features = self.teacher_whitener(teacher_features)
+        # flatten teacher to 2D, whiten, then unflatten
+        flattened_teacher_features = teacher_features.view(-1, teacher_features.shape[-1])
+        flattened_whitened_teacher_features = self.teacher_whitener(flattened_teacher_features)
+        whitened_teacher_features = flattened_whitened_teacher_features.view(teacher_features.shape)
 
         return projected_student_features, whitened_teacher_features
 
