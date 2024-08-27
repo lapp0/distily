@@ -3,5 +3,6 @@ from . import (  # noqa
     loss,
     projectors,
     objectives,
+    norm
 )
 from .objectives import DistillationObjective  # noqa

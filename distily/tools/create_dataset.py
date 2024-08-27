@@ -150,9 +150,9 @@ def create_seq_dataset(args: DatasetGenerationArguments):
 
 if __name__ == "__main__":
     args = DatasetGenerationArguments(
-        dataset_uri="distily/synth_tdecay_gpt2_seq_1K",
+        dataset_uri="distily/synth_gpt2_ted_seq_100K",
         model_uri="gpt2",
-        n_samples=1000,
+        n_samples=100000,
         max_length=1024,
         private=False,
         temperature=None,

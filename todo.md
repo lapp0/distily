@@ -6,17 +6,20 @@
 
 # TODO
 
+- [ ] implement whitening
+- [ ] refactor so there is a `norm` input, and refactor so no projcetors include normalization
+- [ ] test ortho with whitening
+
 ## v0.4.0
-- [ ] Implement synthetic datasets: randomly sampled
-- [ ] Implement synthetic datasets: dynamic temperature
+- [x] Implement synthetic datasets: randomly sampled
+- [x] Implement synthetic datasets: dynamic temperature
+- [ ] better dynamic temperature default params
+- [ ] ensure dynamic temperature always ends at end_t
 
 ## v0.4.2
 - [ ] `debug` mode: more overhead and slower, but can help debug loss functions. Calculate the following:
       - grad_norm of each individual loss component (determine magnitude)
 	  - correlation between each loss components gradient (determine relatedness)
-
-## v0.4.3
-- [ ] batch norm layer independent of projector
 
 ## v0.5.0
 - [ ] synthetic datasets: custom generators focusing on OOD sequences with vllm
