@@ -49,7 +49,7 @@ class Whitening1d(nn.Module):
 
         # Ensure symmetry and add regularization
         cov = (cov + cov.T) / 2
-        cov += torch.eye(cov.size(0)) * self.eps
+        cov += torch.eye(cov.size(0), device=x.device) * self.eps
 
         # Singular Value Decomposition (SVD)
         U, S, Vh = torch.linalg.svd(cov, full_matrices=False)
