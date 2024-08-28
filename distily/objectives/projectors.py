@@ -66,13 +66,13 @@ class OrthogonalProjector(nn.Module):
         print(f"Skew-symmetric weight matrix W: {W}")
 
         if torch.any(torch.isnan(W)):
-            logger.error("NaN detected in W before matrix exponential.")
+            print("NaN detected in W before matrix exponential.")
 
         A = torch.linalg.matrix_exp(W)
         print(f"Orthogonal transformation matrix A: {A}")
 
         if torch.any(torch.isnan(A)):
-            logger.error("NaN detected in A after matrix exponential.")
+            print("NaN detected in A after matrix exponential.")
 
         if self.student_dim != A.size(0):
             A = A[:, 0:self.student_dim]
@@ -82,7 +82,7 @@ class OrthogonalProjector(nn.Module):
         print(f"Projected student features: {projected_student_features}")
 
         if torch.any(torch.isnan(projected_student_features)):
-            logger.error("NaN detected in projected student features after matmul.")
+            print("NaN detected in projected student features after matmul.")
 
         normalized_student_features = self.bn_s(projected_student_features)
         normalized_teacher_features = self.bn_t(teacher_features)
