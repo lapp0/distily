@@ -66,11 +66,11 @@ class OrthogonalProjector(nn.Module):
             # Truncate A to match the student dimension
             A = A[:self.student_dim, :]
             # project onto the Stiefel manifold (Section 3.1)
-            Q, _ = torch.linalg.qr(A)
-        else:
-            Q = A
+            #Q, _ = torch.linalg.qr(A)
+        #else:
+            #Q = A
 
-        projected_student_features = F.linear(student_features, Q)
+        projected_student_features = F.linear(student_features, A)
 
         # TODO: CLEAN UP
         # Paper uses orthonormal, this is batch normalization
