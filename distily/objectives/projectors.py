@@ -72,10 +72,9 @@ class OrthogonalProjector(nn.Module):
         # Log min and max values in W to diagnose potential instability
         print(f"Min value in W: {W.min().item()}, Max value in W: {W.max().item()}")
 
-        # Optionally, convert W to float32 before matrix exponential if using bfloat16
-        W = W.to(torch.float32)
-
-        A = torch.linalg.matrix_exp(W)
+        # Convert to float32 because matrix_exp is unstable for bfloat16
+        with torch.autocast(device_type='cuda', dtype=torch.float32, enabled=True):
+            A = torch.linalg.matrix_exp(W)
         print(f"Orthogonal transformation matrix A: {A}")
 
         # Check for NaNs in A
