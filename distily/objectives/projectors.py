@@ -58,60 +58,10 @@ class OrthogonalProjector(nn.Module):
         self.bn_t = nn.BatchNorm1d(teacher_features.size(-1), eps=0.0001, affine=False)
 
     def forward(self, student_features, teacher_features):
-        print("Forward pass started.")
-        print(f"Initial student features: {student_features}")
-        print(f"Initial teacher features: {teacher_features}")
-
         W = (self.weight - self.weight.T) / 2  # Enforcing skew symmetry
-        print(f"Skew-symmetric weight matrix W: {W}")
-
-        # Check for NaNs in W
-        if torch.any(torch.isnan(W)):
-            print("NaN detected in W before matrix exponential.")
-
-        # Log min and max values in W to diagnose potential instability
-        print(f"Min value in W: {W.min().item()}, Max value in W: {W.max().item()}")
-
-
-        # Check for NaNs in A
-        if torch.any(torch.isnan(A)):
-            print("NaN detected in A after matrix exponential.")
-
-        if self.student_dim != A.size(0):
-            A = A[:, 0:self.student_dim]
-            print(f"Truncated orthogonal matrix A: {A}")
-
-        projected_student_features = torch.matmul(student_features, A)
-        print(f"Projected student features: {projected_student_features}")
-
-        # Check for NaNs in projected_student_features
-        if torch.any(torch.isnan(projected_student_features)):
-            print("NaN detected in projected student features after matmul.")
-
-        normalized_student_features = self.bn_s(projected_student_features)
-        normalized_teacher_features = self.bn_t(teacher_features)
-        print(f"Normalized student features: {normalized_student_features}")
-        print(f"Normalized teacher features: {normalized_teacher_features}")
-
-        print("Forward pass completed.")
-        return normalized_student_features, normalized_teacher_features
-
-    def fake_forward(self, student_features, teacher_features):
-        W = (self.weight - self.weight.T) / 2  # Enforcing skew symmetry
-
-        # Convert to float32 because matrix_exp is unstable for bfloat16
-        A = torch.linalg.matrix_exp(W.float()).to(dtype=W.dtype)
-
-        if self.student_dim != A.size(0):
-            # Truncate A to match the student dimension
-            A = A[:, 0:self.student_dim]
-            # project onto the Stiefel manifold (Section 3.1)
-            #Q, _ = torch.linalg.qr(A)
-        #else:
-            #Q = A
-
-        # TODO: trying this temporarily may delete
-        projected_student_features = torch.matmul(student_features, A)
+        A = torch.linalg.matrix_exp(W.float()).to(dtype=W.dtype)  # mat exp - float32 for numerical stability
+        A = A[:, 0:self.student_dim]
+        projected_student_features = F.linear(student_features, A)
 
         """
         # TODO: CLEAN UP
