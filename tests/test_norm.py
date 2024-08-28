@@ -13,6 +13,7 @@ INPUT_TENSORS = [
     torch.randn(10000, 10),
     torch.randn(10000, 100),
     torch.randn(10000, 1000),
+    torch.randn(800, 800),
 ]
 
 

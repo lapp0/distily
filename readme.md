@@ -60,6 +60,7 @@ TODO: commit the linked docs
 - [ ] Improve sampling efficiency through synthetic data generation.
 - [ ] Implement cross-entropy classification loss (traditional LLM loss function)
 - [ ] Apply projector to logits (https://arxiv.org/pdf/2310.17183)
+- [ ] Apply "teacher recording", run teacher inference once, use features dataset any number of times.
 
 #### Distill to a different model shape / size:
 - [x] Distill to model with fewer `num_hidden_layers` by implementing layer mappers.

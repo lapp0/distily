@@ -38,12 +38,17 @@ class OrthogonalProjector(nn.Module):
     Based on: https://github.com/roymiles/vkd/issues/1#issuecomment-2135090288
     """
 
-    def __init__(self, student_features, teacher_features, whitener):
+    def __init__(self, student_features, teacher_features, whitener, batchnorm=False):
         super().__init__()
 
         self.whiten = whitener is not None
         if self.whiten:
             self.whitener = whitener()
+
+        self.batchnorm = batchnorm
+        if self.batchnorm:
+            self.bn_s = nn.BatchNorm1d(teacher_features.size(-1), eps=0.0001, affine=False)
+            self.bn_t = nn.BatchNorm1d(teacher_features.size(-1), eps=0.0001, affine=False)
 
         teacher_dim = teacher_features.size(-1)
         self.student_dim = student_features.size(-1)
@@ -68,13 +73,18 @@ class OrthogonalProjector(nn.Module):
             flattened_whitened_teacher_features = self.whitener(flattened_teacher_features)
             teacher_features = flattened_whitened_teacher_features.view(teacher_features.shape)
 
-            # TODO: Experiment with whitening student features as well
-            """
-            # flatten student features to 2D, whiten, then unflatten
-            flattened_student_features = projected_student_features.view(-1, projected_student_features.shape[-1])
-            flattened_whitened_student_features = self.whitener(flattened_student_features)
-            projected_student_features = flattened_whitened_student_features.view(projected_student_features.shape)
-            """
+            # TODO: should we whiten student features? Might be worth an experiment, although the paper doesn't suggest it
+
+        if self.batchnorm:
+            # apply 1d batchnorm on 4d tensor with layers coupled
+            projected_student_features = self.bn_s(
+                projected_student_features.reshape(-1, projected_student_features.size(-1))
+            ).reshape_as(projected_student_features)
+            teacher_features = self.bn_t(
+                teacher_features.reshape(-1, teacher_features.size(-1))
+            ).reshape_as(teacher_features)
+
+            # TODO: decoupled batchnorm (see Miles)
 
         return projected_student_features, teacher_features
 
@@ -172,6 +182,7 @@ PROJECTORS = {
     "orthogonal_no_whitening": partial(OrthogonalProjector, whitener=None),
     "orthogonal_whiten_svd": partial(OrthogonalProjector, whitener=Whitening1dSVD),
     "orthogonal_whiten_cholesky": partial(OrthogonalProjector, whitener=Whitening1dCholesky),
+    "orthogonal_batchnorm": partial(OrthogonalProjector, whitener=None, batchnorm=True),
 
     # mlp
     "mlp": MLPProjector,

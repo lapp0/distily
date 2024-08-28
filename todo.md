@@ -3,17 +3,29 @@
 - [ ] half layer gpt2, but beat distilgpt2 benchmarks
 - [ ] distill phi-3-mini to 1.58b, report metrics
 
-
 # TODO
 
-- [ ] implement whitening
-- [ ] refactor so there is a `norm` input, and refactor so no projcetors include normalization
-- [ ] test ortho with whitening
+- [ ] update temperature scaler, temp = 10 for initial token, 0.5 for all remaining tokens
+
+## Big Benches
+- [ ] attn big bench, determine default params
+  - [ ] attn big bench with lr decay to 6e-5
+- [ ] big bench on synthetic dataset
+- [ ] bench warmups
+- [ ] bench lr's
+- [ ] bench lr schedulers
+- [ ] **integrate liger**
+- [ ] bench layernorm vs batchnorm for projections
+- [ ] repeat attn benchmarks, but use hs
+- [ ] big bench on `gpt2_xl` -> `gpt2`
+- [ ] big bench on `gpt2` -> `gpt2_bitnet`
+
+
 
 ## v0.4.0
 - [x] Implement synthetic datasets: randomly sampled
 - [x] Implement synthetic datasets: dynamic temperature
-- [ ] better dynamic temperature default params
+- [x] better dynamic temperature default params
 - [ ] ensure dynamic temperature always ends at end_t
 
 ## v0.4.2
@@ -38,6 +50,9 @@
 - [x] add ability to transfer / freeze embeddings
 - [ ] gradient weighted loss (review paper, see if there's ways to handle case where activations gradients push model in opposite direction as logit gradients / are orthogonal)
 - [ ] add stochastic noise / batch regularization and experiment since smaller batch size performrs so much better
+- [ ] fix whitening functions in ortho projection https://arxiv.org/pdf/2403.06213
+  - precompute whitened value across runs since teacher is static
+  - good opportunity to introduce data "recording" for teacher
 
 **Bug Fix**
 - [ ] loading the same dataset multiple times increases disk usage
