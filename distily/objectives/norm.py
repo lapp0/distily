@@ -14,7 +14,7 @@ class Whitening1dZCA(nn.Module):
         f_cov = torch.mm(xn.t(), xn) / (xn.size(0) - 1)
 
         # Decompose eigenvalues, regularize, and invert
-        eigvals, eigvecs = torch.linalg.eigh(f_cov)
+        eigvals, eigvecs = torch.linalg.eigh(f_cov.float()).to(f_cov.dtype)
         inv_sqrt_eigvals = torch.diag(torch.rsqrt(eigvals + self.eps))
 
         # ZCA whitening matrix
