@@ -49,11 +49,9 @@ class OrthogonalProjector(nn.Module):
         teacher_dim = teacher_features.size(-1)
         self.student_dim = student_features.size(-1)
 
-        weight = torch.empty((teacher_dim, teacher_dim))
-        torch.nn.init.kaiming_uniform_(weight, a=math.sqrt(5))
-
         # Ensure skew-symmetry
-        self.weight = nn.Parameter((weight - weight.T) / 2)
+        self.weight = nn.Parameter(torch.empty((teacher_dim, teacher_dim)))
+        torch.nn.init.kaiming_uniform_(self.weight, a=math.sqrt(5))
 
         # TODO: REPLACE OR CLEAN UP
         self.bn_s = nn.BatchNorm1d(teacher_features.size(-1), eps=0.0001, affine=False)
