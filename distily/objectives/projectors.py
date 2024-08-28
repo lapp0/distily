@@ -69,7 +69,9 @@ class OrthogonalProjector(nn.Module):
         #else:
             #Q = A
 
-        projected_student_features = F.linear(student_features, A)
+        # TODO: trying this temporarily may delete
+        projected_student_features = torch.matmul(student_features, A)
+        #projected_student_features = F.linear(student_features, A)
 
         # TODO: CLEAN UP
         # Paper uses orthonormal, this is batch normalization
