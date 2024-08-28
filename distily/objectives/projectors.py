@@ -74,7 +74,7 @@ class OrthogonalProjector(nn.Module):
 
         # Convert to float32 because matrix_exp is unstable for bfloat16
         wdtype = W.dtype
-        A = torch.linalg.matrix_exp(W)
+        A = torch.linalg.matrix_exp(W.to(dtype=torch.float64))
         A = A.to(dtype=wdtype)
         print(f"Orthogonal transformation matrix A: {A}")
 
