@@ -23,8 +23,12 @@ class Whitening1d(nn.Module):
         f_cov = torch.mm(xn.t(), xn) / (xn.size(0) - 1)
 
         # Add regularization and compute the inverse square root via Cholesky decomposition
-        inv_sqrt = torch.linalg.cholesky((1 - self.eps) * f_cov + self.eps * torch.eye(self.feature_size, device=x.device))
-        inv_sqrt = torch.inverse(inv_sqrt)
+        inv_sqrt = torch.linalg.cholesky(
+            (1 - self.eps) * f_cov +
+            self.eps * torch.eye(self.feature_size, device=x.device)
+        )
+        inv_sqrt = torch.inverse(inv_sqrt).to(xn.dtype)
 
+        xn = xn.to(inv_sqrt.dtype)
         # Apply the whitening transformation
         return torch.mm(xn, inv_sqrt)
