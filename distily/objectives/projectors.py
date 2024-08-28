@@ -65,12 +65,20 @@ class OrthogonalProjector(nn.Module):
         W = (self.weight - self.weight.T) / 2  # Enforcing skew symmetry
         print(f"Skew-symmetric weight matrix W: {W}")
 
+        # Check for NaNs in W
         if torch.any(torch.isnan(W)):
             print("NaN detected in W before matrix exponential.")
+
+        # Log min and max values in W to diagnose potential instability
+        print(f"Min value in W: {W.min().item()}, Max value in W: {W.max().item()}")
+
+        # Optionally, convert W to float32 before matrix exponential if using bfloat16
+        W = W.to(torch.float32)
 
         A = torch.linalg.matrix_exp(W)
         print(f"Orthogonal transformation matrix A: {A}")
 
+        # Check for NaNs in A
         if torch.any(torch.isnan(A)):
             print("NaN detected in A after matrix exponential.")
 
@@ -81,6 +89,7 @@ class OrthogonalProjector(nn.Module):
         projected_student_features = torch.matmul(student_features, A)
         print(f"Projected student features: {projected_student_features}")
 
+        # Check for NaNs in projected_student_features
         if torch.any(torch.isnan(projected_student_features)):
             print("NaN detected in projected student features after matmul.")
 
