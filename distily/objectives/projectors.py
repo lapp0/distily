@@ -164,8 +164,9 @@ class MilesProjector(nn.Module):
 PROJECTORS = {
     "identity": IdentityProjector,
     "linear": LinearProjector,
-    "orthogonal": OrthogonalProjector,
     "miles": MilesProjector,
+    "orthogonal": OrthogonalProjector,
+    "orthogonal_unwhitened": partial(OrthogonalProjector, whiten=False),
 
     # mlp
     "mlp": MLPProjector,

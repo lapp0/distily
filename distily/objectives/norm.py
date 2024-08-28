@@ -53,7 +53,7 @@ class Whitening1d(nn.Module):
 
         # Singular Value Decomposition (SVD)
         cov_dt = cov.dtype
-        cov_float64 = cov.to(dtype=torch.float64)
+        cov_float64 = cov.float()
         U, S, Vh = torch.linalg.svd(cov_float64, full_matrices=False)
         U = U.to(dtype=cov_dt)
         S = S.to(dtype=cov_dt)
