@@ -73,8 +73,9 @@ class OrthogonalProjector(nn.Module):
         print(f"Min value in W: {W.min().item()}, Max value in W: {W.max().item()}")
 
         # Convert to float32 because matrix_exp is unstable for bfloat16
-        with torch.autocast(device_type='cuda', dtype=torch.float32, enabled=True):
-            A = torch.linalg.matrix_exp(W)
+        wdtype = W.dtype
+        A = torch.linalg.matrix_exp(W)
+        A = A.to(dtype=wdtype)
         print(f"Orthogonal transformation matrix A: {A}")
 
         # Check for NaNs in A
