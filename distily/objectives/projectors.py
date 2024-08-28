@@ -60,11 +60,12 @@ class OrthogonalProjector(nn.Module):
         self.bn_t = nn.BatchNorm1d(teacher_features.size(-1), eps=0.0001, affine=False)
 
     def forward(self, student_features, teacher_features):
-        A = torch.linalg.matrix_exp(self.weight)
+        W = (self.weight - self.weight.T) / 2  # Enforcing skew symmetry
+        A = torch.linalg.matrix_exp(W)
 
         if self.student_dim != A.size(0):
             # Truncate A to match the student dimension
-            A = A[:self.student_dim, :]
+            A = A[:, 0:self.student_dim]
             # project onto the Stiefel manifold (Section 3.1)
             #Q, _ = torch.linalg.qr(A)
         #else:
