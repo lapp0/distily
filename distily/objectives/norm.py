@@ -2,19 +2,39 @@ import torch
 import torch.nn as nn
 
 
-class OLD_Whitening1d(nn.Module):
-    """
-    Whiten features.
+class Whitening1dZCA(nn.Module):
+    def __init__(self, eps: float = 1e-8):
+        """Whitening layer using ZCA Whitening for 1D inputs."""
+        super().__init__()
+        self.eps = eps
 
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        # Computer centered and covariante matrix
+        xn = x - x.mean(dim=0, keepdim=True)
+        f_cov = torch.mm(xn.t(), xn) / (xn.size(0) - 1)
+
+        # Decompose eigenvalues, regularize, and invert
+        eigvals, eigvecs = torch.linalg.eigh(f_cov)
+        inv_sqrt_eigvals = torch.diag(torch.rsqrt(eigvals + self.eps))
+
+        # ZCA whitening matrix
+        zca_matrix = eigvecs @ inv_sqrt_eigvals @ eigvecs.t()
+
+        # Apply the ZCA whitening transformation
+        return torch.mm(xn, zca_matrix)
+
+
+class Whitening1dCholesky(nn.Module):
+    """
+    Whiten features with Cholesky
     References:
     - https://arxiv.org/abs/2403.06213
     - https://github.com/htdt/self-supervised/blob/master/methods/whitening.py
     - https://github.com/roymiles/vkd/issues/2#issuecomment-2182980957
     """
-    def __init__(self, features: torch.Tensor, eps: float = 1e-8):
+    def __init__(self, eps: float = 1e-8):
         """Whitening layer using Cholesky decomposition for 1D inputs."""
         super().__init__()
-        self.feature_size = features.size(-1)
         self.eps = eps
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -25,17 +45,18 @@ class OLD_Whitening1d(nn.Module):
         # Add regularization and compute the inverse square root via Cholesky decomposition
         inv_sqrt = torch.linalg.cholesky(
             (1 - self.eps) * f_cov +
-            self.eps * torch.eye(self.feature_size, device=x.device)
+            self.eps * torch.eye(f_cov.size(0), device=x.device)
         )
         inv_sqrt = torch.inverse(inv_sqrt).to(xn.dtype)
 
         xn = xn.to(inv_sqrt.dtype)
+
         # Apply the whitening transformation
         return torch.mm(xn, inv_sqrt)
 
 
-class Whitening1d(nn.Module):
-    """Whiten features"""
+class Whitening1dSVD(nn.Module):
+    """Whiten features using Singular Value Decomposition (SVD)."""
     def __init__(self, eps=1e-5):
         super().__init__()
         self.eps = eps

@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-import distily
+from distily.objectives.norm import Whitening1dZCA, Whitening1dCholesky, Whitening1dSVD
 
 
 class IdentityProjector(nn.Module):
@@ -38,12 +38,12 @@ class OrthogonalProjector(nn.Module):
     Based on: https://github.com/roymiles/vkd/issues/1#issuecomment-2135090288
     """
 
-    def __init__(self, student_features, teacher_features, whiten=True):
+    def __init__(self, student_features, teacher_features, whitener):
         super().__init__()
 
-        self.whiten = whiten
+        self.whiten = whitener is not None
         if self.whiten:
-            self.whitener = distily.objectives.norm.Whitening1d()
+            self.whitener = whitener()
 
         teacher_dim = teacher_features.size(-1)
         self.student_dim = student_features.size(-1)
@@ -165,8 +165,13 @@ PROJECTORS = {
     "identity": IdentityProjector,
     "linear": LinearProjector,
     "miles": MilesProjector,
-    "orthogonal": OrthogonalProjector,
-    "orthogonal_unwhitened": partial(OrthogonalProjector, whiten=False),
+
+    # orthogonal, different whiteners
+    "orthogonal": partial(OrthogonalProjector, whitener=Whitening1dZCA),
+    "orthogonal_whiten_zca": partial(OrthogonalProjector, whitener=Whitening1dZCA),
+    "orthogonal_no_whitening": partial(OrthogonalProjector, whitener=None),
+    "orthogonal_whiten_svd": partial(OrthogonalProjector, whitener=Whitening1dSVD),
+    "orthogonal_whiten_cholesky": partial(OrthogonalProjector, whitener=Whitening1dCholesky),
 
     # mlp
     "mlp": MLPProjector,
