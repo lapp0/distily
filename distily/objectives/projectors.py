@@ -72,11 +72,6 @@ class OrthogonalProjector(nn.Module):
         # Log min and max values in W to diagnose potential instability
         print(f"Min value in W: {W.min().item()}, Max value in W: {W.max().item()}")
 
-        # Convert to float32 because matrix_exp is unstable for bfloat16
-        wdtype = W.dtype
-        A = torch.linalg.matrix_exp(W.to(dtype=torch.float64))
-        A = A.to(dtype=wdtype)
-        print(f"Orthogonal transformation matrix A: {A}")
 
         # Check for NaNs in A
         if torch.any(torch.isnan(A)):
@@ -103,7 +98,9 @@ class OrthogonalProjector(nn.Module):
 
     def fake_forward(self, student_features, teacher_features):
         W = (self.weight - self.weight.T) / 2  # Enforcing skew symmetry
-        A = torch.linalg.matrix_exp(W)
+
+        # Convert to float32 because matrix_exp is unstable for bfloat16
+        A = torch.linalg.matrix_exp(W.float()).to(dtype=W.dtype)
 
         if self.student_dim != A.size(0):
             # Truncate A to match the student dimension
@@ -115,8 +112,8 @@ class OrthogonalProjector(nn.Module):
 
         # TODO: trying this temporarily may delete
         projected_student_features = torch.matmul(student_features, A)
-        #projected_student_features = F.linear(student_features, A)
 
+        """
         # TODO: CLEAN UP
         # Paper uses orthonormal, this is batch normalization
         projected_student_features = self.bn_s(
@@ -126,7 +123,6 @@ class OrthogonalProjector(nn.Module):
             teacher_features.reshape(-1, teacher_features.size(-1))
         ).reshape_as(teacher_features)
 
-        """
         # flatten teacher features to 2D, whiten, then unflatten
         flattened_teacher_features = teacher_features.view(-1, teacher_features.shape[-1])
         flattened_whitened_teacher_features = self.whitener(flattened_teacher_features)
