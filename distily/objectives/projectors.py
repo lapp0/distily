@@ -38,17 +38,26 @@ class OrthogonalProjector(nn.Module):
     Based on: https://github.com/roymiles/vkd/issues/1#issuecomment-2135090288
     """
 
-    def __init__(self, student_features, teacher_features, whitener, batchnorm=False):
+    def __init__(self, student_features, teacher_features, whitener, use_batchnorm=False, use_layernorm=False):
         super().__init__()
 
         self.whiten = whitener is not None
         if self.whiten:
             self.whitener = whitener()
 
-        self.batchnorm = batchnorm
-        if self.batchnorm:
-            self.bn_s = nn.BatchNorm1d(teacher_features.size(-1), eps=0.0001, affine=False)
-            self.bn_t = nn.BatchNorm1d(teacher_features.size(-1), eps=0.0001, affine=False)
+        self.use_batchnorm = use_batchnorm
+        if use_batchnorm:
+            bn_s = nn.BatchNorm1d(teacher_features.size(-1), eps=0.0001, affine=False)
+            bn_t = nn.BatchNorm1d(teacher_features.size(-1), eps=0.0001, affine=False)
+            self.register_module('bn_s', bn_s)
+            self.register_module('bn_t', bn_t)
+
+        self.use_layernorm = use_layernorm
+        if use_layernorm:
+            ln_s = nn.LayerNorm1d(teacher_features.size(-1), eps=0.0001, affine=False)
+            ln_t = nn.LayerNorm1d(teacher_features.size(-1), eps=0.0001, affine=False)
+            self.register_module('ln_s', ln_s)
+            self.register_module('ln_t', ln_t)
 
         teacher_dim = teacher_features.size(-1)
         self.student_dim = student_features.size(-1)
@@ -56,10 +65,6 @@ class OrthogonalProjector(nn.Module):
         # Ensure skew-symmetry
         self.weight = nn.Parameter(torch.empty((teacher_dim, teacher_dim)))
         torch.nn.init.kaiming_uniform_(self.weight, a=math.sqrt(5))
-
-        # TODO: REPLACE OR CLEAN UP
-        self.bn_s = nn.BatchNorm1d(teacher_features.size(-1), eps=0.0001, affine=False)
-        self.bn_t = nn.BatchNorm1d(teacher_features.size(-1), eps=0.0001, affine=False)
 
     def forward(self, student_features, teacher_features):
         W = (self.weight - self.weight.T) / 2  # Enforcing skew symmetry
@@ -75,7 +80,7 @@ class OrthogonalProjector(nn.Module):
 
             # TODO: should we whiten student features? Might be worth an experiment, although the paper doesn't suggest it
 
-        if self.batchnorm:
+        if self.use_batchnorm:
             # apply 1d batchnorm on 4d tensor with layers coupled
             projected_student_features = self.bn_s(
                 projected_student_features.reshape(-1, projected_student_features.size(-1))
@@ -85,6 +90,14 @@ class OrthogonalProjector(nn.Module):
             ).reshape_as(teacher_features)
 
             # TODO: decoupled batchnorm (see Miles)
+
+        elif self.use_layernorm:
+            projected_student_features = self.ln_s(
+                projected_student_features.reshape(-1, projected_student_features.size(-1))
+            ).reshape_as(projected_student_features)
+            teacher_features = self.ln_t(
+                teacher_features.reshape(-1, teacher_features.size(-1))
+            ).reshape_as(teacher_features)
 
         return projected_student_features, teacher_features
 
@@ -182,7 +195,8 @@ PROJECTORS = {
     "orthogonal_no_whitening": partial(OrthogonalProjector, whitener=None),
     "orthogonal_whiten_svd": partial(OrthogonalProjector, whitener=Whitening1dSVD),
     "orthogonal_whiten_cholesky": partial(OrthogonalProjector, whitener=Whitening1dCholesky),
-    "orthogonal_batchnorm": partial(OrthogonalProjector, whitener=None, batchnorm=True),
+    "orthogonal_batchnorm": partial(OrthogonalProjector, whitener=None, use_batchnorm=True),
+    "orthogonal_layernorm": partial(OrthogonalProjector, whitener=None, use_layernorm=True),
 
     # mlp
     "mlp": MLPProjector,
