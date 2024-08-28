@@ -55,6 +55,10 @@ class OrthogonalProjector(nn.Module):
         # Ensure skew-symmetry
         self.weight = nn.Parameter((weight - weight.T) / 2)
 
+        # TODO: REPLACE OR CLEAN UP
+        self.bn_s = nn.BatchNorm1d(teacher_features.size(-1), eps=0.0001, affine=False)
+        self.bn_t = nn.BatchNorm1d(teacher_features.size(-1), eps=0.0001, affine=False)
+
     def forward(self, student_features, teacher_features):
         A = torch.linalg.matrix_exp(self.weight)
 
@@ -68,6 +72,16 @@ class OrthogonalProjector(nn.Module):
 
         projected_student_features = F.linear(student_features, Q)
 
+        # TODO: CLEAN UP
+        # Paper uses orthonormal, this is batch normalization
+        projected_student_features = self.bn_s(
+            projected_student_features.reshape(-1, projected_student_features.size(-1))
+        ).reshape_as(projected_student_features)
+        teacher_features = self.bn_t(
+            teacher_features.reshape(-1, teacher_features.size(-1))
+        ).reshape_as(teacher_features)
+
+        """
         # flatten teacher features to 2D, whiten, then unflatten
         flattened_teacher_features = teacher_features.view(-1, teacher_features.shape[-1])
         flattened_whitened_teacher_features = self.whitener(flattened_teacher_features)
@@ -77,8 +91,9 @@ class OrthogonalProjector(nn.Module):
         flattened_student_features = projected_student_features.view(-1, projected_student_features.shape[-1])
         flattened_whitened_student_features = self.whitener(flattened_student_features)
         whitened_projected_student_features = flattened_whitened_student_features.view(projected_student_features.shape)
+        """
 
-        return whitened_projected_student_features, whitened_teacher_features
+        return projected_student_features, teacher_features
 
 
 class MLPProjector(nn.Module):
