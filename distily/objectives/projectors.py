@@ -41,7 +41,7 @@ class OrthogonalProjector(nn.Module):
     def __init__(self, student_features, teacher_features, pade_approx=False, whiten=True):
         super().__init__()
 
-        self.white = whiten
+        self.whiten = whiten
         if self.whiten:
             self.whitener = distily.objectives.norm.Whitening1d(teacher_features)
 
