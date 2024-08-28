@@ -1,9 +1,10 @@
 [tool.poetry]
 name = "distily"
-version = "0.3.0"
+version = "0.4.0"
 description = "Distily: Language Model Distillation Toolkit and Library"
 authors = ["Andrew Lapp <andrew@github.rew.la>"]
 license = "MIT"
+
 
 [tool.poetry.dependencies]
 python = ">=3.09"
@@ -13,11 +14,15 @@ tqdm = ">=4.0"
 torch = ">=2.0"
 accelerate = ">=0.21.0"
 
-# TODO: these should be optional deps in distily[extras]
-bitsandbytes = ">=0.43.3 "
-flash-attn = ">=2.6.3"
-tensorboardX = "*"
-lm_eval = "*"
+# optional
+bitsandbytes = { version = ">=0.43.3", optional = true }
+flash-attn = { version = ">=2.6.3", optional = true}
+tensorboardX = { version = "*", optional = true }
+lm_eval = { version = "*", optional = true }
+
+[tool.poetry.extras]
+full = ["bitsandbytes", "flash-attn", "tensorboardX", "lm_eval"]
+
 
 [build-system]
 requires = ["poetry-core"]

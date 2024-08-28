@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 
-class Whitening1d(nn.Module):
+class OLD_Whitening1d(nn.Module):
     """
     Whiten features.
 
@@ -32,3 +32,30 @@ class Whitening1d(nn.Module):
         xn = xn.to(inv_sqrt.dtype)
         # Apply the whitening transformation
         return torch.mm(xn, inv_sqrt)
+
+
+class Whitening1d(nn.Module):
+    """Whiten features"""
+    def __init__(self, eps=1e-5):
+        super().__init__()
+        self.eps = eps
+
+    def forward(self, x):
+        # Centering
+        x_centered = x - x.mean(dim=0, keepdim=True)
+
+        # Covariance matrix
+        cov = torch.mm(x_centered.T, x_centered) / (x_centered.size(0) - 1)
+
+        # Ensure symmetry and add regularization
+        cov = (cov + cov.T) / 2
+        cov += torch.eye(cov.size(0)) * self.eps
+
+        # Singular Value Decomposition (SVD)
+        U, S, Vh = torch.linalg.svd(cov, full_matrices=False)
+
+        # Whitening transformation
+        D_inv_sqrt = torch.diag(1.0 / torch.sqrt(S + self.eps))
+        whitened = torch.mm(torch.mm(x_centered, U), D_inv_sqrt)
+
+        return whitened

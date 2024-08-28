@@ -38,15 +38,12 @@ class OrthogonalProjector(nn.Module):
     Based on: https://github.com/roymiles/vkd/issues/1#issuecomment-2135090288
     """
 
-    def __init__(self, student_features, teacher_features, pade_approx=False, whiten=True):
+    def __init__(self, student_features, teacher_features, whiten=True):
         super().__init__()
 
         self.whiten = whiten
         if self.whiten:
-            self.whitener = distily.objectives.norm.Whitening1d(teacher_features)
-
-        if pade_approx:
-            raise NotImplementedError("Pade Approximation is not implemented")
+            self.whitener = distily.objectives.norm.Whitening1d()
 
         teacher_dim = teacher_features.size(-1)
         self.student_dim = student_features.size(-1)
@@ -71,22 +68,13 @@ class OrthogonalProjector(nn.Module):
             flattened_whitened_teacher_features = self.whitener(flattened_teacher_features)
             teacher_features = flattened_whitened_teacher_features.view(teacher_features.shape)
 
-        """
-        # TODO: CLEAN UP
-        # Paper uses orthonormal, this is batch normalization
-        projected_student_features = self.bn_s(
-            projected_student_features.reshape(-1, projected_student_features.size(-1))
-        ).reshape_as(projected_student_features)
-        teacher_features = self.bn_t(
-            teacher_features.reshape(-1, teacher_features.size(-1))
-        ).reshape_as(teacher_features)
-        """
-        """
-        # flatten student features to 2D, whiten, then unflatten
-        flattened_student_features = projected_student_features.view(-1, projected_student_features.shape[-1])
-        flattened_whitened_student_features = self.whitener(flattened_student_features)
-        whitened_projected_student_features = flattened_whitened_student_features.view(projected_student_features.shape)
-        """
+            # TODO: Experiment with whitening student features as well
+            """
+            # flatten student features to 2D, whiten, then unflatten
+            flattened_student_features = projected_student_features.view(-1, projected_student_features.shape[-1])
+            flattened_whitened_student_features = self.whitener(flattened_student_features)
+            projected_student_features = flattened_whitened_student_features.view(projected_student_features.shape)
+            """
 
         return projected_student_features, teacher_features
 
