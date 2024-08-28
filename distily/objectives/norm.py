@@ -52,8 +52,9 @@ class Whitening1d(nn.Module):
         cov += torch.eye(cov.size(0), device=x.device) * self.eps
 
         # Singular Value Decomposition (SVD)
-        with torch.cuda.amp.autocast(dtype=torch.double):
-            U, S, Vh = torch.linalg.svd(cov, full_matrices=False)
+        cov_float64 = cov.to(dtype=torch.float64)
+        U, S, Vh = torch.linalg.svd(cov_float64, full_matrices=False)
+        U = U.to(dtype=cov.dtype)
 
         # Whitening transformation
         D_inv_sqrt = torch.diag(1.0 / torch.sqrt(S + self.eps))
