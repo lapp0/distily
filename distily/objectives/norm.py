@@ -38,7 +38,7 @@ class DistillationBatchNorm1d(nn.Module):
     forward = FourDimDistillationNorm.forward
 
 
-class DistillationLayerNorm1d(nn.LayerNorm):
+class DistillationLayerNorm1d(nn.Module):
     """
     Calculate layernorm across 4D tensor of shape
     (batch size, num layers, sequence length, feature size)

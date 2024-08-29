@@ -42,12 +42,14 @@ HF_WRITE=<your hub token> python3 -c "from huggingface_hub.hf_api import HfFolde
 
 ## Further Reading
 
-TODO: commit the linked docs
+TODO: commit the linked docs once complete
 
-**Documentation**
-- [Distily Documentation](./docs/index.md)
+**Using Distily**
+- How Distillation Works: [The Distily Recipe](./docs/recipe.md)
+- [Quickstart / Examples](./docs/using.md)
+- [Parameter Selection](./docs/params.md)
 
-**Models**
+**Available Models**
 - [Official Distily Models](./docs/official_models.md)
 - [All HF Models Created With Distily](https://huggingface.co/models?library=Distily)
 
