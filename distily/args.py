@@ -110,7 +110,7 @@ class DistillationObjectiveArguments:
     hs_projector: typing.Optional[str] = None
 
     attn_weight: float = 0
-    attn_loss_fn: str = "mse"
+    attn_loss_fn: str = "raw_mse"
     attn_layer_mapper: str = "layer-2"
     attn_norm: typing.Optional[str] = None
     attn_projector: typing.Optional[str] = None
