@@ -50,8 +50,8 @@ class OrthogonalProjector(nn.Module):
 
         self.use_layernorm = use_layernorm
         if use_layernorm:
-            ln_s = LayerNorm1d4d(teacher_features.size(-1), eps=0.0001, affine=False)
-            ln_t = LayerNorm1d4d(teacher_features.size(-1), eps=0.0001, affine=False)
+            ln_s = LayerNorm1d4d(teacher_features.size(-1), eps=0.0001, elementwise_affine=False)
+            ln_t = LayerNorm1d4d(teacher_features.size(-1), eps=0.0001, elementwise_affine=False)
             self.register_module('ln_s', ln_s)
             self.register_module('ln_t', ln_t)
 
