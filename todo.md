@@ -28,6 +28,9 @@
 - [x] better dynamic temperature default params
 - [ ] ensure dynamic temperature always ends at end_t
 
+## v0.4.1
+- [ ] implement and benchmark all norm permutations. RMSNorm, LayerNorm, BatchNorm, but also normalization across different layers may have different characteristics when distilling, we may want to norm across (feature size, num layers) dimension, etc
+
 ## v0.4.2
 - [ ] `debug` mode: more overhead and slower, but can help debug loss functions. Calculate the following:
       - grad_norm of each individual loss component (determine magnitude)

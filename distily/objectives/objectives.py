@@ -2,7 +2,7 @@ from typing import Callable, Union, Dict
 from dataclasses import dataclass
 import torch
 
-from distily.objectives import loss, layer_mappers, projectors
+from distily.objectives import loss, layer_mappers, norm, projectors
 
 
 @dataclass
@@ -11,6 +11,7 @@ class LossComponent:
     weight: float
     loss_fn: Union[None, str, Callable]
     layer_mapper: Union[None, str, Callable] = None
+    norm: Union[None, str, Callable] = None
     projector: Union[None, str, Callable] = None
 
     def _get_callable(self, attr, source_dict):
@@ -27,6 +28,10 @@ class LossComponent:
     @property
     def apply_layer_mapper(self):
         return self._get_callable(self.layer_mapper, layer_mappers.LAYER_MAPPERS)
+
+    @property
+    def get_norm(self):
+        return self._get_callable(self.norm, norm.NORMS)
 
     @property
     def get_projector(self):
@@ -64,10 +69,12 @@ class DistillationObjective:
             hs_weight,
             hs_loss_fn,
             hs_layer_mapper,
+            hs_norm,
             hs_projector,
             attn_weight,
             attn_loss_fn,
             attn_layer_mapper,
+            attn_norm,
             attn_projector,
     ):
         self.logits_loss_component = LossComponent(
@@ -80,6 +87,7 @@ class DistillationObjective:
             weight=hs_weight,
             loss_fn=hs_loss_fn,
             layer_mapper=hs_layer_mapper,
+            norm=hs_norm,
             projector=hs_projector,
         )
         self.attn_loss_component = LossComponent(
@@ -87,10 +95,12 @@ class DistillationObjective:
             weight=attn_weight,
             loss_fn=attn_loss_fn,
             layer_mapper=attn_layer_mapper,
+            norm=attn_norm,
             projector=attn_projector,
         )
 
         self._projectors: dict = {}
+        self._norms: dict = {}
 
     def __call__(self, teacher_model, student_model, inputs) -> Dict[str, float]:
         forward_kwargs = {
@@ -127,13 +137,20 @@ class DistillationObjective:
         elif isinstance(feat_s, tuple):
             feat_s, feat_t = torch.vstack(feat_s), torch.vstack(feat_t)
 
+        # projectors and norms may be trainable, therefore we lazy-load, then re-use
         if loss_component.projector:
-            # projectors are trainable, therefore we lazy-load, then re-use the same projector
             if loss_component.label not in self._projectors:
                 self._projectors[loss_component.label] = loss_component\
                     .get_projector(feat_s, feat_t)\
                     .to(device=feat_s.device, dtype=feat_s.dtype)
             feat_s, feat_t = self._projectors[loss_component.label].forward(feat_s, feat_t)
+
+        if loss_component.norm:
+            if loss_component.label not in self._norms:
+                self._projectors[loss_component.label] = loss_component\
+                    .get_norm(feat_s, feat_t)\
+                    .to(device=feat_s.device, dtype=feat_s.dtype)
+            feat_s, feat_t = self._norms[loss_component.label].forward(feat_s, feat_t)
 
         loss = loss_component.get_loss(feat_s, feat_t)
 
