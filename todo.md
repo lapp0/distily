@@ -5,7 +5,7 @@
 
 # TODO
 
-- [ ] update temperature scaler, temp = 10 for initial token, 0.5 for all remaining tokens
+
 
 ## Big Benches
 - [ ] attn big bench, determine default params
@@ -22,16 +22,12 @@
 
 
 
-## v0.4.0
-- [x] Implement synthetic datasets: randomly sampled
-- [x] Implement synthetic datasets: dynamic temperature
-- [x] better dynamic temperature default params
+## v0.4.2
+- [ ] update temperature scaler, temp = 10 for initial token, 0.5 for all remaining tokens
 - [ ] ensure dynamic temperature always ends at end_t
 
-## v0.4.1
-- [ ] implement and benchmark all norm permutations. RMSNorm, LayerNorm, BatchNorm, but also normalization across different layers may have different characteristics when distilling, we may want to norm across (feature size, num layers) dimension, etc
 
-## v0.4.2
+## v0.4.3
 - [ ] `debug` mode: more overhead and slower, but can help debug loss functions. Calculate the following:
       - grad_norm of each individual loss component (determine magnitude)
 	  - correlation between each loss components gradient (determine relatedness)
@@ -46,6 +42,7 @@
 
 ## v0.5.2
 - [ ] fix log output so the loss/logits and loss/activations respects logging_steps
+- [ ] implement and benchmark all norm permutations. RMSNorm, LayerNorm, BatchNorm, but also normalization across different layers may have different characteristics when distilling, we may want to norm across (feature size, num layers) dimension, etc
 
 
 ## v0.5.3

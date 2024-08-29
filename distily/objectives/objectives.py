@@ -147,7 +147,7 @@ class DistillationObjective:
 
         if loss_component.norm:
             if loss_component.label not in self._norms:
-                self._projectors[loss_component.label] = loss_component\
+                self._norms[loss_component.label] = loss_component\
                     .get_norm(feat_s, feat_t)\
                     .to(device=feat_s.device, dtype=feat_s.dtype)
             feat_s, feat_t = self._norms[loss_component.label].forward(feat_s, feat_t)
