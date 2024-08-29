@@ -94,6 +94,8 @@ class DistillationTrainer(transformers.Trainer):
 
     def train(self, *args, **kwargs):
         train_output = super().train(*args, **kwargs)
+        if self.args.eval_on_end:
+            self.evaluate()
         bench_metrics_out = self._maybe_benchmark()
         if bench_metrics_out is None:
             return train_output

@@ -25,6 +25,7 @@
 ## v0.4.2
 - [ ] update temperature scaler, temp = 10 for initial token, 0.5 for all remaining tokens
 - [ ] ensure dynamic temperature always ends at end_t
+- [ ] ensemble projector
 
 
 ## v0.4.3
