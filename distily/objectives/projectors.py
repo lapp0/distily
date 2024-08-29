@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from distily.objectives.norm import Whitening1dZCA, Whitening1dCholesky, Whitening1dSVD
+from distily.objectives.norm import BatchNorm1d4d, LayerNorm1d4d
 
 
 class IdentityProjector(nn.Module):
@@ -38,24 +38,20 @@ class OrthogonalProjector(nn.Module):
     Based on: https://github.com/roymiles/vkd/issues/1#issuecomment-2135090288
     """
 
-    def __init__(self, student_features, teacher_features, whitener, use_batchnorm=False, use_layernorm=False):
+    def __init__(self, student_features, teacher_features, use_batchnorm=False, use_layernorm=False):
         super().__init__()
-
-        self.whiten = whitener is not None
-        if self.whiten:
-            self.whitener = whitener()
 
         self.use_batchnorm = use_batchnorm
         if use_batchnorm:
-            bn_s = nn.BatchNorm1d(teacher_features.size(-1), eps=0.0001, affine=False)
-            bn_t = nn.BatchNorm1d(teacher_features.size(-1), eps=0.0001, affine=False)
+            bn_s = BatchNorm1d4d(teacher_features.size(-1), eps=0.0001, affine=False)
+            bn_t = BatchNorm1d4d(teacher_features.size(-1), eps=0.0001, affine=False)
             self.register_module('bn_s', bn_s)
             self.register_module('bn_t', bn_t)
 
         self.use_layernorm = use_layernorm
         if use_layernorm:
-            ln_s = nn.LayerNorm1d(teacher_features.size(-1), eps=0.0001, affine=False)
-            ln_t = nn.LayerNorm1d(teacher_features.size(-1), eps=0.0001, affine=False)
+            ln_s = LayerNorm1d4d(teacher_features.size(-1), eps=0.0001, affine=False)
+            ln_t = LayerNorm1d4d(teacher_features.size(-1), eps=0.0001, affine=False)
             self.register_module('ln_s', ln_s)
             self.register_module('ln_t', ln_t)
 
@@ -72,32 +68,13 @@ class OrthogonalProjector(nn.Module):
         A = A[:, 0:self.student_dim]
         projected_student_features = F.linear(student_features, A)
 
-        if self.whiten:
-            # flatten teacher features to 2D, whiten, then unflatten
-            flattened_teacher_features = teacher_features.view(-1, teacher_features.shape[-1])
-            flattened_whitened_teacher_features = self.whitener(flattened_teacher_features)
-            teacher_features = flattened_whitened_teacher_features.view(teacher_features.shape)
-
-            # TODO: should we whiten student features? Might be worth an experiment, although the paper doesn't suggest it
-
         if self.use_batchnorm:
-            # apply 1d batchnorm on 4d tensor with layers coupled
-            projected_student_features = self.bn_s(
-                projected_student_features.reshape(-1, projected_student_features.size(-1))
-            ).reshape_as(projected_student_features)
-            teacher_features = self.bn_t(
-                teacher_features.reshape(-1, teacher_features.size(-1))
-            ).reshape_as(teacher_features)
-
-            # TODO: decoupled batchnorm (see Miles)
+            projected_student_features = self.bn_s(projected_student_features)
+            teacher_features = self.bn_t(teacher_features)
 
         elif self.use_layernorm:
-            projected_student_features = self.ln_s(
-                projected_student_features.reshape(-1, projected_student_features.size(-1))
-            ).reshape_as(projected_student_features)
-            teacher_features = self.ln_t(
-                teacher_features.reshape(-1, teacher_features.size(-1))
-            ).reshape_as(teacher_features)
+            projected_student_features = self.ln_s(projected_student_features)
+            teacher_features = self.ln_t(teacher_features)
 
         return projected_student_features, teacher_features
 
@@ -189,14 +166,9 @@ PROJECTORS = {
     "linear": LinearProjector,
     "miles": MilesProjector,
 
-    # orthogonal, different whiteners
-    "orthogonal": partial(OrthogonalProjector, whitener=Whitening1dZCA),
-    "orthogonal_whiten_zca": partial(OrthogonalProjector, whitener=Whitening1dZCA),
-    "orthogonal_no_whitening": partial(OrthogonalProjector, whitener=None),
-    "orthogonal_whiten_svd": partial(OrthogonalProjector, whitener=Whitening1dSVD),
-    "orthogonal_whiten_cholesky": partial(OrthogonalProjector, whitener=Whitening1dCholesky),
-    "orthogonal_batchnorm": partial(OrthogonalProjector, whitener=None, use_batchnorm=True),
-    "orthogonal_layernorm": partial(OrthogonalProjector, whitener=None, use_layernorm=True),
+    "orthogonal": partial(OrthogonalProjector),
+    "orthogonal_batchnorm": partial(OrthogonalProjector, use_batchnorm=True),
+    "orthogonal_layernorm": partial(OrthogonalProjector, use_layernorm=True),
 
     # mlp
     "mlp": MLPProjector,
