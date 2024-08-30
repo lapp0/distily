@@ -54,6 +54,9 @@ TODO: commit the linked docs once complete
 - [All HF Models Created With Distily](https://huggingface.co/models?library=Distily)
 
 
+**Contributing**
+- [Contributing Guidelines](./docs/contributing.md)
+
 ## Roadmap
 
 #### Improved performance / sampling efficiency:

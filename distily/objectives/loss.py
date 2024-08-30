@@ -1,6 +1,5 @@
 import torch
 from torch.nn import functional as F
-import einops
 
 
 def _stable_kl_div(P_log_prob, Q_prob, epsilon=1e-10):
@@ -14,6 +13,7 @@ def _stable_kl_div(P_log_prob, Q_prob, epsilon=1e-10):
 
 def _cdist(x: torch.Tensor, y: torch.Tensor, p: float = 1.0) -> torch.Tensor:
     """Builtin cdist only works for float32"""
+    import einops
     if x.dtype != torch.float32:
         # Reshape x and y for broadcasting
         x = einops.rearrange(x, "b l r -> b l () r")
