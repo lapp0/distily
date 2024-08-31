@@ -71,6 +71,7 @@ def get_student_model(student_model_args, teacher_model):
     if student_model_args.student_model_name_or_path:
         student_model = transformers.AutoModelForCausalLM.from_pretrained(
             student_model_args.student_model_name_or_path,
+            attn_implementation="flash_attention_2",
             torch_dtype=torch.bfloat16,
         )
 
@@ -93,7 +94,7 @@ def get_student_model(student_model_args, teacher_model):
             torch_dtype=torch.bfloat16,
         ).to(device="cuda")
 
-    if student_model_args.dropout:  # TODO: argument
+    if student_model_args.dropout:
         student_model.hidden_dropout_prob = student_model_args.dropout
         student_model.attention_probs_dropout_prob = student_model_args.dropout
 

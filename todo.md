@@ -6,7 +6,6 @@
 # TODO
 
 
-
 ## Big Benches
 - [ ] attn big bench, determine default params
   - [ ] attn big bench with lr decay to 6e-5

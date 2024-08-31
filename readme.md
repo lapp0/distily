@@ -7,7 +7,7 @@
 ## Install
 
 ```
-pip install -U git+https://github.com/lapp0/distily
+pip install -U "git+https://github.com/lapp0/distily.git#egg=distily[full]"
 ```
 
 ## Features

@@ -1,4 +1,5 @@
 import torch.nn as nn
+from functools import partial
 
 
 class FourDimDistillationNorm:
@@ -29,11 +30,14 @@ class DistillationBatchNorm1d(nn.Module):
     (batch size, num layers, sequence length, feature size)
     and applies batch normalization
     """
-    def __init__(self, student_features, teacher_features, eps=1e-5, affine=False, **kwargs):
+    def __init__(self, student_feat, teacher_feat, norm_student=True, affine=False, **kwargs):
         super().__init__()
-        size_t = teacher_features.size(-1)
-        self.norm_s = nn.BatchNorm1d(size_t, eps=eps, affine=affine, **kwargs)
-        self.norm_t = nn.BatchNorm1d(size_t, eps=eps, affine=affine, **kwargs)
+        size_t = teacher_feat.size(-1)
+        if norm_student:
+            self.norm_s = nn.BatchNorm1d(size_t, affine=affine, **kwargs)
+        else:
+            self.norm_s = nn.Identity()
+        self.norm_t = nn.BatchNorm1d(size_t, affine=affine, **kwargs)
 
     forward = FourDimDistillationNorm.forward
 
@@ -43,16 +47,55 @@ class DistillationLayerNorm1d(nn.Module):
     Calculate layernorm across 4D tensor of shape
     (batch size, num layers, sequence length, feature size)
     """
-    def __init__(self, student_features, teacher_features, eps=1e-5, elementwise_affine=False, **kwargs):
+    def __init__(self, student_feat, teacher_feat, norm_student=True, affine=False, **kwargs):
         super().__init__()
-        size_t = teacher_features.size(-1)
-        self.norm_s = nn.LayerNorm(size_t, eps=eps, elementwise_affine=elementwise_affine, **kwargs)
-        self.norm_t = nn.LayerNorm(size_t, eps=eps, elementwise_affine=elementwise_affine, **kwargs)
+        size_t = teacher_feat.size(-1)
+        if norm_student:
+            self.norm_s = nn.LayerNorm(size_t, elementwise_affine=affine, **kwargs)
+        else:
+            self.norm_s = nn.Identity()
+        self.norm_t = nn.LayerNorm(size_t, elementwise_affine=affine, **kwargs)
 
     forward = FourDimDistillationNorm.forward
 
 
+class DistillationRMSNorm1d(nn.Module):
+    def __init__(self, student_feat, teacher_feat, norm_student=True, affine=False, **kwargs):
+        super().__init__()
+        size_t = teacher_feat.size(-1)
+        if norm_student:
+            self.norm_s = nn.RMSNorm(size_t, elementwise_affine=affine, **kwargs)
+        else:
+            self.norm_s = nn.Identity()
+        self.norm_t = nn.RMSNorm(size_t, elementwise_affine=affine, **kwargs)
+
+    forward = FourDimDistillationNorm.forward
+
+
+class DistillationInstanceNorm1d(nn.Module):
+    def __init__(self, student_feat, teacher_feat, norm_student=True, affine=False, **kwargs):
+        super().__init__()
+        size_t = teacher_feat.size(-1)
+        if norm_student:
+            self.norm_s = nn.InstanceNorm1d(size_t, affine=affine, **kwargs)
+        else:
+            self.norm_s = nn.Identity()
+        self.norm_t = nn.InstanceNorm1d(size_t, affine=affine, **kwargs)
+
+    forward = FourDimDistillationNorm.forward
+
+
+# TODO:
+# class DistillationGroupNorm1d(nn.Module):
+
+
 NORMS = {
     "batchnorm": DistillationBatchNorm1d,
+    "batchnorm_teacher_only": partial(DistillationBatchNorm1d, norm_student=False),
     "layernorm": DistillationLayerNorm1d,
+    "layernorm_teacher_only": partial(DistillationLayerNorm1d, norm_student=False),
+    "rmsnorm": DistillationRMSNorm1d,
+    "rmsnorm_teacher_only": partial(DistillationRMSNorm1d, norm_student=False),
+    "instancenorm": DistillationInstanceNorm1d,
+    "instance_teacher_only": partial(DistillationInstanceNorm1d, norm_student=False),
 }

@@ -36,7 +36,7 @@ class OrthogonalProjector(nn.Module):
     Based on: https://github.com/roymiles/vkd/issues/1#issuecomment-2135090288
     """
 
-    def __init__(self, student_features, teacher_features, use_batchnorm=False, use_layernorm=False):
+    def __init__(self, student_features, teacher_features):
         super().__init__()
 
         teacher_dim = teacher_features.size(-1)
