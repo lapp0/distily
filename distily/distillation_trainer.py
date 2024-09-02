@@ -14,35 +14,23 @@ import distily
 
 def _pack_bit_tensor(bool_tensor):
     assert len(bool_tensor.shape) == 1
-    bool_tensor = bool_tensor.to(torch.uint8)
+    bool_tensor = bool_tensor.to(torch.int64)
 
-    # Calculate the required padding to make the length a multiple of 8
-    padding = (8 - bool_tensor.shape[0] % 8) % 8
+    padding = (64 - bool_tensor.shape[0] % 64) % 64
     if padding > 0:
-        bool_tensor = torch.cat([bool_tensor, torch.zeros(padding, dtype=torch.uint8)])
+        bool_tensor = torch.cat([bool_tensor, torch.zeros(padding, dtype=torch.int64)])
 
-    bit_groups = bool_tensor.view(-1, 8)
-
-    packed_tensor = torch.zeros(bit_groups.shape[0], dtype=torch.uint8, device=bool_tensor.device)
-
-    # Pack each group of 8 bits into a byte using bitwise operations
-    for i in range(8):
-        packed_tensor |= (bit_groups[:, i] << i)
+    bit_groups = bool_tensor.view(-1, 64)
+    shifts = torch.arange(64, device=bool_tensor.device, dtype=torch.int64)
+    packed_tensor = torch.sum(bit_groups << shifts, dim=1)
 
     return packed_tensor
 
 
 def _bit_tensor_sum(packed_tensor):
-    shifts = torch.arange(8, device=packed_tensor.device, dtype=packed_tensor.dtype)
+    shifts = torch.arange(64, device=packed_tensor.device, dtype=packed_tensor.dtype)
     bit_masks = 1 << shifts
     return torch.sum((packed_tensor.unsqueeze(-1) & bit_masks) != 0).item()
-
-
-def _unpack_bit_tensor(packed_tensor):
-    shifts = torch.arange(8, device=packed_tensor.device, dtype=packed_tensor.dtype)
-    unpacked_bits = ((packed_tensor.unsqueeze(1) >> shifts) & 1).to(torch.uint8)
-    unpacked_tensor = unpacked_bits.flatten()
-    return unpacked_tensor
 
 
 class DistillationTrainer(transformers.Trainer):
@@ -220,8 +208,7 @@ class DistillationTrainer(transformers.Trainer):
             grad_sign = torch.cat([_pack_bit_tensor(p.grad.flatten() > 0) for p in model.parameters()])
             if self._prev_grad_sign is not None:
                 sign_xor = grad_sign ^ self._prev_grad_sign
-                equal_bits = (~sign_xor).to(torch.uint8)
-                stats["grad_prev_similarity"] = _bit_tensor_sum(equal_bits) / (equal_bits.numel() * 8)
+                stats["grad_prev_similarity"] = 1 - (_bit_tensor_sum(sign_xor) / (sign_xor.numel() * 8))
             self._prev_grad_sign = grad_sign
 
             self._extra_stats.append(stats)
