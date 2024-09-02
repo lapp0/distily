@@ -32,8 +32,14 @@ def _pack_bit_tensor(bool_tensor):
     return packed_tensor
 
 
+def _bit_tensor_sum(packed_tensor):
+    shifts = torch.arange(8, device=packed_tensor.device, dtype=packed_tensor.dtype)
+    bit_masks = 1 << shifts
+    return torch.sum((packed_tensor.unsqueeze(-1) & bit_masks) != 0).item()
+
+
 def _unpack_bit_tensor(packed_tensor):
-    shifts = torch.tensor([0, 1, 2, 3, 4, 5, 6, 7], dtype=torch.uint8, device=packed_tensor.device)
+    shifts = torch.arange(8, device=packed_tensor.device, dtype=packed_tensor.dtype)
     unpacked_bits = ((packed_tensor.unsqueeze(1) >> shifts) & 1).to(torch.uint8)
     unpacked_tensor = unpacked_bits.flatten()
     return unpacked_tensor
@@ -213,13 +219,7 @@ class DistillationTrainer(transformers.Trainer):
         if self._prev_grad_sign is not None:
             sign_xor = grad_sign ^ self._prev_grad_sign
             equal_bits = (~sign_xor).to(torch.uint8)
-            stats["grad_prev_similarity"] = equal_bits.bitwise_and(
-                torch.tensor(
-                    [1, 2, 4, 8, 16, 32, 64, 128],
-                    dtype=torch.uint8,
-                    device=grad_sign.device
-                )
-            ).sum().item() / (grad_sign.numel() * 8)
+            stats["grad_prev_similarity"] = _bit_tensor_sum(equal_bits)
         self._prev_grad_sign = grad_sign
 
         stats["grad_norm_"] = (
