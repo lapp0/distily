@@ -97,11 +97,16 @@ NORMS = {
 }
 
 # apply all permutations of `teacher_only`, `affine`, and `track_running_stats`
-for norm_name, norm_fn in NORMS.items():
-    NORMS[f"{norm_name}_teacher_only"] = partial(norm_fn, norm_student=False)
-for norm_name, norm_fn in NORMS.items():
-    NORMS[f"{norm_name}_affine"] = partial(norm_fn, affine=True)
-track_running_stats_norms = ["batchnorm", "instancenorm"]
-for norm_name, norm_fn in NORMS.items():
-    if norm_name.startswith("batchnorm") or norm_name.startswith("instancenorm"):
-        NORMS[f"{norm_name}_stats"] = partial(norm_fn, track_running_stats=True)
+NORMS.update({
+    f"{norm_name}_teacher_only": partial(norm_fn, norm_student=False)
+    for norm_name, norm_fn in NORMS.items()
+})
+NORMS.update({
+    f"{norm_name}_affine": partial(norm_fn, affine=True)
+    for norm_name, norm_fn in NORMS.items()
+})
+NORMS.update({
+    f"{norm_name}_stats": partial(norm_fn, track_running_stats=True)
+    for norm_name, norm_fn in NORMS.items()
+    if norm_name.startswith("batchnorm") or norm_name.startswith("instancenorm")
+})
