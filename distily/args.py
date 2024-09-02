@@ -38,9 +38,6 @@ class StudentModelArguments:
         metadata={"help": "Make student model a bitnet model."}
     )
 
-    # TODO: Full field
-    dropout: typing.Optional[float] = None
-
 
 @dataclass
 class TeacherModelArguments:
@@ -82,8 +79,9 @@ class EvalArguments:
         metadata={"help": "Additional evaluation metrics to be used."}
     )
     harness_benchmarks: typing.List[typing.Dict] = field(
-        default_factory=lambda: ["wikitext", "boolq", "hellaswag", "glue", "ai2_arc"],
-        # official model release recommendation: include mmlu, math, etc
+        default_factory=list,
+        # official model release recommendation:
+        # include lambda: ["wikitext", "boolq", "hellaswag", "glue", "ai2_arc", "mmlu", "math"]
         metadata={"help": "Benchmarks to compare student and teacher models at end of training."}
     )
     harness_benchmark_limit: int = field(
@@ -122,16 +120,9 @@ class DistillationTrainingArguments(TrainingArguments):
     ##################################
     # Distillation Training parameters
     ##################################
-    train_embeddings: bool = field(
-        default=True,
-        metadata={"help": "If True, trains new embeddings from scratch. Else, use teachers input / output embeddings"}
-    )
-
-    # TODO: add extra metric evaluators
 
     # extra helper specific to this trainer
     eval_teacher_metrics: bool = True  # TODO: use field
-    eval_on_end: bool = True
 
     #####################################################
     # TrainingArguments parameters with sane defaults set
@@ -162,6 +153,7 @@ class DistillationTrainingArguments(TrainingArguments):
     eval_strategy: str = "steps"
     eval_steps: int = 5000
     eval_on_start: bool = True
+    eval_on_end: bool = True
     report_to: str = "tensorboard"
 
 
