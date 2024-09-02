@@ -166,6 +166,12 @@ class DistillationTrainer(transformers.Trainer):
         if self.args.n_gpu > 1:
             loss = loss.mean()  # mean() to average on multi-gpu parallel training
 
+        if self.use_apex:
+            with transformers.trainer.amp.scale_loss(loss, self.optimizer) as scaled_loss:
+                scaled_loss.backward()
+        else:
+            self.accelerator.backward(loss, **kwargs)
+
         ##############
         # NEW CODE
         ##############
@@ -178,12 +184,6 @@ class DistillationTrainer(transformers.Trainer):
         ##############
         # END NEW CODE
         ##############
-
-        if self.use_apex:
-            with transformers.trainer.amp.scale_loss(loss, self.optimizer) as scaled_loss:
-                scaled_loss.backward()
-        else:
-            self.accelerator.backward(loss, **kwargs)
 
         return loss.detach() / self.args.gradient_accumulation_steps
 
