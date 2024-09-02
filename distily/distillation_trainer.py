@@ -222,8 +222,8 @@ class DistillationTrainer(transformers.Trainer):
             stats["grad_prev_similarity"] = _bit_tensor_sum(equal_bits) / (equal_bits.numel() * 8)
         self._prev_grad_sign = grad_sign
 
-        stats["grad_norm_"] = torch.norm(
-            torch.stack([torch.norm(p.grad.detach(), norm_type=2) for p in model.parameters()]),
+        stats["_grad_norm"] = torch.norm(
+            torch.stack([torch.norm(p.grad) for p in model.parameters()]),
             2.0
         ).item()
 
