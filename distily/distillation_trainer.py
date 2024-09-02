@@ -1,4 +1,6 @@
 from dataclasses import asdict
+import statistics
+import collections
 import os
 import gc
 import shelve
@@ -57,6 +59,9 @@ class DistillationTrainer(transformers.Trainer):
         self.distillation_objective = distillation_objective
 
         self.evaluators = evaluators
+
+        self._prev_grad_sign = None
+        self._extra_stats = []
 
     @classmethod
     def from_args(
@@ -204,14 +209,75 @@ class DistillationTrainer(transformers.Trainer):
 
         # add stats
         # add gradient details to
+        grad_sign = torch.cat([_pack_bit_tensor(p.grad.flatten() > 0) for p in model.parameters()])
+        if self._prev_grad_sign:
+            sign_xor = grad_sign ^ self._prev_grad_sign
+            equal_bits = (~sign_xor).to(torch.uint8)
+            stats["grad_prev_similarity"] = equal_bits.bitwise_and(
+                torch.tensor(
+                    [1, 2, 4, 8, 16, 32, 64, 128],
+                    dtype=torch.uint8,
+                    device=grad_sign.device
+                )
+            ).sum().item() / (grad_sign.numel() * 8)
+            self._prev_grad_sign = grad_sign
 
-        import pdb;pdb.set_trace()
+        stats["grad_norm_"] = torch.sqrt(sum(p.grad.norm(2).item()**2 for p in model.parameters() if p.grad is not None))
+
+        self._extra_stats.append(stats)
 
         ##############
         # END NEW CODE
         ##############
 
         return loss.detach() / self.args.gradient_accumulation_steps
+
+    def _maybe_log_save_evaluate(self, tr_loss, grad_norm, model, trial, epoch, ignore_keys_for_eval):
+        if self.control.should_log and self.state.global_step > self._globalstep_last_logged:
+            if transformers.trainer.is_torch_xla_available():
+                transformers.trainer.xm.mark_step()
+
+            logs = {}
+
+            ##############
+            # NEW CODE
+            ##############
+
+            transposed_stats = collections.defaultdict(list)
+            [transposed_stats[key].append(d.get(key)) for d in self._extra_stats for key in d]
+            for k in transposed_stats:
+                logs[k] = sum(transposed_stats[k]) / len(transposed_stats[k])
+
+            logs["grad_norm_var"] = statistics.variance(self._extra_stats["grad_norm_"])
+
+            ##############
+            # END NEW CODE
+            ##############
+
+            # all_gather + mean() to get average loss over all processes
+            tr_loss_scalar = self._nested_gather(tr_loss).mean().item()
+
+            # reset tr_loss to zero
+            tr_loss -= tr_loss
+
+            logs["loss"] = round(tr_loss_scalar / (self.state.global_step - self._globalstep_last_logged), 4)
+            if grad_norm is not None:
+                logs["grad_norm"] = grad_norm.detach().item() if isinstance(grad_norm, torch.Tensor) else grad_norm
+            logs["learning_rate"] = self._get_learning_rate()
+
+            self._total_loss_scalar += tr_loss_scalar
+            self._globalstep_last_logged = self.state.global_step
+            self.store_flos()
+
+            self.log(logs)
+
+        metrics = None
+        if self.control.should_evaluate:
+            metrics = self._evaluate(trial, ignore_keys_for_eval)
+
+        if self.control.should_save:
+            self._save_checkpoint(model, trial, metrics=metrics)
+            self.control = self.callback_handler.on_save(self.args, self.state, self.control)
 
     def evaluate(self, *args, metric_key_prefix="eval", **kwargs):
         self.model.eval()
