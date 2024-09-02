@@ -220,9 +220,12 @@ class DistillationTrainer(transformers.Trainer):
                     device=grad_sign.device
                 )
             ).sum().item() / (grad_sign.numel() * 8)
-            self._prev_grad_sign = grad_sign
+        self._prev_grad_sign = grad_sign
 
-        stats["grad_norm_"] = sum(p.grad.norm(2).item()**2 for p in model.parameters() if p.grad is not None)**0.5
+        stats["grad_norm_"] = (
+            sum(p.grad.norm(2).item()**2 for p in model.parameters() if p.grad is not None) /
+            sum(p.numel() for p in model.parameters() if p.grad is not None)
+        )**0.5
 
         self._extra_stats.append(stats)
 
@@ -248,7 +251,8 @@ class DistillationTrainer(transformers.Trainer):
             for k in transposed_stats:
                 logs[k] = sum(transposed_stats[k]) / len(transposed_stats[k])
 
-            logs["grad_norm_var"] = statistics.variance(transposed_stats["grad_norm_"])
+            if self.args.logging_steps >= 16:
+                logs["grad_norm_var"] = statistics.variance(transposed_stats["grad_norm_"])
 
             ##############
             # END NEW CODE
