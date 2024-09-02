@@ -5,6 +5,7 @@ import shelve
 
 import transformers
 import torch
+from torch import nn
 from huggingface_hub import ModelCard
 
 import distily
@@ -105,21 +106,86 @@ class DistillationTrainer(transformers.Trainer):
             {**train_output.metrics, **bench_metrics_out}
         )
 
-    def compute_loss(self, model, inputs, return_outputs=False):
+    def compute_loss(self, model, inputs, return_outputs=False, return_stats=False):
         loss_dict = self.distillation_objective(self.teacher_model, model, inputs)
         loss = loss_dict.pop("loss")
 
-        # if train step, add to log history
-        if not return_outputs:
-            self.log({
-                "step": self.state.global_step,
-                **{k: float(v) for k, v in loss_dict.items()},
-            })
+        stats = {
+            "step": self.state.global_step,
+            **{k: float(v) for k, v in loss_dict.items()},
+        }
 
         if return_outputs:
             # TODO: real output, this is nothing of use
             return loss, torch.tensor([1.0])
-        return loss
+        elif stats:
+            return loss, stats
+        else:
+            return loss
+
+    def training_step(self, model, inputs) -> torch.Tensor:
+        """
+        Copy of https://github.com/huggingface/transformers/blob/52a021375/src/transformers/trainer.py#L3394
+
+        With additional behavior:
+        - Enable gradient logging
+        """
+        model.train()
+        inputs = self._prepare_inputs(inputs)
+        if transformers.trainer.is_sagemaker_mp_enabled():
+            loss_mb = transformers.trainer.smp_forward_backward(model, inputs, self.args.gradient_accumulation_steps)
+            return loss_mb.reduce_mean().detach().to(self.args.device)
+
+        with self.compute_loss_context_manager():
+            loss, stats = self.compute_loss(model, inputs, return_stats=True)
+
+        del inputs
+        if (
+            self.args.torch_empty_cache_steps is not None
+            and self.state.global_step % self.args.torch_empty_cache_steps == 0
+        ):
+            if transformers.trainer.is_torch_xpu_available():
+                torch.xpu.empty_cache()
+            elif transformers.trainer.is_torch_mlu_available():
+                torch.mlu.empty_cache()
+            elif transformers.trainer.is_torch_musa_available():
+                torch.musa.empty_cache()
+            elif transformers.trainer.is_torch_npu_available():
+                torch.npu.empty_cache()
+            elif transformers.trainer.is_torch_mps_available(min_version="2.0"):
+                torch.mps.empty_cache()
+            else:
+                torch.cuda.empty_cache()
+
+        kwargs = {}
+
+        # For LOMO optimizers you need to explicitly use the learnign rate
+        if self.args.optim in [transformers.trainer.OptimizerNames.LOMO, transformers.trainer.OptimizerNames.ADALOMO]:
+            kwargs["learning_rate"] = self._get_learning_rate()
+
+        if self.args.n_gpu > 1:
+            loss = loss.mean()  # mean() to average on multi-gpu parallel training
+
+        ##############
+        # NEW CODE
+        ##############
+
+        # add stats
+        # add gradient details to
+
+        import pdb;pdb.set_trace()
+
+        ##############
+        # END NEW CODE
+        ##############
+
+        if self.use_apex:
+            with transformers.trainer.amp.scale_loss(loss, self.optimizer) as scaled_loss:
+                scaled_loss.backward()
+        else:
+            self.accelerator.backward(loss, **kwargs)
+
+        return loss.detach() / self.args.gradient_accumulation_steps
 
     def evaluate(self, *args, metric_key_prefix="eval", **kwargs):
         self.model.eval()
