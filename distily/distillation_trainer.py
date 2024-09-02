@@ -5,10 +5,36 @@ import shelve
 
 import transformers
 import torch
-from torch import nn
 from huggingface_hub import ModelCard
 
 import distily
+
+
+def _pack_bit_tensor(bool_tensor):
+    assert len(bool_tensor.shape) == 1
+    bool_tensor = bool_tensor.to(torch.uint8)
+
+    # Calculate the required padding to make the length a multiple of 8
+    padding = (8 - bool_tensor.shape[0] % 8) % 8
+    if padding > 0:
+        bool_tensor = torch.cat([bool_tensor, torch.zeros(padding, dtype=torch.uint8)])
+
+    bit_groups = bool_tensor.view(-1, 8)
+
+    packed_tensor = torch.zeros(bit_groups.shape[0], dtype=torch.uint8, device=bool_tensor.device)
+
+    # Pack each group of 8 bits into a byte using bitwise operations
+    for i in range(8):
+        packed_tensor |= (bit_groups[:, i] << i)
+
+    return packed_tensor
+
+
+def _unpack_bit_tensor(packed_tensor):
+    shifts = torch.tensor([0, 1, 2, 3, 4, 5, 6, 7], dtype=torch.uint8, device=packed_tensor.device)
+    unpacked_bits = ((packed_tensor.unsqueeze(1) >> shifts) & 1).to(torch.uint8)
+    unpacked_tensor = unpacked_bits.flatten()
+    return unpacked_tensor
 
 
 class DistillationTrainer(transformers.Trainer):
