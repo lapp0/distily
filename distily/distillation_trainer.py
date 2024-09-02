@@ -222,7 +222,7 @@ class DistillationTrainer(transformers.Trainer):
             ).sum().item() / (grad_sign.numel() * 8)
             self._prev_grad_sign = grad_sign
 
-        stats["grad_norm_"] = torch.sqrt(sum(p.grad.norm(2).item()**2 for p in model.parameters() if p.grad is not None))
+        stats["grad_norm_"] = sum(p.grad.norm(2).item()**2 for p in model.parameters() if p.grad is not None)**0.5
 
         self._extra_stats.append(stats)
 
