@@ -66,6 +66,7 @@ class DatasetArguments:
 
 @dataclass
 class EvalArguments:
+    extra_grad_stats: bool = True
     ppl_evaluators: typing.List[typing.Dict] = field(
         default_factory=lambda: [
             dict(name="enwikippl", dataset="wikimedia/wikipedia", subset="20231101.en", split="train", sample_size=1000),
