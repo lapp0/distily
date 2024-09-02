@@ -13,7 +13,8 @@ import distily
 
 
 def _pack_bit_tensor(bool_tensor):
-    """Packs a boolean tensor into an int64 tensor using SIMD optimization."""
+    """Packs a boolean tensor into an int64 tensor using bitwise operations and summation."""
+    assert len(bool_tensor.shape) == 1
     bool_tensor = bool_tensor.to(torch.int64)
     padding = (64 - bool_tensor.shape[0] % 64) % 64
     if padding > 0:
@@ -21,11 +22,7 @@ def _pack_bit_tensor(bool_tensor):
 
     bit_groups = bool_tensor.view(-1, 64)
     shifts = torch.arange(64, device=bool_tensor.device, dtype=torch.int64)
-    packed_tensor = torch.zeros(bit_groups.size(0), dtype=torch.int64, device=bool_tensor.device)
-
-    # Apply shifts in increments and sum the results
-    for i in range(0, 64, 8):
-        packed_tensor += (bit_groups[:, i:i+8] << shifts[i:i+8]).sum(dim=1)
+    packed_tensor = torch.bitwise_and(bit_groups, 1 << shifts).sum(dim=1)
 
     return packed_tensor
 
