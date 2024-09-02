@@ -215,7 +215,7 @@ class DistillationTrainer(transformers.Trainer):
 
         # add stats
         # add gradient details to
-        if self.args.extra_grad_stats:
+        if self.all_args.get("eval_args", {}).get("extra_grad_stats"):
             grad_sign = torch.cat([_pack_bit_tensor(p.grad.flatten() > 0) for p in model.parameters()])
             if self._prev_grad_sign is not None:
                 sign_xor = grad_sign ^ self._prev_grad_sign
@@ -255,7 +255,7 @@ class DistillationTrainer(transformers.Trainer):
                 if k[0] != "_":
                     logs[k] = sum(transposed_stats[k]) / len(transposed_stats[k])
 
-            if self.args.logging_steps >= 16 and self.args.extra_grad_stats:
+            if self.args.logging_steps >= 16 and self.all_args.get("eval_args", {}).get("extra_grad_stats"):
                 logs["grad_norm_var"] = statistics.variance(transposed_stats["_grad_norm"])
 
             ##############
