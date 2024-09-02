@@ -210,7 +210,7 @@ class DistillationTrainer(transformers.Trainer):
         # add stats
         # add gradient details to
         grad_sign = torch.cat([_pack_bit_tensor(p.grad.flatten() > 0) for p in model.parameters()])
-        if self._prev_grad_sign:
+        if self._prev_grad_sign is not None:
             sign_xor = grad_sign ^ self._prev_grad_sign
             equal_bits = (~sign_xor).to(torch.uint8)
             stats["grad_prev_similarity"] = equal_bits.bitwise_and(
