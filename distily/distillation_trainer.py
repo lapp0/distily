@@ -248,7 +248,7 @@ class DistillationTrainer(transformers.Trainer):
             for k in transposed_stats:
                 logs[k] = sum(transposed_stats[k]) / len(transposed_stats[k])
 
-            logs["grad_norm_var"] = statistics.variance(self._extra_stats["grad_norm_"])
+            logs["grad_norm_var"] = statistics.variance(transposed_stats["grad_norm_"])
 
             ##############
             # END NEW CODE
