@@ -68,6 +68,7 @@ class DistillationTrainer(transformers.Trainer):
 
         self._prev_grad_sign = None
         self._extra_stats = []
+        self._rolling_grad_norms = collections.deque(16)
 
     @classmethod
     def from_args(
@@ -223,13 +224,6 @@ class DistillationTrainer(transformers.Trainer):
                 stats["grad_prev_similarity"] = _bit_tensor_sum(equal_bits) / (equal_bits.numel() * 8)
             self._prev_grad_sign = grad_sign
 
-            # TODO: _grad_norm is off by a factor of 2 to 3? Perhaps I'm using the wrong norm?
-            stats["_grad_norm"] = torch.torch.cat([
-                param.grad.detach().flatten()
-                for param in model.parameters()
-                if param.grad is not None
-            ]).norm().item()
-
             self._extra_stats.append(stats)
 
         ##############
@@ -239,6 +233,7 @@ class DistillationTrainer(transformers.Trainer):
         return loss.detach() / self.args.gradient_accumulation_steps
 
     def _maybe_log_save_evaluate(self, tr_loss, grad_norm, model, trial, epoch, ignore_keys_for_eval):
+        self._rolling_grad_norms.append(grad_norm)
         if self.control.should_log and self.state.global_step > self._globalstep_last_logged:
             if transformers.trainer.is_torch_xla_available():
                 transformers.trainer.xm.mark_step()
@@ -255,8 +250,8 @@ class DistillationTrainer(transformers.Trainer):
                 if k[0] != "_":
                     logs[k] = sum(transposed_stats[k]) / len(transposed_stats[k])
 
-            if self.args.logging_steps >= 16 and self.all_args["eval_args"].extra_grad_stats:
-                logs["grad_norm_var"] = statistics.variance(transposed_stats["_grad_norm"])
+            if len(self._rolling_grad_norms) == 16 and self.all_args["eval_args"].extra_grad_stats:
+                logs["grad_norm_var"] = statistics.variance(self._rolling_grad_norms)
 
             ##############
             # END NEW CODE
