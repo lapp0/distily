@@ -233,7 +233,7 @@ class DistillationTrainer(transformers.Trainer):
         return loss.detach() / self.args.gradient_accumulation_steps
 
     def _maybe_log_save_evaluate(self, tr_loss, grad_norm, model, trial, epoch, ignore_keys_for_eval):
-        self._rolling_grad_norms.append(grad_norm)
+        self._rolling_grad_norms.append(grad_norm.item())
         if self.control.should_log and self.state.global_step > self._globalstep_last_logged:
             if transformers.trainer.is_torch_xla_available():
                 transformers.trainer.xm.mark_step()
