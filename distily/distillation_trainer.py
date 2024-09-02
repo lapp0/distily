@@ -208,7 +208,7 @@ class DistillationTrainer(transformers.Trainer):
             grad_sign = torch.cat([_pack_bit_tensor(p.grad.flatten() > 0) for p in model.parameters()])
             if self._prev_grad_sign is not None:
                 sign_xor = grad_sign ^ self._prev_grad_sign
-                stats["grad_prev_similarity"] = 1 - (_bit_tensor_sum(sign_xor) / (sign_xor.numel() * 8))
+                stats["grad_prev_similarity"] = 1 - (_bit_tensor_sum(sign_xor) / (sign_xor.numel() * 64))
             self._prev_grad_sign = grad_sign
 
             self._extra_stats.append(stats)
