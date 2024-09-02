@@ -68,7 +68,7 @@ class DistillationTrainer(transformers.Trainer):
 
         self._prev_grad_sign = None
         self._extra_stats = []
-        self._rolling_grad_norms = collections.deque(16)
+        self._rolling_grad_norms = collections.deque(maxlen=16)
 
     @classmethod
     def from_args(
