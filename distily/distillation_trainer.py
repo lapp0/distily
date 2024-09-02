@@ -13,25 +13,31 @@ import distily
 
 
 def _pack_bit_tensor(bool_tensor):
-    assert len(bool_tensor.shape) == 1
+    """Packs a boolean tensor into an int64 tensor using SIMD optimization."""
     bool_tensor = bool_tensor.to(torch.int64)
-
     padding = (64 - bool_tensor.shape[0] % 64) % 64
     if padding > 0:
         bool_tensor = torch.cat([bool_tensor, torch.zeros(padding, dtype=torch.int64)])
 
     bit_groups = bool_tensor.view(-1, 64)
     shifts = torch.arange(64, device=bool_tensor.device, dtype=torch.int64)
-    packed_tensor = torch.sum(bit_groups << shifts, dim=1)
+    packed_tensor = torch.zeros(bit_groups.size(0), dtype=torch.int64, device=bool_tensor.device)
+
+    # Apply shifts in increments and sum the results
+    for i in range(0, 64, 8):
+        packed_tensor += (bit_groups[:, i:i+8] << shifts[i:i+8]).sum(dim=1)
 
     return packed_tensor
 
 
 def _bit_tensor_sum(packed_tensor):
-    shifts = torch.arange(64, device=packed_tensor.device, dtype=packed_tensor.dtype)
-    bit_masks = 1 << shifts
-    return torch.sum((packed_tensor.unsqueeze(-1) & bit_masks) != 0).item()
-
+    """Counts the number of 1-bits in a packed int64 tensor using the Hamming weight algorithm."""
+    count = packed_tensor
+    count = (count - ((count >> 1) & 0x5555555555555555))
+    count = (count & 0x3333333333333333) + ((count >> 2) & 0x3333333333333333)
+    count = (count + (count >> 4)) & 0x0F0F0F0F0F0F0F0F
+    count = (count * 0x0101010101010101) >> 56
+    return torch.sum(count).item()
 
 class DistillationTrainer(transformers.Trainer):
     def __init__(
