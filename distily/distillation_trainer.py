@@ -215,20 +215,22 @@ class DistillationTrainer(transformers.Trainer):
 
         # add stats
         # add gradient details to
-        grad_sign = torch.cat([_pack_bit_tensor(p.grad.flatten() > 0) for p in model.parameters()])
-        if self._prev_grad_sign is not None:
-            sign_xor = grad_sign ^ self._prev_grad_sign
-            equal_bits = (~sign_xor).to(torch.uint8)
-            stats["grad_prev_similarity"] = _bit_tensor_sum(equal_bits) / (equal_bits.numel() * 8)
-        self._prev_grad_sign = grad_sign
+        if self.args.extra_grad_stats:
+            grad_sign = torch.cat([_pack_bit_tensor(p.grad.flatten() > 0) for p in model.parameters()])
+            if self._prev_grad_sign is not None:
+                sign_xor = grad_sign ^ self._prev_grad_sign
+                equal_bits = (~sign_xor).to(torch.uint8)
+                stats["grad_prev_similarity"] = _bit_tensor_sum(equal_bits) / (equal_bits.numel() * 8)
+            self._prev_grad_sign = grad_sign
 
-        stats["_grad_norm"] = torch.cat([
-            param.grad.detach().flatten()
-            for param in model.parameters()
-            if param.grad is not None
-        ]).norm().item()
+            # TODO: _grad_norm is off by a factor of 2 to 3? Perhaps I'm using the wrong norm?
+            stats["_grad_norm"] = torch.torch.cat([
+                param.grad.detach().flatten()
+                for param in model.parameters()
+                if param.grad is not None
+            ]).norm().item()
 
-        self._extra_stats.append(stats)
+            self._extra_stats.append(stats)
 
         ##############
         # END NEW CODE
@@ -250,9 +252,10 @@ class DistillationTrainer(transformers.Trainer):
             transposed_stats = collections.defaultdict(list)
             [transposed_stats[key].append(d.get(key)) for d in self._extra_stats for key in d]
             for k in transposed_stats:
-                logs[k] = sum(transposed_stats[k]) / len(transposed_stats[k])
+                if k[0] != "_":
+                    logs[k] = sum(transposed_stats[k]) / len(transposed_stats[k])
 
-            if self.args.logging_steps >= 16:
+            if self.args.logging_steps >= 16 and self.args.extra_grad_stats:
                 logs["grad_norm_var"] = statistics.variance(transposed_stats["_grad_norm"])
 
             ##############

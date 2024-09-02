@@ -169,7 +169,6 @@ def create_model_card_text(trainer):
     hyperparameters = transformers.modelcard.extract_hyperparameters_from_trainer(trainer)
     hyperparameters.update({
         "distillation_objective": repr(trainer.distillation_objective),
-        "train_embeddings": str(trainer.args.train_embeddings),
         "lr_scheduler": trainer.lr_scheduler,
         **asdict(trainer.all_args.get("student_model_args", {})),
         **asdict(trainer.all_args.get("teacher_model_args", {})),
