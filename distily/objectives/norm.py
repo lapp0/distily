@@ -75,12 +75,12 @@ class DistillationRMSNorm1d(nn.Module):
 class DistillationInstanceNorm1d(nn.Module):
     def __init__(self, student_feat, teacher_feat, norm_student=True, affine=False, **kwargs):
         super().__init__()
-        size_t = teacher_feat.size(-1)
+        # InstanceNorm1d uses the zeroth dim's size, we lazy-set this in forward()
         if norm_student:
-            self.norm_s = nn.InstanceNorm1d(size_t, affine=affine, **kwargs)
+            self.norm_s = nn.LazyInstanceNorm1d(affine=affine, **kwargs)
         else:
             self.norm_s = nn.Identity()
-        self.norm_t = nn.InstanceNorm1d(size_t, affine=affine, **kwargs)
+        self.norm_t = nn.LazyInstanceNorm1d(affine=affine, **kwargs)
 
     forward = FourDimDistillationNorm.forward
 
@@ -91,11 +91,17 @@ class DistillationInstanceNorm1d(nn.Module):
 
 NORMS = {
     "batchnorm": DistillationBatchNorm1d,
-    "batchnorm_teacher_only": partial(DistillationBatchNorm1d, norm_student=False),
     "layernorm": DistillationLayerNorm1d,
-    "layernorm_teacher_only": partial(DistillationLayerNorm1d, norm_student=False),
     "rmsnorm": DistillationRMSNorm1d,
-    "rmsnorm_teacher_only": partial(DistillationRMSNorm1d, norm_student=False),
     "instancenorm": DistillationInstanceNorm1d,
-    "instance_teacher_only": partial(DistillationInstanceNorm1d, norm_student=False),
 }
+
+# apply all permutations of `teacher_only`, `affine`, and `track_running_stats`
+for norm_name, norm_fn in NORMS.items():
+    NORMS[f"{norm_name}_teacher_only"] = partial(norm_fn, norm_student=False)
+for norm_name, norm_fn in NORMS.items():
+    NORMS[f"{norm_name}_affine"] = partial(norm_fn, affine=True)
+track_running_stats_norms = ["batchnorm", "instancenorm"]
+for norm_name, norm_fn in NORMS.items():
+    if norm_name.startswith("batchnorm") or norm_name.startswith("instancenorm"):
+        NORMS[f"{norm_name}_stats"] = partial(norm_fn, track_running_stats=True)

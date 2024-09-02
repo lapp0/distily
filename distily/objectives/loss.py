@@ -162,7 +162,7 @@ def sinkhorn_loss(feat_s, feat_t, epsilon=0.1, n_iters=20):
 LOSS_FUNCTIONS = {
     "kl": kl_divergence_loss,
     "raw_mse": F.mse_loss,
-    "mse": soft_mse_loss,
+    "soft_mse": soft_mse_loss,
     "reverse_kl": reverse_kl_divergence_loss,
     "cakld": cakld_loss,
     "jsd": jsd_loss,

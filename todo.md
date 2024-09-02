@@ -1,9 +1,15 @@
 # Model Generation Milestones
-- [ ] distill 99% quality model with identical architecture
-- [ ] half layer gpt2, but beat distilgpt2 benchmarks
+- [x] beat distilgpt2 on distilgpt2 architecture
 - [ ] distill phi-3-mini to 1.58b, report metrics
 
 # TODO
+
+- [ ] simple visualization for docs
+- [ ] diagnose why my model is 10% smaller than distilgpt2 when using the same architecture
+- [x] beat distilgpt2
+- [ ] bayesian hyperparam search using optunab
+- [ ] OpenRail-(D)AMS
+
 
 
 ## Big Benches

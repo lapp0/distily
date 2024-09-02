@@ -104,8 +104,8 @@ class DistillationObjectiveArguments:
     logits_loss_fn: str = "kl"
 
     hs_weight: float = 0
-    hs_loss_fn: str = "mse"
-    hs_layer_mapper: str = "last"
+    hs_loss_fn: str = None
+    hs_layer_mapper: str = None
     hs_norm: typing.Optional[str] = None
     hs_projector: typing.Optional[str] = None
 
@@ -113,7 +113,7 @@ class DistillationObjectiveArguments:
     attn_loss_fn: str = "raw_mse"
     attn_layer_mapper: str = "layer-2"
     attn_norm: typing.Optional[str] = None
-    attn_projector: typing.Optional[str] = None
+    attn_projector: typing.Optional[str] = "orthogonal"
 
 
 @dataclass
@@ -146,7 +146,7 @@ class DistillationTrainingArguments(TrainingArguments):
     optim: str = "paged_lion_32bit"
 
     # smaller batch sizes perform better
-    per_device_train_batch_size: int = 4
+    per_device_train_batch_size: int = 8
     gradient_accumulation_steps: int = 1
 
     # optimize performance and memory
