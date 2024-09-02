@@ -252,7 +252,7 @@ class DistillationTrainer(transformers.Trainer):
                 logs[k] = sum(transposed_stats[k]) / len(transposed_stats[k])
 
             if self.args.logging_steps >= 16:
-                logs["grad_norm_var"] = statistics.variance(transposed_stats["grad_norm_"])
+                logs["grad_norm_var"] = statistics.variance(transposed_stats["_grad_norm"])
 
             ##############
             # END NEW CODE
