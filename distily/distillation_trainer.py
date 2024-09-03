@@ -13,17 +13,16 @@ import distily
 
 
 def _pack_bit_tensor(bool_tensor):
-    """Packs a boolean tensor into an int64 tensor using bitwise operations and summation."""
+    """Packs a boolean tensor into an int64 tensor using correct bitwise operations and summation."""
     assert len(bool_tensor.shape) == 1
-    bool_tensor = bool_tensor.to(torch.int64)
     padding = (64 - bool_tensor.shape[0] % 64) % 64
     if padding > 0:
-        bool_tensor = torch.cat([bool_tensor, torch.zeros(padding, dtype=torch.int64)])
+        bool_tensor = torch.cat([bool_tensor, torch.zeros(padding, dtype=bool)])
 
     bit_groups = bool_tensor.view(-1, 64)
     shifts = torch.arange(64, device=bool_tensor.device, dtype=torch.int64)
-    packed_tensor = torch.bitwise_and(bit_groups, 1 << shifts).sum(dim=1)
 
+    packed_tensor = torch.sum(bit_groups * (1 << shifts), dim=-1, dtype=torch.int64)
     return packed_tensor
 
 
@@ -35,6 +34,7 @@ def _bit_tensor_sum(packed_tensor):
     count = (count + (count >> 4)) & 0x0F0F0F0F0F0F0F0F
     count = (count * 0x0101010101010101) >> 56
     return torch.sum(count).item()
+
 
 class DistillationTrainer(transformers.Trainer):
     def __init__(

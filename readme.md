@@ -22,7 +22,7 @@ Distily allows you to distill a model with
 
 Command to create a distilled `gpt2` with only 6 layers:
 ```
-python3 -m distily.cli \
+python3 -m distily.run \
     --teacher_model_name_or_path gpt2 \
     --output_dir distily_gpt2 \
     --hub_model_id "distily/distily_gpt2" \
