@@ -13,7 +13,7 @@ import distily
 
 
 def _pack_bit_tensor(bool_tensor):
-    """Packs a boolean tensor into an int64 tensor using correct bitwise operations and summation."""
+    """Packs a boolean tensor into an int64 tensor using bitwise operations and summation."""
     assert len(bool_tensor.shape) == 1
     padding = (64 - bool_tensor.shape[0] % 64) % 64
     if padding > 0:
