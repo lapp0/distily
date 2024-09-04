@@ -1,11 +1,15 @@
+from collections import Counter
+from contextlib import contextmanager
 from dataclasses import asdict
-import shelve
+import datasets
 import difflib
+import distily
+import multiprocessing
+import os
+import shelve
 import torch
 import transformers
 import typing
-import distily
-import datasets
 
 
 MODEL_CARD_TEMPLATE = """
@@ -123,6 +127,45 @@ def _to_markdown_table(data: typing.Dict[str, typing.Dict], sigfig=4) -> str:
     return "\n".join([header, separator] + rows)
 
 
+@contextmanager
+def exception_printer():
+    try:
+        yield
+    except Exception as e:
+        print(f"Exception (skipping): {e}")
+
+
+def _get_resource_stats():
+    stats = {}
+
+    with exception_printer():
+        stats["Max Train VRAM Use"] = (
+            transformers.modelcard._maybe_round(torch.cuda.max_memory_allocated() / (1024 ** 3)) + " GB"
+        )
+    with exception_printer():
+        gpu_id = torch.cuda.current_device()
+        vram_info = torch.cuda.get_device_properties(gpu_id).total_memory
+        available_vram = vram_info / (1024**3)  # Convert to GB
+        stats['Available VRAM'] = transformers.modelcard._maybe_round(available_vram) + " GB"
+    with exception_printer():
+        gpu_names = [torch.cuda.get_device_name(i) for i in range(torch.cuda.device_count())]
+        gpu_counts = Counter(gpu_names)
+        stats["GPUs"] = "\n  - ".join([] + [
+            f"{count}x {name}" if count > 1 else name
+            for name, count in gpu_counts.items()
+        ])
+    with exception_printer():
+        stats['CPUs'] = os.cpu_count()
+    with exception_printer():
+        total_memory = os.sysconf('SC_PAGE_SIZE') * os.sysconf('SC_PHYS_PAGES')
+        stats['CPU Memory'] = transformers.modelcard._maybe_round(total_memory / (1024**3)) + " GB"
+    with exception_printer():
+        bandwidth = multiprocessing.cpu_count() * 25  # Rough estimate in GB/s
+        stats['CPU Memory Bandwidth'] = transformers.modelcard._maybe_round(bandwidth) + " GB/s"
+
+    return stats
+
+
 def create_model_card_text(trainer):
     # Student model details
     student_model_architecture = (
@@ -209,15 +252,12 @@ def create_model_card_text(trainer):
         )
     )
 
-    # TODO: Expand on this
-    # - Hardware (GPU / total VRAM / CPU / total memory)
-    # - Eval Performance of both models in terms of memory and speed
-    # - 'train_runtime', 'train_samples_per_second', 'train_steps_per_second' hardware info
-    resource_table = (
-        "- VRAM Use: " +
-        transformers.modelcard._maybe_round(torch.cuda.max_memory_allocated() / (1024 ** 3)) +
-        " GB"
-    )
+    resource_stats = {
+        **{},  # TODO: Eval Performance of both models in terms of memory and speed
+        **{},  # TODO: 'train_runtime', 'train_samples_per_second', 'train_steps_per_second'
+        **_get_resource_stats()
+    }
+    resources_section = "\n".join(f"- {k}: {v}" for k, v in resource_stats.items())
 
     return MODEL_CARD_TEMPLATE.format(
         model_name=trainer.args.output_dir,
@@ -233,7 +273,7 @@ def create_model_card_text(trainer):
         teacher_model_size=f"{teacher_model_size:.2f} GB",
         model_diff_repr=model_diff_repr,
         benchmark_table_section=benchmark_table_section,
-        resource_table=resource_table,
+        resource_table=resources_section,
         num_train_samples=len(trainer.train_dataset),
         objective_details=trainer.distillation_objective,
         hyperparameters="\n".join([f"- {name}: `{value}`" for name, value in hyperparameters.items()]),
