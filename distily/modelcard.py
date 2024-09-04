@@ -44,9 +44,7 @@ More information needed
 </details>
 <br/>
 
-{"# Benchmark Metrics Comparison" if benchmark_table else ""}
-
-{benchmark_table}
+{benchmark_table_section}
 
 # Resource Usage
 
@@ -158,7 +156,11 @@ def create_model_card_text(trainer):
             model_label: _flatten_harness_results(db[model_label]["results"])
             for model_label in db.keys()
         }
-        benchmark_table = _to_markdown_table(benchmark_results) if benchmark_results else None
+        benchmark_table = _to_markdown_table(benchmark_results)
+    if benchmark_results:
+        benchmark_table_section = f"# Benchmark Metrics Comparison\n\n{benchmark_table}"
+    else:
+        benchmark_table_section = ""
 
     framework_versions = "\n".join([
         f"- Distily {distily.__version__}",
@@ -230,7 +232,7 @@ def create_model_card_text(trainer):
         teacher_model_dtype=str(teacher_model_dtype),
         teacher_model_size=f"{teacher_model_size:.2f} GB",
         model_diff_repr=model_diff_repr,
-        benchmark_table=benchmark_table,
+        benchmark_table_section=benchmark_table_section,
         resource_table=resource_table,
         num_train_samples=len(trainer.train_dataset),
         objective_details=trainer.distillation_objective,
