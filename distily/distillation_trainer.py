@@ -240,6 +240,8 @@ class DistillationTrainer(transformers.Trainer):
             if len(self._rolling_grad_norms) == 16 and self.all_args["eval_args"].extra_grad_stats:
                 logs["grad_norm_var"] = statistics.variance(self._rolling_grad_norms)
 
+            self._extra_stats = []
+
             ##############
             # END NEW CODE
             ##############
