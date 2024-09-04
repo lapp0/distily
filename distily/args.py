@@ -109,10 +109,10 @@ class DistillationObjectiveArguments:
     hs_norm: typing.Optional[str] = None
     hs_projector: typing.Optional[str] = None
 
-    attn_weight: float = 0
+    attn_weight: float = 5.0
     attn_loss_fn: str = "raw_mse"
     attn_layer_mapper: str = "layer-2"
-    attn_norm: typing.Optional[str] = None
+    attn_norm: typing.Optional[str] = "layernorm_teacher_only_affine"
     attn_projector: typing.Optional[str] = "orthogonal"
 
 
@@ -131,15 +131,15 @@ class DistillationTrainingArguments(TrainingArguments):
     #####################################################
 
     # optimize convergence to final model
-    learning_rate: float = 1e-4
+    learning_rate: float = 2e-4
     max_grad_norm: float = 1.0
-    warmup_ratio: float = 0.2
+    warmup_ratio: float = 0.0
     lr_scheduler_type: str = "constant"
     num_train_epochs: float = 1.0
     optim: str = "paged_lion_32bit"
 
-    # smaller batch sizes perform better
-    per_device_train_batch_size: int = 8
+    # larger batches appear to train better?
+    per_device_train_batch_size: int = 16
     gradient_accumulation_steps: int = 1
 
     # optimize performance and memory
@@ -150,7 +150,7 @@ class DistillationTrainingArguments(TrainingArguments):
     gradient_checkpointing_kwargs = {"use_reentrant": False}
 
     # logging / evaluation
-    logging_steps: int = 25
+    logging_steps: int = 64
     save_steps: int = 5000
     eval_strategy: str = "steps"
     eval_steps: int = 5000

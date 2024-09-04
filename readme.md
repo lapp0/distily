@@ -73,6 +73,7 @@ TODO: commit the linked docs once complete
 - [ ] Distill to a model with modified `num_attention_heads` and `num_key_value_heads` by extending the projectors implementation.
 
 #### Distill to a different architecture:
-- [x] Distill to bitnet
+- [x] Distill to Bitnet (b1.58)
 - [ ] Distill to State-Space / Mamba
 - [ ] Distill to MoE
+- [ ] Distill to Parameter Sharing (ALBERT-style) Model

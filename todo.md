@@ -1,104 +1,87 @@
-# Model Generation Milestones
-- [x] beat distilgpt2 on distilgpt2 architecture
-- [ ] distill phi-3-mini to 1.58b, report metrics
+# IN "SHIP IT" MODE
+Complete these necessary steps for v1.0.0 and initial official models
+
+## Finish Training Setup
+- [ ] diagnose why my model is 10% smaller than distilgpt2 when using the same architecture
+- [x] LICENSE (AGPL for now)
+- [x] Default to OpenRail Variant https://www.licenses.ai/rail-license-generator
+- [ ] bayesian hyperparam search using optun for hidden states
+- [ ] experiment with sythetic data
+- [ ] integrate and test checkpointing
+
+## Train Models
+- [x] gpt2 -> distilgpt2
+- [ ] qwen-0.5B bitnet, report metrics
+- [ ] phi-3-mini_short_betnet, report metrics
+- [ ] phi-3-mini_bitnet, report metrics
+- [ ] llama-3.1_bitnet, report metrics
+- [ ] share models, new models can mode later
+
 
 # TODO
 
-- [ ] simple visualization for docs
-- [ ] diagnose why my model is 10% smaller than distilgpt2 when using the same architecture
-- [x] beat distilgpt2
-- [ ] bayesian hyperparam search using optunab
-- [ ] OpenRail-(D)AMS
-
-
-
 ## Big Benches
-- [ ] attn big bench, determine default params
-  - [ ] attn big bench with lr decay to 6e-5
+- [x] attn big bench, determine default params
 - [ ] big bench on synthetic dataset
 - [ ] bench warmups
 - [ ] bench lr's
 - [ ] bench lr schedulers
-- [ ] **integrate liger**
-- [ ] bench layernorm vs batchnorm for projections
 - [ ] repeat attn benchmarks, but use hs
-- [ ] big bench on `gpt2_xl` -> `gpt2`
-- [ ] big bench on `gpt2` -> `gpt2_bitnet`
 
-
-
-## v0.4.2
+## v0.5.1 Fix and Benchmark Synthetic Datasets
 - [ ] update temperature scaler, temp = 10 for initial token, 0.5 for all remaining tokens
 - [ ] ensure dynamic temperature always ends at end_t
-- [ ] ensemble projector
+- [ ] experiment with training on different decay schedules
 
-
-## v0.4.3
-- [ ] `debug` mode: more overhead and slower, but can help debug loss functions. Calculate the following:
-      - grad_norm of each individual loss component (determine magnitude)
-	  - correlation between each loss components gradient (determine relatedness)
-
-## v0.5.0
-- [ ] synthetic datasets: custom generators focusing on OOD sequences with vllm
+## v0.5.2 Checkpointing
+- [ ] integrate and test checkpointing
+- [ ] `FileNotFoundError: [Errno 2] No such file or directory: 'distily_experiments_1M/checkpoint-8000/trainer_state.json'`
+## v0.5.3:
 - [ ] update benchmarks so they run in vllm, not hf
 
-## v0.5.1
-- [ ] benchmark_harness for HotpotQA, TriviaQA, GLUE, SQUAD, CoNLL-2003, CoLA, MNLI
-  - [ ] additional: MMLU-PRO / MATH / etc
-
-## v0.5.2
-- [ ] fix log output so the loss/logits and loss/activations respects logging_steps
-- [ ] implement and benchmark all norm permutations. RMSNorm, LayerNorm, BatchNorm, but also normalization across different layers may have different characteristics when distilling, we may want to norm across (feature size, num layers) dimension, etc
-
-
-## v0.5.3
-**Training Quality Improvements**
-- [x] add ability to transfer / freeze embeddings
-- [ ] gradient weighted loss (review paper, see if there's ways to handle case where activations gradients push model in opposite direction as logit gradients / are orthogonal)
-- [ ] add stochastic noise / batch regularization and experiment since smaller batch size performrs so much better
-- [ ] fix whitening functions in ortho projection https://arxiv.org/pdf/2403.06213
-  - precompute whitened value across runs since teacher is static
-  - good opportunity to introduce data "recording" for teacher
-
-**Bug Fix**
-- [ ] loading the same dataset multiple times increases disk usage
-- [ ] fix checkpointing: `FileNotFoundError: [Errno 2] No such file or directory: 'distily_experiments_1M/checkpoint-8000/trainer_state.json'`
-
-**Auditability Improvements**
+## v0.5.4: Improved Auditability
 - [ ] garbage collect each train round, and each eval round. log train memory and eval memory each step
 - [ ] log train and eval time each step
 
 
-## v0.6.0
-**Optimizations**
-- [ ] use vLLM to prepare base model forward passes
+## v0.5.5: Optimizations
+MAYBE skip
 - [ ] use torch 2.5.0 to compile forward pass
+- [ ] test liger
 
-- [ ] training qwen-0.5B
-
-## v0.7.0
-- [ ] research dataset which would be best for this task
 
 ## Necessary for v1.0.0
 - [ ] documentation, all TODOs in readme.md
 - [ ] model card: include metadata for benchmarks to include evaluation results
-- [ ] specify datasets by argument
-- [ ] specify metrics by argument
+- [x] specify datasets by argument
+- [x] specify metrics by argument
 - [ ] add tooling to convert to 1.58b safetensors file
+
+## Post Release
+Reorganize these
+- [ ] simple visualization for docs
+- [ ] loading the same dataset multiple times increases disk usage
+- [ ] ensemble projector
+- [ ] gradient weighted loss (review paper, see if there's ways to handle case where activations gradients push model in opposite direction as logit gradients / are orthogonal) (see research.md)
+- [ ] add stochastic noise / batch regularization and experiment since smaller batch size performrs so much better
+- [ ] fix whitening functions in ortho projection https://arxiv.org/pdf/2403.06213
+  - precompute whitened value across runs since teacher is static
+  - good opportunity to introduce data "recording" for teacher
 - [ ] fix sinkhorn RuntimeError: "cdist_cuda" not implemented for 'BFloat16
 - [ ] test mutual_information_loss
 
+### Architecture Parameter Sweep
+- Distill same model to different shapes and sizes, see which architectures can hold the greatest capacity
 
-## Create Issues
+### Create Issues
 Didn't want to tackle these
 - [ ] log version of package, including commit in model card
 
 
-## Publish
+### Publish
 - [ ] evaluate results with logit distillation vs hidden state distillation
-- [ ] search for optimal hidden states to select
-- [ ] other hyperparameter experiments
+
 
 ## Optimize
-- [ ] ability to distill models using 8-bit backward pass
+- [ ] ability to distill bitnet models using 8-bit backward pass
 - [ ] use vllm for teacher output, serialize

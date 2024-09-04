@@ -93,7 +93,10 @@ NORMS = {
     "batchnorm": DistillationBatchNorm1d,
     "layernorm": DistillationLayerNorm1d,
     "rmsnorm": DistillationRMSNorm1d,
-    "instancenorm": DistillationInstanceNorm1d,
+
+    # TODO: fix bugs
+    # "instancenorm": DistillationInstanceNorm1d,
+    # "groupnorm": TODO
 }
 
 # apply all permutations of `teacher_only`, `affine`, and `track_running_stats`

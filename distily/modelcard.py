@@ -34,12 +34,21 @@ More information needed
 - **Data Type (dtype)**: {student_model_dtype}
 - **Model Size**: {student_model_size}
 
+<details>
+<summary>Student Model Details</summary>
 
-# Benchmark Metrics Comparison
+```
+{student_model_repr}
+```
+
+</details>
+<br/>
+
+{"# Benchmark Metrics Comparison" if benchmark_table else ""}
 
 {benchmark_table}
 
-# Resource Usage Comparison
+# Resource Usage
 
 {resource_table}
 
@@ -149,7 +158,7 @@ def create_model_card_text(trainer):
             model_label: _flatten_harness_results(db[model_label]["results"])
             for model_label in db.keys()
         }
-        benchmark_table = _to_markdown_table(benchmark_results)
+        benchmark_table = _to_markdown_table(benchmark_results) if benchmark_results else None
 
     framework_versions = "\n".join([
         f"- Distily {distily.__version__}",
@@ -215,6 +224,7 @@ def create_model_card_text(trainer):
         student_total_params=f"{student_total_params:,}",
         student_model_dtype=str(student_model_dtype),
         student_model_size=f"{student_model_size:.2f} GB",
+        student_model_repr=repr(trainer.student_model),
         teacher_model_architecture=teacher_model_architecture,
         teacher_total_params=f"{teacher_total_params:,}",
         teacher_model_dtype=str(teacher_model_dtype),
@@ -229,3 +239,18 @@ def create_model_card_text(trainer):
         token_count=sum(map(sum, trainer.train_dataset["attention_mask"])),
         **dataset_kwargs
     )
+
+
+def update_model_card(model_card, trainer):
+    model_card.data["library_name"] = "Distily"
+    if trainer.all_args.get("dataset_args"):
+        model_card.data["datasets"] = [trainer.all_args["dataset_args"].dataset_uri]
+
+    model_card.data["license"] = "creativeml-openrail-m"
+    model_card.data["base_model"] = trainer.teacher_model.config._name_or_path,
+    model_card.data["tags"] += "Distily"
+    model_card.data["base_model_relation"] = "finetune"  # TODO: update to "distillation"
+
+    model_card.text = create_model_card_text(trainer)
+
+    return model_card
