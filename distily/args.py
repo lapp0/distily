@@ -70,7 +70,7 @@ class EvalArguments:
 
     ppl_evaluators: typing.List[typing.Dict] = field(
         default_factory=lambda: [
-            dict(name="enwikippl", dataset="wikimedia/wikipedia", subset="20231101.en", split="train", sample_size=1000),
+            dict(name="enwikippl", dataset="wikimedia/wikipedia", subset="20231101.en", split="train", sample_size=2500),
             dict(name="frwikippl", dataset="wikimedia/wikipedia", subset="20231101.fr", split="train", sample_size=1000),
             dict(name="zhwikippl", dataset="wikimedia/wikipedia", subset="20231101.zh", split="train", sample_size=1000),
         ],
@@ -150,7 +150,7 @@ class DistillationTrainingArguments(TrainingArguments):
     gradient_checkpointing_kwargs = {"use_reentrant": False}
 
     # logging / evaluation
-    logging_steps: int = 64
+    logging_steps: int = 16
     save_steps: int = 5000
     eval_strategy: str = "steps"
     eval_steps: int = 5000

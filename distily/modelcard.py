@@ -250,7 +250,7 @@ def update_model_card(model_card, trainer):
 
     model_card.data["license"] = "creativeml-openrail-m"
     model_card.data["base_model"] = trainer.teacher_model.config._name_or_path
-    model_card.data["tags"] += "Distily"
+    model_card.data["tags"] += ["Distily"]
     model_card.data["base_model_relation"] = "finetune"  # TODO: update to "distillation"
 
     model_card.text = create_model_card_text(trainer)
