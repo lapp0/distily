@@ -249,7 +249,7 @@ def update_model_card(model_card, trainer):
         model_card.data["datasets"] = [trainer.all_args["dataset_args"].dataset_uri]
 
     model_card.data["license"] = "creativeml-openrail-m"
-    model_card.data["base_model"] = trainer.teacher_model.config._name_or_path,
+    model_card.data["base_model"] = trainer.teacher_model.config._name_or_path
     model_card.data["tags"] += "Distily"
     model_card.data["base_model_relation"] = "finetune"  # TODO: update to "distillation"
 
