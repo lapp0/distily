@@ -150,8 +150,8 @@ def _get_resource_stats():
     with exception_printer():
         gpu_names = [torch.cuda.get_device_name(i) for i in range(torch.cuda.device_count())]
         gpu_counts = Counter(gpu_names)
-        stats["GPUs"] = "\n  - ".join([] + [
-            f"{count}x {name}" if count > 1 else name
+        stats["GPUs"] = "\n  - ".join([""] + [
+            f"{count}x {name}"
             for name, count in gpu_counts.items()
         ])
     with exception_printer():
