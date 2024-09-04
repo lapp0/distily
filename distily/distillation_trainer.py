@@ -299,7 +299,7 @@ class DistillationTrainer(transformers.Trainer):
 
         model_card_filepath = os.path.join(self.args.output_dir, "README.md")
         model_card = ModelCard.load(model_card_filepath)
-        model_card = distily.modelcard.create_model_card_text(model_card, self)
+        model_card = distily.modelcard.create_model_card(model_card, self)
         model_card.save(model_card_filepath)
 
     def _maybe_benchmark(self):
