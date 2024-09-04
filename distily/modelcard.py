@@ -224,7 +224,7 @@ def create_model_card_text(trainer):
         student_total_params=f"{student_total_params:,}",
         student_model_dtype=str(student_model_dtype),
         student_model_size=f"{student_model_size:.2f} GB",
-        student_model_repr=repr(trainer.student_model),
+        student_model_repr=repr(trainer.model),
         teacher_model_architecture=teacher_model_architecture,
         teacher_total_params=f"{teacher_total_params:,}",
         teacher_model_dtype=str(teacher_model_dtype),
