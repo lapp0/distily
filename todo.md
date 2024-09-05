@@ -5,7 +5,7 @@ Complete these necessary steps for v1.0.0 and initial official models
 - [ ] diagnose why my model is 10% smaller than distilgpt2 when using the same architecture
 - [x] LICENSE (AGPL for now)
 - [x] Default to OpenRail Variant https://www.licenses.ai/rail-license-generator
-- [ ] bayesian hyperparam search using optun for hidden states
+- [ ] note in readme about privacy by setting `push_to_hub=False`. "In the spirit of collaboration, ..., for reproducability reasons, ..., however for security reasons you may set `push_to_hub=False`.
 - [ ] experiment with sythetic data
 - [ ] integrate and test checkpointing
 
@@ -69,6 +69,7 @@ Reorganize these
   - good opportunity to introduce data "recording" for teacher
 - [ ] fix sinkhorn RuntimeError: "cdist_cuda" not implemented for 'BFloat16
 - [ ] test mutual_information_loss
+- [ ] bayesian hyperparam search using optun for hidden states
 
 ### Architecture Parameter Sweep
 - Distill same model to different shapes and sizes, see which architectures can hold the greatest capacity

@@ -58,6 +58,7 @@ class DistillationTrainer(transformers.Trainer):
         self.evaluators = evaluators
 
         self._prev_grad_sign = None
+        self._prev_grad = None
         self._extra_stats = []
         self._rolling_grad_norms = collections.deque(maxlen=16)
 
@@ -154,7 +155,7 @@ class DistillationTrainer(transformers.Trainer):
         Copy of https://github.com/huggingface/transformers/blob/52a021375/src/transformers/trainer.py#L3394
 
         With additional behavior:
-        - Enable gradient logging
+        - Enable comparative gradient logging
         """
         model.train()
         inputs = self._prepare_inputs(inputs)
@@ -205,13 +206,23 @@ class DistillationTrainer(transformers.Trainer):
         # add stats
         # add gradient details to
         if self.all_args["eval_args"].extra_grad_stats:
+
             grad_sign = torch.cat([_pack_bit_tensor(p.grad.flatten() > 0) for p in model.parameters()])
             if self._prev_grad_sign is not None:
                 sign_xor = grad_sign ^ self._prev_grad_sign
-                stats["grad_prev_similarity"] = 1 - (_bit_tensor_sum(sign_xor) / (sign_xor.numel() * 64))
+                stats["grad_bin_prev_similarity"] = 1 - (_bit_tensor_sum(sign_xor) / (sign_xor.numel() * 64))
             self._prev_grad_sign = grad_sign
 
-            self._extra_stats.append(stats)
+            grad = torch.cat([p.grad.to(torch.float8_e5m2).flatten() for p in model.parameters()])
+            if self._prev_grad is not None:
+                sign_xor = grad_sign ^ self._prev_grad
+                stats["grad_prev_cos_sim"] = torch.nn.functional.cosine_similarity(grad, self._prev_grad).item()
+            self._prev_grad_sign = grad_sign
+
+            gc.collect()
+            torch.cuda.empty_cache()
+
+        self._extra_stats.append(stats)
 
         ##############
         # END NEW CODE
@@ -220,6 +231,13 @@ class DistillationTrainer(transformers.Trainer):
         return loss.detach() / self.args.gradient_accumulation_steps
 
     def _maybe_log_save_evaluate(self, tr_loss, grad_norm, model, trial, epoch, ignore_keys_for_eval):
+        """
+        Copy of https://github.com/huggingface/transformers/blob/52a021375/src/transformers/trainer.py#L3394
+
+        With additional behavior:
+        - Enable gradient variance logging
+        - clear self._extra_stats once queued for logging
+        """
         self._rolling_grad_norms.append(grad_norm.item())
         if self.control.should_log and self.state.global_step > self._globalstep_last_logged:
             if transformers.trainer.is_torch_xla_available():

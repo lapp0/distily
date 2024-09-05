@@ -77,3 +77,6 @@ TODO: commit the linked docs once complete
 - [ ] Distill to State-Space / Mamba
 - [ ] Distill to MoE
 - [ ] Distill to Parameter Sharing (ALBERT-style) Model
+
+#### Additional Techniques:
+- [ ] Distill from multiple models at once
