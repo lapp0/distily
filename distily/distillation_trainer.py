@@ -214,17 +214,14 @@ class DistillationTrainer(transformers.Trainer):
                 stats["grad_bin_prev_similarity"] = 1 - (_bit_tensor_sum(sign_xor) / (sign_xor.numel() * 64))
             self._prev_grad_sign = grad_sign
 
-            from torchao.float8.float8_ops import float8_mm  # noqa
-            flat_grad = [p.grad.to(torch.float8_e4m3fn).view(-1) for p in model.parameters()]
+            import bitsandbytes as bnb
+            flat_grad_8bit = [bnb.functional.quantize_blockwise(p.grad.view(-1)) for p in model.parameters()]
             if self._prev_grad is not None:
-                dot_product = sum(
-                    float8_mm(curr.unsqueeze(0), prev.unsqueeze(1)).item()
-                    for curr, prev in zip(flat_grad, self._prev_grad)
-                )
-                norm1 = sum(float8_mm(curr.unsqueeze(0), curr.unsqueeze(1)).item() for curr in flat_grad)
-                norm2 = sum(float8_mm(prev.unsqueeze(0), prev.unsqueeze(1)).item() for prev in self._prev_grad)
-                stats["grad_prev_cos_sim"] = dot_product / (norm1 ** 0.5 * norm2 ** 0.5)
-            self._prev_grad = flat_grad
+                dot_product = sum(torch.dot(curr, prev).item() for curr, prev in zip(flat_grad_8bit, self._prev_grad))
+                norm1 = sum(curr.norm().item() ** 2 for curr in flat_grad_8bit)
+                norm2 = sum(prev.norm().item() ** 2 for prev in self._prev_grad)
+                stats["grad_prev_cos_sim"] = dot_product / (norm1**0.5 * norm2**0.5)
+            self._prev_grad = flat_grad_8bit
 
             gc.collect()
             torch.cuda.empty_cache()
