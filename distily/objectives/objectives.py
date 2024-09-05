@@ -167,5 +167,5 @@ class DistillationObjective:
             f"attn_loss_component={self.attn_loss_component}"
         ]
         prefix = "\n    "
-        components = prefix + ",".join([c.replace("\n", prefix) for c in components])
+        components = prefix + f",{prefix}".join([c.replace("\n", prefix) for c in components])
         return f"{self.__class__.__name__}({components}\n)"
