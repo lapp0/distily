@@ -43,12 +43,15 @@ class LossComponent:
 
     def __repr__(self):
         class_name = self.__class__.__name__
-        field_values = ', '.join(
-            f"{field}={getattr(self, field)}"
+        if not self.is_measured:
+            return f"{class_name}(weight=0)"
+        prefix = "\n    "
+        field_values = prefix + ','.join(
+            f"{prefix}{field}={repr(getattr(self, field))}"
             for field in self.__dataclass_fields__
             if getattr(self, field) is not None
         )
-        return f"{class_name}({field_values})"
+        return f"{class_name}({field_values}\n)"
 
 
 class DistillationObjective:
@@ -157,11 +160,11 @@ class DistillationObjective:
         return loss
 
     def __repr__(self):
-        res = []
-        if self.logits_loss_component.is_measured:
-            res.append(f"logits_loss_component={self.logits_loss_component}")
-        if self.hs_loss_component.is_measured:
-            res.append(f"hs_loss_component={self.hs_loss_component}")
-        if self.attn_loss_component.is_measured:
-            res.append(f"attn_loss_component={self.attn_loss_component}")
-        return f"{self.__class__.__name__}({', '.join(res)})"
+        components = [
+            f"logits_loss_component={self.logits_loss_component}",
+            f"hs_loss_component={self.hs_loss_component}",
+            f"attn_loss_component={self.attn_loss_component}"
+        ]
+        prefix = "\n    "
+        components = prefix + ",".join([c.replace("\n", prefix) for c in components])
+        return f"{self.__class__.__name__}({components}\n)"
