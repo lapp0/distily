@@ -210,7 +210,7 @@ class DistillationTrainer(transformers.Trainer):
         # add gradient details to
         if self.all_args["eval_args"].extra_grad_stats:
 
-            with torch.cuda.amp.autocast():
+            with torch.amp.autocast("cuda"):
                 grad_sign = torch.cat([_pack_bit_tensor(p.grad.flatten() > 0) for p in model.parameters()])
                 if self._prev_grad_sign is not None:
                     sign_xor = grad_sign ^ self._prev_grad_sign
