@@ -50,7 +50,7 @@ class LossComponent:
         field_values = ','.join(
             f"{prefix}{field}={repr(getattr(self, field))}"
             for field in self.__dataclass_fields__
-            if getattr(self, field) is not None
+            if field != "label" and getattr(self, field) is not None
         )
         return f"{self.__class__.__name__}({field_values}\n)"
 
