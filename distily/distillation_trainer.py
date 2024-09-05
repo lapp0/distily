@@ -218,7 +218,7 @@ class DistillationTrainer(transformers.Trainer):
 
             flat_grad = [p.grad.to(torch.bfloat16).view(-1) for p in model.parameters()]
             if self._prev_grad is not None:
-                with torch.cuda.amp.autocast():
+                with torch.amp.autocast(device="cuda", dtype=torch.float16):
                     dot_product = sum(torch.dot(curr, prev).item() for curr, prev in zip(flat_grad, self._prev_grad))
                 norm1 = sum(curr.norm().item() ** 2 for curr in flat_grad)
                 norm2 = sum(prev.norm().item() ** 2 for prev in self._prev_grad)
