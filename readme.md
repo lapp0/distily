@@ -12,9 +12,12 @@ pip install -U "git+https://github.com/lapp0/distily.git#egg=distily[full]"
 
 ## Features
 Distily allows you to distill a model with
-- Smaller architecture: fewer layers, fewer attention heads, narrower MLP, etc
 - Quantized weights: e.g. bitnet
-- Distinct architecture: e.g. State-Space models such as Mamba
+- Distinct architecture: State-Space models such as Mamba, Mixture-of-Experts (MoE)
+- Modified architecture: Decrease (or increase) the
+  - number of layers
+  - width and depth of attention heads and dense layer.
+  - the number of attention and KV heads.
 
 ## Usage
 
@@ -70,7 +73,7 @@ TODO: commit the linked docs once complete
 #### Distill to a different model shape / size:
 - [x] Distill to model with fewer `num_hidden_layers` by implementing layer mappers.
 - [x] Distill to a model with modified module dimensions and behaviors (e.g., `intermediate_size`, `hidden_act`) by employing projectors.
-- [ ] Distill to a model with modified `num_attention_heads` and `num_key_value_heads` by extending the projectors implementation.
+- [x] Distill to a model with modified `num_attention_heads` and `num_key_value_heads`.
 
 #### Distill to a different architecture:
 - [x] Distill to Bitnet (b1.58)
