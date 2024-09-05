@@ -42,16 +42,17 @@ class LossComponent:
         return bool(self.weight)
 
     def __repr__(self):
-        class_name = self.__class__.__name__
-        if not self.is_measured:
-            return f"{class_name}(weight=0)"
         prefix = "\n    "
-        field_values = prefix + ','.join(
+
+        if not self.is_measured:
+            return f"{self.__class__.__name__}({prefix}weight=0\n)"
+
+        field_values = ','.join(
             f"{prefix}{field}={repr(getattr(self, field))}"
             for field in self.__dataclass_fields__
             if getattr(self, field) is not None
         )
-        return f"{class_name}({field_values}\n)"
+        return f"{self.__class__.__name__}({field_values}\n)"
 
 
 class DistillationObjective:
