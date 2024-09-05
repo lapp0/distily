@@ -210,20 +210,20 @@ class DistillationTrainer(transformers.Trainer):
         # add gradient details to
         if self.all_args["eval_args"].extra_grad_stats:
 
-            with torch.amp.autocast("cuda"):
-                grad_sign = torch.cat([_pack_bit_tensor(p.grad.flatten() > 0) for p in model.parameters()])
-                if self._prev_grad_sign is not None:
-                    sign_xor = grad_sign ^ self._prev_grad_sign
-                    stats["grad_bin_prev_similarity"] = 1 - (_bit_tensor_sum(sign_xor) / (sign_xor.numel() * 64))
-                self._prev_grad_sign = grad_sign
+            grad_sign = torch.cat([_pack_bit_tensor(p.grad.flatten() > 0) for p in model.parameters()])
+            if self._prev_grad_sign is not None:
+                sign_xor = grad_sign ^ self._prev_grad_sign
+                stats["grad_bin_prev_similarity"] = 1 - (_bit_tensor_sum(sign_xor) / (sign_xor.numel() * 64))
+            self._prev_grad_sign = grad_sign
 
-                flat_grad = [p.grad.to(torch.bfloat16).view(-1) for p in model.parameters()]
+            with torch.cuda.amp.autocast():
+                flat_grad = [p.grad.view(-1) for p in model.parameters()]
                 if self._prev_grad is not None:
                     dot_product = sum(torch.dot(curr, prev).item() for curr, prev in zip(flat_grad, self._prev_grad))
                     norm1 = sum(curr.norm().item() ** 2 for curr in flat_grad)
                     norm2 = sum(prev.norm().item() ** 2 for prev in self._prev_grad)
                     stats["grad_prev_cos_sim"] = dot_product / (norm1**0.5 * norm2**0.5)
-                self._prev_grad = flat_grad
+            self._prev_grad = flat_grad
 
             """
             import bitsandbytes as bnb
