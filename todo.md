@@ -8,6 +8,7 @@ Complete these necessary steps for v1.0.0 and initial official models
 - [ ] note in readme about privacy by setting `push_to_hub=False`. "In the spirit of collaboration, ..., for reproducability reasons, ..., however for security reasons you may set `push_to_hub=False`.
 - [ ] experiment with sythetic data
 - [ ] integrate and test checkpointing
+- [ ] bitnet to gguf
 
 ## Train Models
 - [x] gpt2 -> distilgpt2
@@ -45,9 +46,9 @@ Complete these necessary steps for v1.0.0 and initial official models
 
 
 ## v0.5.5: Optimizations
-MAYBE skip
-- [ ] use torch 2.5.0 to compile forward pass
-- [ ] test liger
+- [ ] try liger with qwen / llama
+- [ ] MAYBE skip: use torch 2.5.0 to compile forward pass
+
 
 
 ## Necessary for v1.0.0
@@ -57,11 +58,15 @@ MAYBE skip
 - [x] specify metrics by argument
 - [ ] add tooling to convert to 1.58b safetensors file
 
-## Post Release
-Reorganize these
+# Post Release
+
+## Post-v1.0.0 Models
+Distily Models:
+- [ ] `subtily_small`: Goal is to create the SOTA 1GB model through bitnet, MoE, and distillation from multiple models
+
+## Reorganize these
 - [ ] simple visualization for docs
 - [ ] loading the same dataset multiple times increases disk usage
-- [ ] ensemble projector
 - [ ] gradient weighted loss (review paper, see if there's ways to handle case where activations gradients push model in opposite direction as logit gradients / are orthogonal) (see research.md)
 - [ ] add stochastic noise / batch regularization and experiment since smaller batch size performrs so much better
 - [ ] fix whitening functions in ortho projection https://arxiv.org/pdf/2403.06213
@@ -69,7 +74,16 @@ Reorganize these
   - good opportunity to introduce data "recording" for teacher
 - [ ] fix sinkhorn RuntimeError: "cdist_cuda" not implemented for 'BFloat16
 - [ ] test mutual_information_loss
-- [ ] bayesian hyperparam search using optun for hidden states
+- [ ] bayesian hyperparam search using optuna https://github.com/optuna/optuna/tree/d00b9509b461c24dd0b2dbb2ad8561973d4ad929/tutorial/20_recipes
+
+### Additional Projectors
+- [ ] ensemble projector
+- [ ] combine MLP and orthogonal
+- [ ] combined attention / hidden projector, use same MLP at bottom, but different projectors on top to take care of diverging dimensionality
+
+### Additional Layer Mappers
+- [ ] experiment with "full cross" layer mapper with MLP in pursuit of letting the MLP determine how to apply to each layer
+  - [ ] variation: different linear "head" to MLP projector for each layer
 
 ### Architecture Parameter Sweep
 - Distill same model to different shapes and sizes, see which architectures can hold the greatest capacity
