@@ -213,10 +213,10 @@ class DistillationTrainer(transformers.Trainer):
                 stats["grad_bin_prev_similarity"] = 1 - (_bit_tensor_sum(sign_xor) / (sign_xor.numel() * 64))
             self._prev_grad_sign = grad_sign
 
-            grad = torch.cat([p.grad.to(torch.bfloat16) for p in model.parameters()])
+            flat_grad = torch.cat([p.grad.to(torch.bfloat16).flatten().unsqueeze(0) for p in model.parameters()])
             if self._prev_grad is not None:
-                stats["grad_prev_cos_sim"] = torch.nn.functional.cosine_similarity(grad, self._prev_grad).item()
-            self._prev_grad = grad
+                stats["grad_prev_cos_sim"] = torch.nn.functional.cosine_similarity(flat_grad, self._prev_grad).item()
+            self._prev_grad = flat_grad
 
             gc.collect()
             torch.cuda.empty_cache()
