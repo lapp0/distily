@@ -135,7 +135,7 @@ def mutual_information_loss(feat_s, feat_t, alpha=0.1):
     labels = torch.arange(batch_size).to(feat_s.device)
 
     # cross entropy requires float32
-    with torch.autocast(similarities.device.type):
+    with torch.amp.autocast("cuda", dtype=similarities.device.type):
         loss = F.cross_entropy(similarities, labels, reduction="none").sum(-1).mean()
     return loss
 

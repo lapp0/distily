@@ -217,7 +217,7 @@ class DistillationTrainer(transformers.Trainer):
                     stats["grad_bin_prev_similarity"] = 1 - (_bit_tensor_sum(sign_xor) / (sign_xor.numel() * 64))
                 self._prev_grad_sign = grad_sign
 
-                flat_grad = [p.grad.view(-1) for p in model.parameters()]
+                flat_grad = [p.grad.to(torch.bfloat16).view(-1) for p in model.parameters()]
                 if self._prev_grad is not None:
                     dot_product = sum(torch.dot(curr, prev).item() for curr, prev in zip(flat_grad, self._prev_grad))
                     norm1 = sum(curr.norm().item() ** 2 for curr in flat_grad)
