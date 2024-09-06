@@ -12,7 +12,7 @@ pip install -U "git+https://github.com/lapp0/distily.git#egg=distily[full]"
 
 ## Features
 Distily allows you to distill a model with
-- Quantized weights: e.g. bitnet
+- Quantized weights: e.g. TriLM, bitnet
 - Distinct architecture: State-Space models such as Mamba, Mixture-of-Experts (MoE)
 - Modified architecture: Decrease (or increase) the
   - number of layers

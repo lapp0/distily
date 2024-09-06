@@ -66,7 +66,7 @@ class DatasetArguments:
 
 @dataclass
 class EvalArguments:
-    extra_grad_stats: bool = True
+    extra_grad_stats: bool = False
 
     ppl_evaluators: typing.List[typing.Dict] = field(
         default_factory=lambda: [

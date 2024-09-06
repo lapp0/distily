@@ -34,7 +34,7 @@ def _bit_tensor_sum(packed_tensor):
     count = (count & 0x3333333333333333) + ((count >> 2) & 0x3333333333333333)
     count = (count + (count >> 4)) & 0x0F0F0F0F0F0F0F0F
     count = (count * 0x0101010101010101) >> 56
-    return torch.sum(count).item()
+    return torch.sum(count)
 
 
 class DistillationTrainer(transformers.Trainer):
@@ -213,10 +213,9 @@ class DistillationTrainer(transformers.Trainer):
             grad_sign = torch.cat([_pack_bit_tensor(p.grad.flatten() > 0) for p in model.parameters()])
             if self._prev_grad_sign is not None:
                 sign_xor = grad_sign ^ self._prev_grad_sign
-                stats["grad_bin_prev_similarity"] = 1 - (_bit_tensor_sum(sign_xor) / (sign_xor.numel() * 64))
+                stats["grad_bin_prev_similarity"] = 1 - (_bit_tensor_sum(sign_xor).item() / (sign_xor.numel() * 64)).item()
             self._prev_grad_sign = grad_sign
 
-            """
             flat_grad = [p.grad.to(torch.float16).view(-1) for p in model.parameters()]
             if self._prev_grad is not None:
                 with torch.amp.autocast("cuda", dtype=torch.float16):
@@ -225,7 +224,6 @@ class DistillationTrainer(transformers.Trainer):
                     norm2 = sum(prev.norm() ** 2 for prev in self._prev_grad)
                 stats["grad_prev_cos_sim"] = (dot_product / (norm1**0.5 * norm2**0.5)).item()
             self._prev_grad = flat_grad
-            """
 
             """
             import bitsandbytes as bnb
@@ -245,8 +243,8 @@ class DistillationTrainer(transformers.Trainer):
                 stats["grad_prev_cos_sim"] = dot_product / (norm1**0.5 * norm2**0.5)
             self._prev_grad_4bit = flat_grad_4bit
             """
-            gc.collect()
-            torch.cuda.empty_cache()
+            #gc.collect()
+            #torch.cuda.empty_cache()
 
         self._extra_stats.append(stats)
 

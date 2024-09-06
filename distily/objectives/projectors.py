@@ -58,7 +58,7 @@ class OrthogonalProjector(nn.Module):
 class MLPProjector(nn.Module):
     """Applies a multi-layer perceptron (MLP) transformation to student features."""
 
-    def __init__(self, student_features, teacher_features, hidden_dim=256, num_layers=2):
+    def __init__(self, student_features, teacher_features, hidden_dim=64, num_layers=3):
         super().__init__()
         in_features = student_features.size(-1)
         out_features = teacher_features.size(-1)
