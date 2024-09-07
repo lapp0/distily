@@ -64,17 +64,42 @@ Complete these necessary steps for v1.0.0 and initial official models
 Distily Models:
 - [ ] `subtily_small`: Goal is to create the SOTA 1GB model through bitnet, MoE, and distillation from multiple models
 
-## Reorganize these
+## Post-v1.0.0 High Priority
+
+### Misc
+- [ ] loading the same dataset multiple times increases disk usage: same seed shuffle with same dataset should result in no additional disk usage
+- [ ] Complete simple docs
+
+### Optimizations
+- [ ] ability to distill bitnet models using 8-bit backward pass, or if there are precision issues, autocast?
+
+
+## Post-v1.0.0 Medium Priority
+
+## Misc
 - [ ] simple visualization for docs
-- [ ] loading the same dataset multiple times increases disk usage
-- [ ] gradient weighted loss (review paper, see if there's ways to handle case where activations gradients push model in opposite direction as logit gradients / are orthogonal) (see research.md)
 - [ ] add stochastic noise / batch regularization and experiment since smaller batch size performrs so much better
+## Reorganize these
+
+
+### Optimizations
+- [ ] use vllm for teacher output, serialize
 - [ ] fix whitening functions in ortho projection https://arxiv.org/pdf/2403.06213
   - precompute whitened value across runs since teacher is static
   - good opportunity to introduce data "recording" for teacher
-- [ ] fix sinkhorn RuntimeError: "cdist_cuda" not implemented for 'BFloat16
-- [ ] test mutual_information_loss
-- [ ] bayesian hyperparam search using optuna https://github.com/optuna/optuna/tree/d00b9509b461c24dd0b2dbb2ad8561973d4ad929/tutorial/20_recipes
+
+### Publish
+- [ ] evaluate results with logit distillation vs hidden state distillation
+- [ ] review notes.md, review code, create document overviewing
+  - all methods used with sources
+  - all novel methods benchmarked and their run script and dashboard
+  - all new experiments to run
+
+
+
+### Loss Weighting
+- [ ] Experiment: weight loss based on teacher model forward pass perplexity
+- [ ] Experiment: gradient weighted loss (review paper, see if there's ways to handle case where activations gradients push model in opposite direction as logit gradients / are orthogonal) (see research.md)
 
 ### Additional Projectors
 - [ ] ensemble projector
@@ -86,17 +111,13 @@ Distily Models:
   - [ ] variation: different linear "head" to MLP projector for each layer
 
 ### Architecture Parameter Sweep
-- Distill same model to different shapes and sizes, see which architectures can hold the greatest capacity
+- [ ] bayesian hyperparam search using optuna https://github.com/optuna/optuna/tree/d00b9509b461c24dd0b2dbb2ad8561973d4ad929/tutorial/20_recipes
+- [ ] Distill same model to different shapes and sizes, see which architectures can hold the greatest capacity
 
 ### Create Issues
 Didn't want to tackle these
 - [ ] log version of package, including commit in model card
 
-
-### Publish
-- [ ] evaluate results with logit distillation vs hidden state distillation
-
-
-## Optimize
-- [ ] ability to distill bitnet models using 8-bit backward pass
-- [ ] use vllm for teacher output, serialize
+## Low Priority
+- [ ] fix sinkhorn RuntimeError: "cdist_cuda" not implemented for 'BFloat16
+- [ ] test mutual_information_loss
