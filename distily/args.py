@@ -62,6 +62,8 @@ class DatasetArguments:
     dataset_column_name: str = "text"
     dataset_sample_size: int = 250000
     dataset_test_size: float = 0.01
+    dataset_shuffle: bool = False
+    dataset_shuffle_seed: int = 42
 
 
 @dataclass

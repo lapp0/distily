@@ -37,13 +37,14 @@ import os
 import datasets
 
 
-
 def get_dataset(dataset_args, tokenizer, max_seq_len: int):
     dataset = datasets.load_dataset(
         dataset_args.dataset_uri,
         dataset_args.dataset_subset,
         split=dataset_args.dataset_split
     )
+    if dataset_args.dataset_shuffle:
+        dataset = dataset.shuffle(seed=dataset_args.dataset_shuffle_seed)
     dataset = dataset\
         .select(range(dataset_args.dataset_sample_size))\
         .train_test_split(test_size=dataset_args.dataset_test_size)
