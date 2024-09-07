@@ -48,6 +48,20 @@ def get_dataset(dataset_args, tokenizer, max_seq_len: int):
     dataset = dataset\
         .select(range(dataset_args.dataset_sample_size))\
         .train_test_split(test_size=dataset_args.dataset_test_size)
+
+    def tokenize_function(examples):
+        return tokenizer(
+            examples[dataset_args.dataset_column_name],
+            truncation=True,
+            padding="max_length",
+            max_length=max_seq_len
+        )
+
+    ### TODO: REMOVE THIS ONCE STABILITY OF HASH FUNCTION IS VERIFIED
+    ### TODO: ALSO VERIFY THAT THE HASH CHANGES IF TOKENIZER CHANGES
+    print(f"Hash of tokenize_function: {hash(tokenize_function)}")  # Print hash of function
+    ##################
+
     tokenized_dataset = dataset.map(
         lambda x: tokenizer(
             x[dataset_args.dataset_column_name],
@@ -59,4 +73,5 @@ def get_dataset(dataset_args, tokenizer, max_seq_len: int):
         batch_size=100,
         num_proc=os.cpu_count() * 3 // 4,
     )
+
     return tokenized_dataset["train"], tokenized_dataset["test"]
