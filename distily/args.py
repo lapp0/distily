@@ -68,8 +68,8 @@ class DatasetArguments:
 
 @dataclass
 class EvalArguments:
-    grad_var_stats: bool = False
-    binary_grad_similarity_stats: bool = False
+    grad_var_stats: bool = True
+    binary_grad_similarity_stats: bool = True
     full_grad_similarity_stats: bool = False  # expensive
 
     ppl_evaluators: typing.List[typing.Dict] = field(
