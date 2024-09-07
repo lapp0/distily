@@ -208,14 +208,13 @@ class DistillationTrainer(transformers.Trainer):
 
         # add stats
         # add gradient details to
-        if self.all_args["eval_args"].extra_grad_stats:
-
+        if self.all_args["eval_args"].binary_grad_similarity_stats:
             grad_sign = torch.cat([_pack_bit_tensor(p.grad.flatten() > 0) for p in model.parameters()])
             if self._prev_grad_sign is not None:
                 sign_xor = grad_sign ^ self._prev_grad_sign
                 stats["grad_bin_prev_similarity"] = 1 - (_bit_tensor_sum(sign_xor).item() / (sign_xor.numel() * 64)).item()
             self._prev_grad_sign = grad_sign
-
+        if self.all_args["eval_args"].full_grad_similarity_stats:
             flat_grad = [p.grad.to(torch.float16).view(-1) for p in model.parameters()]
             if self._prev_grad is not None:
                 with torch.amp.autocast("cuda", dtype=torch.float16):
@@ -279,7 +278,7 @@ class DistillationTrainer(transformers.Trainer):
                 if k[0] != "_":
                     logs[k] = sum(transposed_stats[k]) / len(transposed_stats[k])
 
-            if len(self._rolling_grad_norms) == 16 and self.all_args["eval_args"].extra_grad_stats:
+            if len(self._rolling_grad_norms) == 16 and self.all_args["eval_args"].grad_var_stats:
                 logs["grad_norm_var"] = statistics.variance(self._rolling_grad_norms)
 
             self._extra_stats = []
