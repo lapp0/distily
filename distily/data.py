@@ -62,8 +62,8 @@ def get_dataset(dataset_args, tokenizer, max_seq_len: int):
     ##################
 
     tokenized_dataset = dataset.map(
-        lambda x: do_tokenize(
-            x[dataset_args.dataset_column_name],
+        do_tokenize,
+        fn_kwargs=dict(
             tokenizer=tokenizer,
             truncation=True,
             padding="max_length",
