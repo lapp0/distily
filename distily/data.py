@@ -41,7 +41,8 @@ def get_dataset(dataset_args, tokenizer, max_seq_len: int):
     dataset = datasets.load_dataset(
         dataset_args.dataset_uri,
         dataset_args.dataset_subset,
-        split=dataset_args.dataset_split
+        split=dataset_args.dataset_split,
+        trust_remote_code=dataset_args.dataset_trust_remote_code,
     )
     if dataset_args.dataset_shuffle:
         dataset = dataset.shuffle(seed=dataset_args.dataset_shuffle_seed)
@@ -49,7 +50,7 @@ def get_dataset(dataset_args, tokenizer, max_seq_len: int):
         .select(range(dataset_args.dataset_sample_size))\
         .train_test_split(test_size=dataset_args.dataset_test_size)
 
-    def tokenize_function(examples):
+    def tokenize_function(examples, tokenizer):
         return tokenizer(
             examples[dataset_args.dataset_column_name],
             truncation=True,
@@ -65,12 +66,13 @@ def get_dataset(dataset_args, tokenizer, max_seq_len: int):
     tokenized_dataset = dataset.map(
         lambda x: tokenizer(
             x[dataset_args.dataset_column_name],
+            fn_kwargs={"tokenizer": tokenizer},
             truncation=True,
             padding="max_length",
             max_length=max_seq_len
         ),
         batched=True,
-        batch_size=100,
+        batch_size=1000,
         num_proc=os.cpu_count() * 3 // 4,
     )
 

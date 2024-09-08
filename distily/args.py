@@ -64,7 +64,7 @@ class DatasetArguments:
     dataset_test_size: float = 0.01
     dataset_shuffle: bool = False
     dataset_shuffle_seed: int = 42
-
+    dataset_trust_remote_code: bool = False
 
 @dataclass
 class EvalArguments:
