@@ -50,12 +50,10 @@ def get_dataset(dataset_args, tokenizer, max_seq_len: int):
         .select(range(dataset_args.dataset_sample_size))\
         .train_test_split(test_size=dataset_args.dataset_test_size)
 
-    def do_tokenize(examples, tokenizer):
+    def do_tokenize(examples, tokenizer, **tokenize_kwargs):
         return tokenizer(
             examples[dataset_args.dataset_column_name],
-            truncation=True,
-            padding="max_length",
-            max_length=max_seq_len
+            **tokenize_kwargs
         )
 
     ### TODO: REMOVE THIS ONCE STABILITY OF HASH FUNCTION IS VERIFIED
@@ -66,7 +64,7 @@ def get_dataset(dataset_args, tokenizer, max_seq_len: int):
     tokenized_dataset = dataset.map(
         lambda x: do_tokenize(
             x[dataset_args.dataset_column_name],
-            fn_kwargs={"tokenizer": tokenizer},
+            tokenizer=tokenizer,
             truncation=True,
             padding="max_length",
             max_length=max_seq_len
