@@ -37,7 +37,7 @@ class StudentModelArguments:
         default=False,
         metadata={"help": "Make student model a bitnet model."}
     )
-    student_model_use_liger: bool = True
+    student_model_use_liger: bool = False
 
 
 @dataclass
@@ -150,6 +150,7 @@ class DistillationTrainingArguments(TrainingArguments):
     # optimize performance and memory
     per_device_eval_batch_size: int = 8  # TODO: auto-find?
     gradient_checkpointing: bool = True
+    compile_forward: bool = True
 
     # Fixes
     gradient_checkpointing_kwargs = {"use_reentrant": False}

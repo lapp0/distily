@@ -6,7 +6,10 @@ import logging
 
 
 class PerplexityEvalCallback(TrainerCallback):
-    def __init__(self, dataset, tokenizer, max_length=1024, dataset_column="text", add_start_token=True):
+    def __init__(self, dataset, tokenizer, max_length=1024, dataset_column="text", add_start_token=None):
+        if add_start_token is None:
+            add_start_token = tokenizer.bos_token_id is not None
+
         # preprocess / tokenize
         predictions = [example[dataset_column] for example in dataset]
         self.encodings = tokenizer(
