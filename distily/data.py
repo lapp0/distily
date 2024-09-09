@@ -37,6 +37,10 @@ import os
 import datasets
 
 
+def do_tokenize(examples, tokenizer, column_name, **tokenize_kwargs):
+    return tokenizer(examples[column_name], **tokenize_kwargs)
+
+
 def get_dataset(dataset_args, tokenizer, max_seq_len: int):
     dataset = datasets.load_dataset(
         dataset_args.dataset_uri,
@@ -50,12 +54,6 @@ def get_dataset(dataset_args, tokenizer, max_seq_len: int):
         .select(range(dataset_args.dataset_sample_size))\
         .train_test_split(test_size=dataset_args.dataset_test_size)
 
-    def do_tokenize(examples, tokenizer, **tokenize_kwargs):
-        return tokenizer(
-            examples[dataset_args.dataset_column_name],
-            **tokenize_kwargs
-        )
-
     ### TODO: REMOVE THIS ONCE STABILITY OF HASH FUNCTION IS VERIFIED
     ### TODO: ALSO VERIFY THAT THE HASH CHANGES IF TOKENIZER CHANGES
     print(f"Hash of tokenize_function: {hash(do_tokenize)}")  # Print hash of function
@@ -67,7 +65,8 @@ def get_dataset(dataset_args, tokenizer, max_seq_len: int):
             tokenizer=tokenizer,
             truncation=True,
             padding="max_length",
-            max_length=max_seq_len
+            max_length=max_seq_len,
+            column_name=dataset_args.dataset_column_name,
         ),
         batched=True,
         batch_size=100,

@@ -9,6 +9,7 @@ class FourDimDistillationNorm:
         apply norm to both student and teacher
         """
         assert student_features.shape == teacher_features.shape
+        import pdb;pdb.set_trace()
         assert len(student_features.shape) == 4
 
         batch_size, layers, sequence_length, feature_size = student_features.shape
