@@ -70,7 +70,7 @@ def get_dataset(dataset_args, tokenizer, max_seq_len: int):
             max_length=max_seq_len
         ),
         batched=True,
-        batch_size=1000,
+        batch_size=100,
         num_proc=os.cpu_count() * 3 // 4,
     )
 

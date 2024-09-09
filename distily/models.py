@@ -69,6 +69,12 @@ def get_teacher_model_tokenizer(teacher_model_args):
 
 def get_student_model(student_model_args, teacher_model):
     if student_model_args.student_model_name_or_path:
+        # optionally apply liger kernel
+        if student_model_args.student_model_use_liger:
+            from liger_kernel.transformers.monkey_patch import _apply_liger_kernel  # noqa
+            config = transformers.AutoConfig.from_pretrained(student_model_args.student_model_name_or_path)
+            _apply_liger_kernel(config.model_type)
+
         student_model = transformers.AutoModelForCausalLM.from_pretrained(
             student_model_args.student_model_name_or_path,
             attn_implementation="flash_attention_2",
@@ -87,7 +93,12 @@ def get_student_model(student_model_args, teacher_model):
         # Force student to have vocabulary size as teacher
         config.vocab_size = teacher_model.config.vocab_size
 
-        # TODO: remove .to(...) hack
+        # optionally apply liger kernel
+        if student_model_args.student_model_use_liger:
+            from liger_kernel.transformers.monkey_patch import _apply_liger_kernel  # noqa
+            _apply_liger_kernel(config.model_type)
+
+        # TODO: remove .to(...) hack, use autocast
         student_model = transformers.AutoModelForCausalLM.from_config(
             config=config,
             attn_implementation="flash_attention_2",

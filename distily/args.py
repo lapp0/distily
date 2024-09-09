@@ -37,6 +37,7 @@ class StudentModelArguments:
         default=False,
         metadata={"help": "Make student model a bitnet model."}
     )
+    student_model_use_liger: bool = True
 
 
 @dataclass
