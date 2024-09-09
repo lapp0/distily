@@ -115,10 +115,11 @@ class DistillationTrainer(transformers.Trainer):
             )
         )
 
+    @classmethod
     def from_kwargs(cls, **kwargs):
         parsed_args_tuple = distily.args.parser.parse_dict(
             kwargs,
-            allow_extra_keys=True
+            allow_extra_keys=False
         )
         return cls.from_args(*parsed_args_tuple)
 
