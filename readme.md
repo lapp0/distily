@@ -30,7 +30,8 @@ python3 -m distily.run \
     --output_dir distily_gpt2 \
     --hub_model_id "distily/distily_gpt2" \
     --push_to_hub True \
-    --student_model_config {"n_layers": 6}
+    --student_model_config {"n_layers": 6} \
+    --student_model_as_bitnet True
 ```
 
 The [Resulting `distily_gpt2` Model](https://huggingface.co/distily/distily_gpt2) has (TODO: explain metrics).
@@ -82,4 +83,5 @@ TODO: commit the linked docs once complete
 - [ ] Distill to Parameter Sharing (ALBERT-style) Model
 
 #### Additional Techniques:
-- [ ] Distill from multiple models at once
+- [ ] [Distill from multiple models at once](https://arxiv.org/pdf/2106.01023)
+- [ ] [Pruning](https://developer.nvidia.com/blog/how-to-prune-and-distill-llama-3-1-8b-to-an-nvidia-llama-3-1-minitron-4b-model/)
