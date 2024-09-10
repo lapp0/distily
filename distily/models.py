@@ -45,19 +45,14 @@ def _transfer_module_to_student(student_model, teacher_model, module_name, freez
             param.requires_grad = False
 
 
-MODEL_DEFAULT_KWARGS = dict(
-    attn_implementation="flash_attention_2",
-    torch_dtype=torch.bfloat16,
-)
-
-
 def get_teacher_model_tokenizer(teacher_model_args):
     model = transformers.AutoModelForCausalLM.from_pretrained(
         teacher_model_args.teacher_model_name_or_path,
+        torch_dtype=torch.bfloat16,
         load_in_8bit=teacher_model_args.teacher_load_in_8bit,
         load_in_4bit=teacher_model_args.teacher_load_in_4bit,
-        **MODEL_DEFAULT_KWARGS
-    ).cuda()  # TODO: autocast, don't explicitly send to cuda
+        device_map="cuda"
+    )
 
     # freeze (maybe redundant)
     model.eval()
@@ -79,11 +74,11 @@ def get_student_model(student_model_args, teacher_model):
             config = transformers.AutoConfig.from_pretrained(student_model_args.student_model_name_or_path)
             _apply_liger_kernel(config.model_type)
 
-        config.use_cache = False
         student_model = transformers.AutoModelForCausalLM.from_pretrained(
             student_model_args.student_model_name_or_path,
-            **MODEL_DEFAULT_KWARGS
-        ).cuda()  # TODO: autocast, don't explicitly send to cuda
+            torch_dtype=torch.bfloat16,
+            device_map="cuda"
+        )
 
     else:
         if student_model_args.student_config_name_or_path:
@@ -102,11 +97,12 @@ def get_student_model(student_model_args, teacher_model):
             from liger_kernel.transformers.monkey_patch import _apply_liger_kernel  # noqa
             _apply_liger_kernel(config.model_type)
 
-        config.use_cache = False,
+        # TODO: remove .to(...) hack, use autocast
+        config.use_cache = False
         student_model = transformers.AutoModelForCausalLM.from_config(
             config=config,
-            **MODEL_DEFAULT_KWARGS
-        ).cuda()  # TODO: autocast, don't explicitly send to cuda
+            torch_dtype=torch.bfloat16,
+        ).to("cuda")
 
     if student_model_args.reinitialize_weights:
         _reinitialize_weights(student_model, student_model_args.reinitialize_weights)
