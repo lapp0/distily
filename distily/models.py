@@ -45,14 +45,19 @@ def _transfer_module_to_student(student_model, teacher_model, module_name, freez
             param.requires_grad = False
 
 
+MODEL_DEFAULT_KWARGS = dict(
+    attn_implementation="flash_attention_2",
+    torch_dtype=torch.bfloat16,
+    device_map="cuda",
+)
+
+
 def get_teacher_model_tokenizer(teacher_model_args):
     model = transformers.AutoModelForCausalLM.from_pretrained(
         teacher_model_args.teacher_model_name_or_path,
-        attn_implementation="flash_attention_2",
-        torch_dtype=torch.bfloat16,
         load_in_8bit=teacher_model_args.teacher_load_in_8bit,
         load_in_4bit=teacher_model_args.teacher_load_in_4bit,
-        device_map="cuda"
+        **MODEL_DEFAULT_KWARGS
     )
 
     # freeze (maybe redundant)
@@ -77,8 +82,8 @@ def get_student_model(student_model_args, teacher_model):
 
         student_model = transformers.AutoModelForCausalLM.from_pretrained(
             student_model_args.student_model_name_or_path,
-            attn_implementation="flash_attention_2",
-            torch_dtype=torch.bfloat16,
+            use_cache=False,
+            **MODEL_DEFAULT_KWARGS
         )
 
     else:
@@ -101,9 +106,9 @@ def get_student_model(student_model_args, teacher_model):
         # TODO: remove .to(...) hack, use autocast
         student_model = transformers.AutoModelForCausalLM.from_config(
             config=config,
-            attn_implementation="flash_attention_2",
-            torch_dtype=torch.bfloat16,
-        ).to(device="cuda")
+            use_cache=False,
+            **MODEL_DEFAULT_KWARGS
+        )
 
     if student_model_args.reinitialize_weights:
         _reinitialize_weights(student_model, student_model_args.reinitialize_weights)
