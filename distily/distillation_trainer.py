@@ -7,7 +7,6 @@ import shelve
 
 import transformers
 import torch
-import torch.nn.functional as F
 from huggingface_hub import ModelCard
 
 import distily
@@ -133,6 +132,10 @@ class DistillationTrainer(transformers.Trainer):
         )
 
     def compute_loss(self, model, inputs, return_outputs=False, return_stats=False):
+        # TODO: remove this hack because liger doesn't support labels revert labels deletion once resolved:
+        # https://github.com/linkedin/Liger-Kernel/issues/242#issuecomment-2341891320
+        del inputs["labels"]
+
         loss_dict = self.distillation_objective(self.teacher_model, model, inputs)
         loss = loss_dict.pop("loss")
 

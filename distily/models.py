@@ -67,14 +67,22 @@ def get_teacher_model_tokenizer(teacher_model_args):
 
 
 def get_student_model(student_model_args, teacher_model):
-    if student_model_args.student_model_name_or_path:
-        # optionally apply liger kernel
-        if student_model_args.student_model_use_liger:
-            from liger_kernel.transformers.monkey_patch import _apply_liger_kernel  # noqa
-            config = transformers.AutoConfig.from_pretrained(student_model_args.student_model_name_or_path)
-            _apply_liger_kernel(config.model_type)
+    if student_model_args.student_model_use_liger:
+        from liger_kernel.transformers import AutoLigerKernelForCausalLM
+        # automodel_cls = AutoLigerKernelForCausalLM
+        # TODO: remove hack below, use above comment once https://github.com/linkedin/Liger-Kernel/issues/242 is fixed
+        class PatchedAutoLiger(AutoLigerKernelForCausalLM):
+            @staticmethod
+            def from_config(config, *args, **kwargs):
+                AutoLigerKernelForCausalLM.from_pretrained(config._name_or_path)
+                return AutoLigerKernelForCausalLM.from_config(config, *args, **kwargs)
+        automodel_cls = PatchedAutoLiger
 
-        student_model = transformers.AutoModelForCausalLM.from_pretrained(
+    else:
+        automodel_cls = transformers.AutoModelForCausalLM
+
+    if student_model_args.student_model_name_or_path:
+        student_model = automodel_cls.from_pretrained(
             student_model_args.student_model_name_or_path,
             torch_dtype=torch.bfloat16,
             device_map="cuda"
@@ -92,14 +100,9 @@ def get_student_model(student_model_args, teacher_model):
         # Force student to have vocabulary size as teacher
         config.vocab_size = teacher_model.config.vocab_size
 
-        # optionally apply liger kernel
-        if student_model_args.student_model_use_liger:
-            from liger_kernel.transformers.monkey_patch import _apply_liger_kernel  # noqa
-            _apply_liger_kernel(config.model_type)
-
         # TODO: remove .to(...) hack, use autocast
         config.use_cache = False
-        student_model = transformers.AutoModelForCausalLM.from_config(
+        student_model = automodel_cls.from_config(
             config=config,
             torch_dtype=torch.bfloat16,
         ).to("cuda")

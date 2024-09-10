@@ -151,12 +151,10 @@ class DistillationTrainingArguments(TrainingArguments):
     per_device_eval_batch_size: int = 8  # TODO: auto-find?
     gradient_checkpointing: bool = True
 
-    # Disabled for now: cannot use output_attention=True with torch_compile
-    # unless in eager mode, offsetting any performance gains
-    # TODO: onece 2.5.0 supports output_attentions=True enable
-    # https://github.com/huggingface/transformers/issues/30978
-    # https://github.com/pytorch/pytorch/issues/119811
-    # torch_compile: bool = True
+    # TODO: clean up
+    torch_compile: bool = False  # TODO
+    torch_compile_backend = None  # defaults to inductor if unset
+    torch_compile_mode = None # TODO: "reduce-overhead"
 
     # Fixes
     gradient_checkpointing_kwargs = {"use_reentrant": False}
