@@ -2,97 +2,27 @@ import torch.nn as nn
 from functools import partial
 
 
-class FourDimDistillationNorm:
+class DistillationLayerNorm(nn.Module):
+    def __init__(self, student_feat, teacher_feat, norm_student=True, affine=False, **kwargs):
+        super().__init__()
+        self.teacher_norm = nn.LayerNorm(teacher_feat.shape[-2:], elementwise_affine=affine, **kwargs)
+        if norm_student:
+            self.student_norm = nn.LayerNorm(student_feat.shape[-2:], elementwise_affine=affine, **kwargs)
+        else:
+            self.student_norm = nn.Identity()
+
     def forward(self, student_features, teacher_features):
-        """
-        Flatten first three dimensions to a single dimension,
-        apply norm to both student and teacher
-        """
-        assert student_features.shape == teacher_features.shape
-        assert len(student_features.shape) == 4
-
-        batch_size, layers, sequence_length, feature_size = student_features.shape
-
-        s_flattened = student_features.view(batch_size * layers * sequence_length, feature_size)
-        s_flattened_norm = self.norm_s(s_flattened)
-        s_norm = s_flattened_norm.view(batch_size, layers, sequence_length, feature_size)
-
-        t_flattened = teacher_features.view(batch_size * layers * sequence_length, feature_size)
-        t_flattened_norm = self.norm_t(t_flattened)
-        t_norm = t_flattened_norm.view(batch_size, layers, sequence_length, feature_size)
-
-        return s_norm, t_norm
+        teacher_features = self.teacher_norm(teacher_features)
+        student_features = self.student_norm(student_features)
+        return student_features, teacher_features
 
 
-class DistillationBatchNorm1d(nn.Module):
-    """
-    Custom BatchNorm that accepts a 4D tensor of shape
-    (batch size, num layers, sequence length, feature size)
-    and applies batch normalization
-    """
-    def __init__(self, student_feat, teacher_feat, norm_student=True, affine=False, **kwargs):
-        super().__init__()
-        size_t = teacher_feat.size(-1)
-        if norm_student:
-            self.norm_s = nn.BatchNorm1d(size_t, affine=affine, **kwargs)
-        else:
-            self.norm_s = nn.Identity()
-        self.norm_t = nn.BatchNorm1d(size_t, affine=affine, **kwargs)
-
-    forward = FourDimDistillationNorm.forward
-
-
-class DistillationLayerNorm1d(nn.Module):
-    """
-    Calculate layernorm across 4D tensor of shape
-    (batch size, num layers, sequence length, feature size)
-    """
-    def __init__(self, student_feat, teacher_feat, norm_student=True, affine=False, **kwargs):
-        super().__init__()
-        size_t = teacher_feat.size(-1)
-        if norm_student:
-            self.norm_s = nn.LayerNorm(size_t, elementwise_affine=affine, **kwargs)
-        else:
-            self.norm_s = nn.Identity()
-        self.norm_t = nn.LayerNorm(size_t, elementwise_affine=affine, **kwargs)
-
-    forward = FourDimDistillationNorm.forward
-
-
-class DistillationRMSNorm1d(nn.Module):
-    def __init__(self, student_feat, teacher_feat, norm_student=True, affine=False, **kwargs):
-        super().__init__()
-        size_t = teacher_feat.size(-1)
-        if norm_student:
-            self.norm_s = nn.RMSNorm(size_t, elementwise_affine=affine, **kwargs)
-        else:
-            self.norm_s = nn.Identity()
-        self.norm_t = nn.RMSNorm(size_t, elementwise_affine=affine, **kwargs)
-
-    forward = FourDimDistillationNorm.forward
-
-
-class DistillationInstanceNorm1d(nn.Module):
-    def __init__(self, student_feat, teacher_feat, norm_student=True, affine=False, **kwargs):
-        super().__init__()
-        # InstanceNorm1d uses the zeroth dim's size, we lazy-set this in forward()
-        if norm_student:
-            self.norm_s = nn.LazyInstanceNorm1d(affine=affine, **kwargs)
-        else:
-            self.norm_s = nn.Identity()
-        self.norm_t = nn.LazyInstanceNorm1d(affine=affine, **kwargs)
-
-    forward = FourDimDistillationNorm.forward
-
-
-# TODO:
-# class DistillationGroupNorm1d(nn.Module):
-
+# TODO: fix other norms, layernorm is the only one which is correct right now though
 
 NORMS = {
-    "batchnorm": DistillationBatchNorm1d,
-    "layernorm": DistillationLayerNorm1d,
-    "rmsnorm": DistillationRMSNorm1d,
+    #"batchnorm": DistillationBatchNorm1d,
+    "layernorm": DistillationLayerNorm,# DistillationLayerNorm1d,
+    #"rmsnorm": DistillationRMSNorm1d,
 
     # TODO: fix bugs
     # "instancenorm": DistillationInstanceNorm1d,
