@@ -61,5 +61,5 @@ def get_trainer(**replacements):
 
 
 if __name__ == "__main__":
-    trainer = get_gpt2_trainer(optim="lion_32bit")
+    trainer = get_trainer(optim="lion_32bit")
     profile_trainer_train(trainer)
