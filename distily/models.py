@@ -80,9 +80,9 @@ def get_student_model(student_model_args, teacher_model):
             config = transformers.AutoConfig.from_pretrained(student_model_args.student_model_name_or_path)
             _apply_liger_kernel(config.model_type)
 
+        config.use_cache = False
         student_model = transformers.AutoModelForCausalLM.from_pretrained(
             student_model_args.student_model_name_or_path,
-            use_cache=False,
             **MODEL_DEFAULT_KWARGS
         )
 
@@ -103,10 +103,9 @@ def get_student_model(student_model_args, teacher_model):
             from liger_kernel.transformers.monkey_patch import _apply_liger_kernel  # noqa
             _apply_liger_kernel(config.model_type)
 
-        # TODO: remove .to(...) hack, use autocast
+        config.use_cache = False,
         student_model = transformers.AutoModelForCausalLM.from_config(
             config=config,
-            use_cache=False,
             **MODEL_DEFAULT_KWARGS
         )
 
