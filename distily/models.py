@@ -48,7 +48,6 @@ def _transfer_module_to_student(student_model, teacher_model, module_name, freez
 MODEL_DEFAULT_KWARGS = dict(
     attn_implementation="flash_attention_2",
     torch_dtype=torch.bfloat16,
-    device_map="cuda",
 )
 
 
@@ -58,7 +57,7 @@ def get_teacher_model_tokenizer(teacher_model_args):
         load_in_8bit=teacher_model_args.teacher_load_in_8bit,
         load_in_4bit=teacher_model_args.teacher_load_in_4bit,
         **MODEL_DEFAULT_KWARGS
-    )
+    ).cuda()  # TODO: autocast, don't explicitly send to cuda
 
     # freeze (maybe redundant)
     model.eval()
@@ -84,7 +83,7 @@ def get_student_model(student_model_args, teacher_model):
         student_model = transformers.AutoModelForCausalLM.from_pretrained(
             student_model_args.student_model_name_or_path,
             **MODEL_DEFAULT_KWARGS
-        )
+        ).cuda()  # TODO: autocast, don't explicitly send to cuda
 
     else:
         if student_model_args.student_config_name_or_path:
