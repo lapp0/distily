@@ -107,7 +107,7 @@ def get_student_model(student_model_args, teacher_model):
         student_model = transformers.AutoModelForCausalLM.from_config(
             config=config,
             **MODEL_DEFAULT_KWARGS
-        )
+        ).cuda()  # TODO: autocast, don't explicitly send to cuda
 
     if student_model_args.reinitialize_weights:
         _reinitialize_weights(student_model, student_model_args.reinitialize_weights)
