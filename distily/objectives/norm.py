@@ -18,6 +18,7 @@ class DistillationLayerNorm(nn.Module):
 
 
 # TODO: fix other norms, layernorm is the only one which is correct right now though
+# Old norm implementations existed in 6cb53a8
 
 NORMS = {
     #"batchnorm": DistillationBatchNorm1d,
