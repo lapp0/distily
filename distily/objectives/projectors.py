@@ -58,16 +58,16 @@ class OrthogonalProjector(nn.Module):
 class MLPProjector(nn.Module):
     """Applies a multi-layer perceptron (MLP) transformation to student features."""
 
-    def __init__(self, student_features, teacher_features, hidden_dim=64, num_layers=3):
+    def __init__(self, student_features, teacher_features, hidden_dim=64):
         super().__init__()
         in_features = student_features.size(-1)
         out_features = teacher_features.size(-1)
 
-        layers = [nn.Linear(in_features, hidden_dim), nn.ReLU()]
-        layers += [nn.Sequential(nn.Linear(hidden_dim, hidden_dim), nn.ReLU()) for _ in range(num_layers - 2)]
-        layers.append(nn.Linear(hidden_dim, out_features))
-
-        self.proj = nn.Sequential(*layers)
+        self.proj = nn.Sequential(
+            nn.Linear(in_features, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, out_features)
+        )
 
     def forward(self, student_features, teacher_features):
         return self.proj(student_features), teacher_features
@@ -99,10 +99,6 @@ PROJECTORS = {
 
     # mlp
     "mlp": MLPProjector,
-    "mlp_256_l2": partial(MLPProjector, hidden_dim=256, num_layers=2),
-    "mlp_64_l2": partial(MLPProjector, hidden_dim=256, num_layers=2),
-    "mlp_256_l3": partial(MLPProjector, hidden_dim=256, num_layers=3),
-    "mlp_64_l3": partial(MLPProjector, hidden_dim=64, num_layers=3),
-    "mlp_256_l4": partial(MLPProjector, hidden_dim=256, num_layers=4),
-    "mlp_64_l4": partial(MLPProjector, hidden_dim=64, num_layers=4),
+    "mlp_256": partial(MLPProjector, hidden_dim=256),
+    "mlp_64": partial(MLPProjector, hidden_dim=64),
 }
