@@ -141,6 +141,12 @@ class DistillationObjective:
         elif isinstance(feat_s, tuple):
             feat_s, feat_t = torch.vstack(feat_s), torch.vstack(feat_t)
 
+        # TODO: REMOVE - experiment with normalizing attention before projecting
+        if loss_component.label == "attn":
+            if (loss_component.label, "pre-proection") not in self._norms:
+                self._norms[(loss_component.label, "pre-projection")] = norm.DistillationLayerNorm(feat_s, feat_t)
+            feat_s, feat_t = self._norms[(loss_component.label, "pre-projection")].forward(feat_s, feat_t)
+
         # projectors and norms may be trainable, therefore we lazy-load, then re-use
         if loss_component.projector:
             if loss_component.label not in self._projectors:
