@@ -5,9 +5,9 @@ from functools import partial
 class DistillationLayerNorm(nn.Module):
     def __init__(self, student_feat, teacher_feat, norm_student=True, affine=False, **kwargs):
         super().__init__()
-        self.teacher_norm = nn.LayerNorm(teacher_feat.shape[-2:], elementwise_affine=affine, **kwargs)
+        self.teacher_norm = nn.LayerNorm(teacher_feat.shape[-1:], elementwise_affine=affine, **kwargs)
         if norm_student:
-            self.student_norm = nn.LayerNorm(student_feat.shape[-2:], elementwise_affine=affine, **kwargs)
+            self.student_norm = nn.LayerNorm(student_feat.shape[-1:], elementwise_affine=affine, **kwargs)
         else:
             self.student_norm = nn.Identity()
 
