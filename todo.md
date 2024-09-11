@@ -11,18 +11,22 @@ Complete these necessary steps for v1.0.0 and initial official models
 - [ ] bitnet to gguf
 
 ## Train Models
-- [x] gpt2 -> distilgpt2
-- [ ] qwen-0.5B bitnet, report metrics
-- [ ] phi-3-mini_short_betnet, report metrics
-- [ ] phi-3-mini_bitnet, report metrics
+- [x] `gpt2` -> `distilgpt2`
+- [ ] `smollm-130M` -> bitnet
+- [ ] `smollm-360M` -> bitnet
+- [ ] `smollm-1.3B` -> bitnet
+- [ ] `phi-2` -> ?
+- [ ] `Phi-3.5-mini-instruct` -> ?
+- [ ] `Phi-3-small-8k-instruct` ->
 - [ ] llama-3.1_bitnet, report metrics
 - [ ] share models, new models can mode later
 
 
 # TODO
 
-- [ ] profiling (See Performance Profiling section in notes.md)
 - [ ] https://www.alphaxiv.org/abs/2408.11796v1
+- [ ] https://arxiv.org/pdf/2306.13649
+- [ ] https://arxiv.org/pdf/2402.03898
 - [ ] add contact details to readme?
 - [ ] verify dataset.map only happens once, doesn't create redundant mapped datasets increasing disk usage
 

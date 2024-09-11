@@ -61,10 +61,38 @@ class DistillationObjective:
 
     Implements __call__(teacher_model, student_model, inputs) -> loss
 
-    Distillation loss can be calculated based on any number of model features, including
-    - logits
-    - specific hidden states (`hidden_states`)
-    - attention scones (`attentions`)
+    Mechanism
+    ---------
+    Runs forward pass and retrieves forward pass features
+    - `out_s = student_model.forward()` (with gradients)
+    - `out_t = teacher_model.forward()` (WITHOUT gradients)
+
+    Then applies a loss function, `return loss(out_s, out_t)`
+
+    Forward Pass Features
+    ---------------------
+    attentions:
+      - Tuple shape: (num_layers,)
+      - Tensor shape: (batch_size, num_attention_heads, sequence_length, sequence_length)
+      - Contains attention scores for each layer.
+
+    hidden_states:
+      - Tuple shape: (num_layers + 1,)
+      - Tensor shape: (batch_size, sequence_length, hidden_state_size)
+      - Represents hidden states for each layer and the initial embedding.
+
+    past_key_values:
+      - Tuple shape: (num_layers, 2,)
+      - Tensor shape: (batch_size, num_attention_heads, sequence_length, embedding_size_per_head)
+      - keys and values (tuple of 2) for faster decoding.
+
+
+    First Layer Data Flow
+    ---------------------
+    Embedding (hidden_states[0])
+    -> MHA (attentions[0], past_key_values[0])
+    -> FFN (updated hidden_states[1])
+    -> Next Layer
     """
     def __init__(
             self,
@@ -140,12 +168,6 @@ class DistillationObjective:
             feat_s, feat_t = loss_component.apply_layer_mapper(feat_s, feat_t)
         elif isinstance(feat_s, tuple):
             feat_s, feat_t = torch.vstack(feat_s), torch.vstack(feat_t)
-
-        # TODO: REMOVE - experiment with normalizing attention before projecting
-        if loss_component.label == "attn":
-            if (loss_component.label, "pre-proection") not in self._norms:
-                self._norms[(loss_component.label, "pre-projection")] = norm.DistillationLayerNorm(feat_s, feat_t)
-            feat_s, feat_t = self._norms[(loss_component.label, "pre-projection")].forward(feat_s, feat_t)
 
         # projectors and norms may be trainable, therefore we lazy-load, then re-use
         if loss_component.projector:

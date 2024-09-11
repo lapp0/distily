@@ -66,6 +66,7 @@ TODO: commit the linked docs once complete
 #### Improved performance / sampling efficiency:
 - [X] Standard knowledge distillation using logits.
 - [x] Distill using intermediate features including hidden states and attentions.
+- [ ] Implement [Value-Transfer](https://arxiv.org/pdf/2002.10957) (simply distillation loss on v of q,k,v)
 - [ ] Improve sampling efficiency through synthetic data generation.
 - [ ] Implement cross-entropy classification loss (traditional LLM loss function)
 - [ ] Apply projector to logits (https://arxiv.org/pdf/2310.17183)
