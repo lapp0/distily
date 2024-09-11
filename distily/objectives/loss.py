@@ -6,8 +6,9 @@ def _stable_kl_div(P_log_prob, Q_prob, epsilon=1e-10):
     """
     Stabilize by clamping Q_prob to avoid log(0) and division by zero
     """
-    Q_prob = Q_prob.clamp(min=epsilon)  # ensure numerical stability
-    return F.kl_div(P_log_prob, Q_prob, reduction="mean") * P_log_prob.size(-1)
+    # ensure numerical stability
+    Q_prob = Q_prob.clamp(min=epsilon)
+    return F.kl_div(P_log_prob, Q_prob, reduction="none").sum(-1).mean()
 
 
 def _cdist(x: torch.Tensor, y: torch.Tensor, p: float = 1.0) -> torch.Tensor:
