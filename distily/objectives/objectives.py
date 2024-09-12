@@ -1,7 +1,7 @@
 from typing import Callable, Union, Dict
 from dataclasses import dataclass
 import torch
-from functools import cache
+from torch import nn
 
 from distily.objectives import loss, layer_mappers, norm, projectors
 
@@ -15,9 +15,7 @@ class LossComponent:
     norm: Union[None, str, Callable] = None
     projector: Union[None, str, Callable] = None
 
-    @staticmethod
-    @cache
-    def _get_callable(attr, source_dict):
+    def _get_callable(self, attr, source_dict):
         if isinstance(attr, Union[str, None]):
             return source_dict[attr]
         if not callable(attr) and attr is not None:
@@ -58,9 +56,57 @@ class LossComponent:
         field_values = ','.join(
             f"{prefix}{field}={repr(getattr(self, field))}"
             for field in self.__dataclass_fields__
-            if field != "label" and getattr(self, field) is not None
+            if field not in ("label", "_cache") and getattr(self, field) is not None
         )
         return f"{self.__class__.__name__}({field_values}\n)"
+
+
+class LazyDistillationLossPipeline(nn.modules.lazy.LazyModuleMixin, nn.Module):
+    def __init__(self, loss_component):
+        super().__init__()
+
+        # not modules, parameters or functions
+        self.weight = loss_component.weight
+        self.loss_fn = loss_component.get_loss  # TODO: use loss module, not functional
+        self.layer_mapper_fn = loss_component.apply_layer_mapper
+
+        # store the module class for lazy initialization
+        self._projector_cls = loss_component.get_projector  # TODO: better name
+        self._norm_cls = loss_component.get_norm  # TODO: better name
+
+        # uninitialized modules
+        self.projector = nn.parameter.UninitializedParameter()
+        self.norm = nn.parameter.UninitializedParameter()
+
+    @torch.no_grad()
+    def initialize_parameters(self, feat_s, feat_t):
+        if not self.has_uninitialized_params():
+            return
+
+        device, dtype = feat_s.device, feat_s.dtype
+
+        if isinstance(self.projector, nn.parameter.UninitializedParameter):
+            projector_module = self._projector_cls(feat_s, feat_t).to(device=device, dtype=dtype)
+            self.projector.materialize(projector_module)
+
+        if isinstance(self.norm, nn.parameter.UninitializedParameter):
+            norm_module = self._norm_cls(feat_s, feat_t).to(device=device, dtype=dtype)
+            self.norm.materialize(norm_module)
+
+    def forward(self, feat_s: torch.Tensor, feat_t: torch.Tensor) -> torch.Tensor:
+        if not self.weight:
+            return torch.tensor(0, device=feat_s.device)
+
+        if self.layer_mapper_fn:
+            feat_s, feat_t = self.layer_mapper_fn(feat_s, feat_t)
+        elif isinstance(feat_s, tuple):
+            feat_s, feat_t = torch.vstack(feat_s), torch.vstack(feat_t)
+
+        feat_s, feat_t = self.projector(feat_s, feat_t)
+        feat_s, feat_t = self.norm(feat_s, feat_t)
+        loss = self.loss_fn(feat_s, feat_t)
+
+        return loss * self.weight
 
 
 class DistillationObjective:
@@ -139,6 +185,10 @@ class DistillationObjective:
             projector=attn_projector,
         )
 
+        self.logits_loss_fn = LazyDistillationLossPipeline(self.logits_loss_component)
+        self.hs_loss_fn = LazyDistillationLossPipeline(self.hs_loss_component)
+        self.attn_loss_fn = LazyDistillationLossPipeline(self.attn_loss_component)
+
     def __call__(self, teacher_model, student_model, inputs) -> Dict[str, float]:
         forward_kwargs = {
             **inputs,
@@ -150,46 +200,13 @@ class DistillationObjective:
             out_t = teacher_model(**forward_kwargs)
         out_s = student_model(**forward_kwargs)
 
-        # calculate component loss
-        device = student_model.device
-        logits_loss = self._calc_loss(out_s.logits, out_t.logits, self.logits_loss_component, device)
-        hs_loss = self._calc_loss(out_s.hidden_states, out_t.hidden_states, self.hs_loss_component, device)
-        attn_loss = self._calc_loss(out_s.attentions, out_t.attentions, self.attn_loss_component, device)
+        loss_logits = self.logits_loss_fn(out_s.logits, out_t.logits)
+        loss_hs = self.hs_loss_fn(out_s.hidden_states, out_t.hidden_states)
+        loss_attn = self.attn_loss_fn(out_s.attentions, out_t.attentions)
 
-        # calculate aggregate linear-combination loss
-        loss = (
-            logits_loss * self.logits_loss_component.weight +
-            hs_loss * self.hs_loss_component.weight +
-            attn_loss * self.attn_loss_component.weight
-        )
+        loss = loss_logits + loss_hs + loss_attn
 
-        return {"loss": loss, "loss/logits": logits_loss, "loss/hs": hs_loss, "loss/attn": attn_loss}
-
-    def _calc_loss(self, feat_s, feat_t, loss_component, device):
-        if not loss_component.is_measured:
-            return torch.tensor(0, device=device)
-
-        if loss_component.layer_mapper:
-            feat_s, feat_t = loss_component.apply_layer_mapper(feat_s, feat_t)
-        elif isinstance(feat_s, tuple):
-            feat_s, feat_t = torch.vstack(feat_s), torch.vstack(feat_t)
-
-        # TODO: ensure we always want to calculate layer-by-layer
-
-        projector = loss_component.get_projector(feat_s, feat_t).to(device=feat_s.device, dtype=feat_s.dtype)
-        norm = loss_component.get_norm(feat_s, feat_t).to(device=feat_s.device, dtype=feat_s.dtype)
-        loss_fn = loss_component.get_loss(feat_s, feat_t)
-
-        print("projector hash", hash(projector))
-        print("norm hash", hash(norm))
-        print("loss_fn hash", hash(loss_fn))
-
-        # APPLY THIS PIPELINE HERE
-        feat_s, feat_t = projector.forward(feat_s, feat_t)
-        feat_s, feat_t = norm.forward(feat_s, feat_t)
-        loss = loss_fn(feat_s, feat_t)
-
-        return loss
+        return {"loss": loss, "loss/logits": loss_logits, "loss/hs": loss_hs, "loss/attn": loss_attn}
 
     def __repr__(self):
         components = [
