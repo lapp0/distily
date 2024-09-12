@@ -37,6 +37,7 @@ class StudentModelArguments:
         default=False,
         metadata={"help": "Make student model a bitnet model."}
     )
+    use_liger_kernel: bool = True  # TODO: Field
 
 
 @dataclass
@@ -149,7 +150,6 @@ class DistillationTrainingArguments(TrainingArguments):
     # optimize performance and memory
     per_device_eval_batch_size: int = 8  # TODO: auto-find?
     gradient_checkpointing: bool = True
-    use_liger_kernel: bool = True  # TODO: Field
 
     # TODO: enable torch compile when this incompatibility with use_liger_kernel is fixed
     # -----------------------
