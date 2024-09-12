@@ -171,7 +171,7 @@ class DistillationObjective:
         if loss_component.layer_mapper:
             feat_s, feat_t = loss_component.apply_layer_mapper(feat_s, feat_t)
         else:
-            feat_s, feat_t = loss_component.apply_layer_mapper(feat_s, feat_t)
+            feat_s, feat_t = torch.vstack(feat_s), torch.vstack(feat_t)
 
         # TODO: ensure we always want to calculate layer-by-layer
 

@@ -42,14 +42,15 @@ NORMS = {
 # apply all permutations of `teacher_only`, `affine`, and `track_running_stats`
 NORMS.update({
     f"{norm_name}_teacher_only": partial(norm_fn, norm_student=False)
-    for norm_name, norm_fn in NORMS.items()
+    for norm_name, norm_fn in NORMS.items() if norm_name is not None
 })
 NORMS.update({
     f"{norm_name}_affine": partial(norm_fn, affine=True)
-    for norm_name, norm_fn in NORMS.items()
+    for norm_name, norm_fn in NORMS.items() if norm_name is not None
 })
 NORMS.update({
     f"{norm_name}_stats": partial(norm_fn, track_running_stats=True)
     for norm_name, norm_fn in NORMS.items()
-    if norm_name.startswith("batchnorm") or norm_name.startswith("instancenorm")
+    if norm_name is not None
+    and norm_name.startswith("batchnorm") or norm_name.startswith("instancenorm")
 })
