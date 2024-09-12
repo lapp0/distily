@@ -75,4 +75,12 @@ def get_dataset(dataset_args, tokenizer, max_seq_len: int):
         num_proc=os.cpu_count() * 3 // 4,
     )
 
+    ### TODO: REMOVE THIS ONCE STABILITY OF HASH FUNCTION IS VERIFIED
+    ### TODO: ALSO VERIFY THAT THE HASH CHANGES IF TOKENIZER CHANGES
+    print(f"AFTER: tokenizer: {tokenizer}")
+    print(f"AFTER: Hash of tokenizer: {datasets.fingerprint.Hasher.hash(tokenizer)}")
+    print(f"AFTER: Hash of tokenize_function: {datasets.fingerprint.Hasher.hash(do_tokenize)}")
+    ##################
+
+
     return tokenized_dataset["train"], tokenized_dataset["test"]

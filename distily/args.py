@@ -156,7 +156,7 @@ class DistillationTrainingArguments(TrainingArguments):
     # UserWarning: cuDNN SDPA backward got grad_output.strides() != output.strides(),
     # attempting to materialize a grad_output with matching strides...
     # (Triggered internally at ../aten/src/ATen/native/cudnn/MHA.cpp:674.)
-    use_liger_kernel: bool = True  # TODO: Field
+    # use_liger_kernel: bool = True  # TODO: Field
 
 
     # Fixes
