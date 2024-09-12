@@ -57,8 +57,8 @@ def get_dataset(dataset_args, tokenizer, max_seq_len: int):
     ### TODO: REMOVE THIS ONCE STABILITY OF HASH FUNCTION IS VERIFIED
     ### TODO: ALSO VERIFY THAT THE HASH CHANGES IF TOKENIZER CHANGES
     print(f"tokenizer: {tokenizer}")
-    print(f"Hash of tokenizer: {datasets.Hasher.hash(tokenizer)}")
-    print(f"Hash of tokenize_function: {datasets.Hasher.hash(do_tokenize)}")
+    print(f"Hash of tokenizer: {datasets.fingerprint.Hasher.hash(tokenizer)}")
+    print(f"Hash of tokenize_function: {datasets.fingerprint.Hasher.hash(do_tokenize)}")
     ##################
 
     tokenized_dataset = dataset.map(
