@@ -137,10 +137,8 @@ class DistillationTrainer(transformers.Trainer):
 
         # dry run to initialize the lazy DistillationObjective modules
         with torch.no_grad():
-            inputs = {
-                "input_ids": torch.tensor(self.train_dataset[0]["input_ids"]).to(self.model.device),
-                "attention_mask": torch.tensor(self.train_dataset[0]["attention_mask"]).to(self.model.device),
-            }
+            row = self._remove_unused_columns(self.train_dataset.select(range(1)))[0]
+            inputs = {k: torch.tensor(v).to(self.model.device) for k, v in row}
             self.distillation_objective.forward(self.model, self.teacher_model, inputs)
 
         # add the named parameters - a bit hacky, involves creating a temporary optimizer
