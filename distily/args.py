@@ -140,7 +140,7 @@ class DistillationTrainingArguments(TrainingArguments):
     max_grad_norm: float = 1.0
     warmup_ratio: float = 0.0
     lr_scheduler_type: str = "polynomial"
-    lr_scheduler_kwargs = field(default_factory=lambda: {"lr_end": 2e-5})
+    lr_scheduler_kwargs: dict = field(default_factory=lambda: {"lr_end": 2e-5})
     num_train_epochs: float = 1.0
     optim: str = "paged_lion_32bit"
 
