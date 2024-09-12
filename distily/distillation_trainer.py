@@ -135,10 +135,11 @@ class DistillationTrainer(transformers.Trainer):
         """Update optimizer with distillation_objective parameters"""
         optimizer = super().create_optimizer()
 
-        # perform a dry run to initialize the lazy module
+        # dry run to initialize the lazy DistillationObjective modules
         with torch.no_grad():
-            dryrun_input_ids = torch.tensor([1]).to(self.model.device)
-            self.distillation_objective.forward(self.model, self.teacher_model, dryrun_input_ids)
+            dry_tensor = torch.tensor([1] * 16).to(self.model.device)
+            dryrun_inputs = {"input_ids": dry_tensor, "attention_mask": dry_tensor}
+            self.distillation_objective.forward(self.model, self.teacher_model, dryrun_inputs)
         import pdb;pdb.set_trace()
         return optimizer
 
