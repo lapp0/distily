@@ -122,7 +122,7 @@ class LazyDistillationLoss(nn.Module):
         return loss * self.weight
 
 
-class DistillationObjective:
+class DistillationObjective(nn.Module):
     """
     Comprehensive distillation objective to calculate loss based on various features.
 
