@@ -16,7 +16,8 @@ class LossComponent:
     projector: Union[None, str, Callable] = None
 
     @cache
-    def _get_callable(self, attr, source_dict):
+    @staticmethod
+    def _get_callable(attr, source_dict):
         if isinstance(attr, Union[str, None]):
             return source_dict[attr]
         if not callable(attr) and attr is not None:
