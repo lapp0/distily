@@ -15,8 +15,8 @@ class LossComponent:
     norm: Union[None, str, Callable] = None
     projector: Union[None, str, Callable] = None
 
-    @cache
     @staticmethod
+    @cache
     def _get_callable(attr, source_dict):
         if isinstance(attr, Union[str, None]):
             return source_dict[attr]
