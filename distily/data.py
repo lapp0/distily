@@ -34,11 +34,12 @@ Generate data at runtime based on energy function.
 """
 
 import os
+import copy
 import datasets
 
 
 def do_tokenize(examples, tokenizer, column_name, **tokenize_kwargs):
-    return tokenizer(examples[column_name], **tokenize_kwargs)
+    return copy.deepcopy(tokenizer)(examples[column_name], **tokenize_kwargs)
 
 
 def get_dataset(dataset_args, tokenizer, max_seq_len: int):

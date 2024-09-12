@@ -143,7 +143,8 @@ class DistillationTrainer(transformers.Trainer):
 
         # add the named parameters - a bit hacky, involves creating a temporary optimizer
         temp_optim = optimizer.__class__(self.distillation_objective.parameters())
-        optimizer.param_groups += temp_optim.param_groups
+        if temp_optim.param_groups:
+            optimizer.param_groups += temp_optim.param_groups
         del temp_optim
 
         return optimizer

@@ -57,8 +57,6 @@ class PerplexityEvalCallback(TrainerCallback):
                 perplexity_batch = torch.exp(loss)
                 ppls.append(perplexity_batch)
 
-            print(batch_input_ids.shape)
-
         # Concatenate all batch perplexities and calculate the mean perplexity
         all_ppls = torch.cat(ppls)
         mean_perplexity = torch.mean(all_ppls)
