@@ -204,6 +204,7 @@ class DistillationObjective(nn.Module):
         self.hs_loss_fn = LazyDistillationLoss(self.hs_loss_component)
         self.attn_loss_fn = LazyDistillationLoss(self.attn_loss_component)
 
+    @torch.autocast(device_type="cuda")
     def forward(self, student_model, teacher_model, inputs) -> Dict[str, float]:
         forward_kwargs = {
             **inputs,
