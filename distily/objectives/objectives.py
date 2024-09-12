@@ -61,8 +61,11 @@ class LazyDistillationLossPipeline(nn.modules.lazy.LazyModuleMixin, nn.Module):
     def __init__(self, loss_component):
         super().__init__()
 
-        # not modules, parameters or functions
         self.weight = loss_component.weight
+        if not self.weight:
+            return
+
+        # not modules, parameters or functions
         self.loss_fn = loss_component.get_loss  # TODO: use loss module, not functional
         self.layer_mapper_fn = loss_component.apply_layer_mapper
 
@@ -76,7 +79,7 @@ class LazyDistillationLossPipeline(nn.modules.lazy.LazyModuleMixin, nn.Module):
 
     @torch.no_grad()
     def initialize_parameters(self, feat_s, feat_t):
-        if not self.has_uninitialized_params():
+        if not self.weight or not self.has_uninitialized_params():
             return
 
         device, dtype = feat_s.device, feat_s.dtype
