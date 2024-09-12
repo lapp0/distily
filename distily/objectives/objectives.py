@@ -112,9 +112,9 @@ class LazyDistillationLoss(nn.Module):
         else:
             return self._get_loss(feat_s, feat_t)
         """
+        return self._get_layer_loss(feat_s, feat_t)
 
-
-    def _get_loss(self, feat_s, feat_t):
+    def _get_layer_loss(self, feat_s, feat_t):
         feat_s, feat_t = self.projector(feat_s, feat_t)
         feat_s, feat_t = self.norm(feat_s, feat_t)
         loss = self.loss_fn(feat_s, feat_t)
