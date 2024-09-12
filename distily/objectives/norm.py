@@ -51,6 +51,6 @@ NORMS.update({
 NORMS.update({
     f"{norm_name}_stats": partial(norm_fn, track_running_stats=True)
     for norm_name, norm_fn in NORMS.items()
-    if norm_name is not None
-    and norm_name.startswith("batchnorm") or norm_name.startswith("instancenorm")
+    if norm_name is not None and
+    (norm_name.startswith("batchnorm") or norm_name.startswith("instancenorm"))
 })
