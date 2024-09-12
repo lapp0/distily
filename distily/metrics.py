@@ -96,4 +96,5 @@ def run_benchmarks(model, tokenizer, benchmarks, limit=None, bootstrap_iters=Non
         max_batch_size=1024,
         limit=limit,
         bootstrap_iters=bootstrap_iters,
+        log_samples=False
     )

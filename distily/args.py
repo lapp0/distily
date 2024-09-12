@@ -37,7 +37,6 @@ class StudentModelArguments:
         default=False,
         metadata={"help": "Make student model a bitnet model."}
     )
-    student_model_use_liger: bool = False
 
 
 @dataclass
@@ -150,11 +149,8 @@ class DistillationTrainingArguments(TrainingArguments):
     # optimize performance and memory
     per_device_eval_batch_size: int = 8  # TODO: auto-find?
     gradient_checkpointing: bool = True
-
-    # TODO: clean up
-    torch_compile: bool = False  # TODO
-    torch_compile_backend = None  # defaults to inductor if unset
-    torch_compile_mode = None # TODO: "reduce-overhead"
+    torch_compile: bool = True  # TODO: Field
+    use_liger_kernel: bool = True  # TODO: Field
 
     # Fixes
     gradient_checkpointing_kwargs = {"use_reentrant": False}

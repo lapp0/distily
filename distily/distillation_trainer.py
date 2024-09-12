@@ -239,24 +239,6 @@ class DistillationTrainer(transformers.Trainer):
                 stats["grad_prev_cos_sim"] = (dot_product / (norm1**0.5 * norm2**0.5)).item()
             self._prev_grad = flat_grad
 
-            """
-            import bitsandbytes as bnb
-            flat_grad_8bit = list(map(bnb.functional.quantize_blockwise, flat_grad))
-            if self._prev_grad_8bit is not None:
-                dot_product = sum(torch.dot(curr, prev).item() for curr, prev in zip(flat_grad_8bit, self._prev_grad_8bit))
-                norm1 = sum(curr.norm().item() ** 2 for curr in flat_grad_8bit)
-                norm2 = sum(prev.norm().item() ** 2 for prev in self._prev_grad_8bit)
-                stats["grad_prev_cos_sim"] = dot_product / (norm1**0.5 * norm2**0.5)
-            self._prev_grad_8bit = flat_grad_8bit
-
-            flat_grad_8bit = list(map(bnb.functional.quantize_4bit, flat_grad))
-            if self._prev_grad_4bit is not None:
-                dot_product = sum(torch.dot(curr, prev).item() for curr, prev in zip(flat_grad_4bit, self._prev_grad_4bit))
-                norm1 = sum(curr.norm().item() ** 2 for curr in flat_grad_4bit)
-                norm2 = sum(prev.norm().item() ** 2 for prev in self._prev_grad_4bit)
-                stats["grad_prev_cos_sim"] = dot_product / (norm1**0.5 * norm2**0.5)
-            self._prev_grad_4bit = flat_grad_4bit
-            """
             gc.collect()
             torch.cuda.empty_cache()
 

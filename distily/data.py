@@ -34,12 +34,11 @@ Generate data at runtime based on energy function.
 """
 
 import os
-import copy
 import datasets
 
 
 def do_tokenize(examples, tokenizer, column_name, **tokenize_kwargs):
-    return copy.deepcopy(tokenizer)(examples[column_name], **tokenize_kwargs)
+    return tokenizer(examples[column_name], **tokenize_kwargs)
 
 
 def get_dataset(dataset_args, tokenizer, max_seq_len: int):
@@ -57,7 +56,9 @@ def get_dataset(dataset_args, tokenizer, max_seq_len: int):
 
     ### TODO: REMOVE THIS ONCE STABILITY OF HASH FUNCTION IS VERIFIED
     ### TODO: ALSO VERIFY THAT THE HASH CHANGES IF TOKENIZER CHANGES
-    print(f"Hash of tokenize_function: {hash(do_tokenize)}")  # Print hash of function
+    print(f"tokenizer: {tokenizer}")
+    print(f"Hash of tokenizer: {datasets.Hasher.hash(tokenizer)}")
+    print(f"Hash of tokenize_function: {datasets.Hasher.hash(do_tokenize)}")
     ##################
 
     tokenized_dataset = dataset.map(
