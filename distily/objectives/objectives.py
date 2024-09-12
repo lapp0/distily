@@ -17,7 +17,7 @@ class LossComponent:
 
     def _get_callable(self, attr, source_dict):
         if isinstance(attr, Union[str, None]):
-            return source_dict[attr]
+            return source_dict.get(attr)
         if not callable(attr) and attr is not None:
             raise TypeError(f"{attr} must be a str, callable, or None")
         return attr
