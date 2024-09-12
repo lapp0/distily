@@ -85,15 +85,14 @@ class LazyDistillationLossPipeline(nn.Module):
         if self.projector or self.norm:
             return
 
-        device, dtype = feat_s.device, feat_s.dtype
-        self.projector = self._projector_cls(feat_s, feat_t).to(device=device, dtype=dtype)
-        self.norm = self._norm_cls(feat_s, feat_t).to(device=device, dtype=dtype)
+        self.projector = self._projector_cls(feat_s, feat_t).to(dtype=feat_s.dtype)
+        self.norm = self._norm_cls(feat_s, feat_t).to(dtype=feat_s.dtype)
 
     def forward(self, feat_s: torch.Tensor, feat_t: torch.Tensor) -> torch.Tensor:
         self._initialize_parameters(feat_s, feat_t)
 
         if not self.weight:
-            return torch.tensor(0, device=feat_s.device)
+            return torch.tensor(0)
 
         if self.layer_mapper_fn:
             feat_s, feat_t = self.layer_mapper_fn(feat_s, feat_t)
@@ -198,9 +197,10 @@ class DistillationObjective:
             out_t = teacher_model(**forward_kwargs)
         out_s = student_model(**forward_kwargs)
 
-        loss_logits = self.logits_loss_fn(out_s.logits, out_t.logits)
-        loss_hs = self.hs_loss_fn(out_s.hidden_states, out_t.hidden_states)
-        loss_attn = self.attn_loss_fn(out_s.attentions, out_t.attentions)
+        with torch.autocast(device_type="cuda"):  # TODO: hack
+            loss_logits = self.logits_loss_fn(out_s.logits, out_t.logits)
+            loss_hs = self.hs_loss_fn(out_s.hidden_states, out_t.hidden_states)
+            loss_attn = self.attn_loss_fn(out_s.attentions, out_t.attentions)
 
         loss = loss_logits + loss_hs + loss_attn
 
