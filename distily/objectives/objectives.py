@@ -73,10 +73,12 @@ class LazyDistillationLossPipeline(nn.modules.lazy.LazyModuleMixin, nn.Module):
         self._projector_cls = loss_component.get_projector  # TODO: better name
         self._norm_cls = loss_component.get_norm  # TODO: better name
 
+        # TODO: JUST MAKE THE CHILD MODULES LAZY, NOT DIRECTLY THIS ONE
         # uninitialized modules
-        self.projector = nn.parameter.UninitializedParameter()
-        self.norm = nn.parameter.UninitializedParameter()
+        self.projector = None
+        self.norm = None
 
+    # TODO: FIX THIS HACK, LOAD MODULES IN __INIT__, BUT MODULES CAN BE LAZY
     @torch.no_grad()
     def initialize_parameters(self, feat_s, feat_t):
         if not self.weight or not self.has_uninitialized_params():
@@ -84,13 +86,11 @@ class LazyDistillationLossPipeline(nn.modules.lazy.LazyModuleMixin, nn.Module):
 
         device, dtype = feat_s.device, feat_s.dtype
 
-        if isinstance(self.projector, nn.parameter.UninitializedParameter):
-            projector_module = self._projector_cls(feat_s, feat_t).to(device=device, dtype=dtype)
-            self.projector.materialize(projector_module)
+        projector_module = self._projector_cls(feat_s, feat_t).to(device=device, dtype=dtype)
+        self.projector = projector_module
 
-        if isinstance(self.norm, nn.parameter.UninitializedParameter):
-            norm_module = self._norm_cls(feat_s, feat_t).to(device=device, dtype=dtype)
-            self.norm.materialize(norm_module)
+        norm_module = self._norm_cls(feat_s, feat_t).to(device=device, dtype=dtype)
+        self.norm = norm_module
 
     def forward(self, feat_s: torch.Tensor, feat_t: torch.Tensor) -> torch.Tensor:
         if not self.weight:
