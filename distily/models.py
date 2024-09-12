@@ -67,7 +67,7 @@ def get_teacher_model_tokenizer(teacher_model_args):
 
 
 def get_student_model(student_model_args, teacher_model):
-    if student_model_args.use_liger_kernel:
+    if student_model_args.student_use_liger_kernel:
         from liger_kernel.transformers import AutoLigerKernelForCausalLM
         # automodel_cls = AutoLigerKernelForCausalLM
         # TODO: remove hack below, use above comment once https://github.com/linkedin/Liger-Kernel/issues/242 is fixed
