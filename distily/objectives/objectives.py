@@ -85,6 +85,9 @@ class LazyDistillationLossPipeline(nn.Module):
         if self.projector or self.norm:
             return
 
+        if isinstance(feat_s, tuple):
+            feat_s, feat_t = feat_s[0], feat_t[0]
+
         self.projector = self._projector_cls(feat_s, feat_t).to(dtype=feat_s.dtype)
         self.norm = self._norm_cls(feat_s, feat_t).to(dtype=feat_s.dtype)
 
