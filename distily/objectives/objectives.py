@@ -88,8 +88,8 @@ class LazyDistillationLoss(nn.Module):
         if isinstance(feat_s, tuple):
             feat_s, feat_t = feat_s[0], feat_t[0]
 
-        self.projector = self._projector_cls(feat_s, feat_t).to(device=feat_s.device, dtype=feat_s.dtype)
-        self.norm = self._norm_cls(feat_s, feat_t).to(device=feat_s.device, dtype=feat_s.dtype)
+        self.projector = self._projector_cls(feat_s, feat_t).to(device=feat_s.device)
+        self.norm = self._norm_cls(feat_s, feat_t).to(device=feat_s.device)
 
     def forward(self, feat_s: torch.Tensor, feat_t: torch.Tensor) -> torch.Tensor:
         self._initialize_parameters(feat_s, feat_t)
