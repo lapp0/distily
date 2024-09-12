@@ -146,7 +146,7 @@ class DistillationTrainer(transformers.Trainer):
         if new_optimizer_params:
             temp_optim = optimizer.__class__(self.distillation_objective.parameters())
             optimizer.param_groups += temp_optim.param_groups
-        del temp_optim
+            del temp_optim
 
         return optimizer
 
