@@ -57,7 +57,7 @@ class LossComponent:
         return f"{self.__class__.__name__}({field_values}\n)"
 
 
-class LazyDistillationLossPipeline(nn.modules.lazy.LazyModuleMixin, nn.Module):
+class LazyDistillationLossPipeline(nn.Module):
     def __init__(self, loss_component):
         super().__init__()
 
@@ -79,20 +79,19 @@ class LazyDistillationLossPipeline(nn.modules.lazy.LazyModuleMixin, nn.Module):
         self.norm = None
 
     # TODO: FIX THIS HACK, LOAD MODULES IN __INIT__, BUT MODULES CAN BE LAZY
-    @torch.no_grad()
-    def initialize_parameters(self, feat_s, feat_t):
-        if not self.weight or not self.has_uninitialized_params():
+    def _initialize_parameters(self, feat_s, feat_t):
+        if not self.weight:
+            return
+        if self.projector or self.norm:
             return
 
         device, dtype = feat_s.device, feat_s.dtype
-
-        projector_module = self._projector_cls(feat_s, feat_t).to(device=device, dtype=dtype)
-        self.projector = projector_module
-
-        norm_module = self._norm_cls(feat_s, feat_t).to(device=device, dtype=dtype)
-        self.norm = norm_module
+        self.projector = self._projector_cls(feat_s, feat_t).to(device=device, dtype=dtype)
+        self.norm = self._norm_cls(feat_s, feat_t).to(device=device, dtype=dtype)
 
     def forward(self, feat_s: torch.Tensor, feat_t: torch.Tensor) -> torch.Tensor:
+        self._initialize_parameters(feat_s, feat_t)
+
         if not self.weight:
             return torch.tensor(0, device=feat_s.device)
 
