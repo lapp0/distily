@@ -2,6 +2,14 @@ import torch.nn as nn
 from functools import partial
 
 
+class DistillationIdentityNorm(nn.Module):
+    def __init__(self, student_features, teacher_features, **kwargs):
+        super().__init__()
+
+    def forward(self, student_features, teacher_features, **kwargs):
+        return student_features, teacher_features
+
+
 class DistillationLayerNorm(nn.Module):
     def __init__(self, student_feat, teacher_feat, norm_student=True, affine=False, **kwargs):
         super().__init__()
@@ -21,6 +29,7 @@ class DistillationLayerNorm(nn.Module):
 # Old norm implementations existed in 6cb53a8
 
 NORMS = {
+    None: DistillationIdentityNorm,
     #"batchnorm": DistillationBatchNorm1d,
     "layernorm": DistillationLayerNorm,# DistillationLayerNorm1d,
     #"rmsnorm": DistillationRMSNorm1d,

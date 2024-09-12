@@ -73,7 +73,10 @@ class MLPProjector(nn.Module):
         return self.proj(student_features), teacher_features
 
 
-# TODO: update EnsembleProjector so it accepts arbitrary child projectors, not just linear
+# TODO: update EnsembleProjector
+# - https://arxiv.org/pdf/2210.15274.pdf
+# - https://github.com/chenyd7/PEFD
+
 class EnsembleProjector(nn.Module):
     """Applies an ensemble of linear projections to student features."""
 
@@ -93,7 +96,7 @@ class EnsembleProjector(nn.Module):
 
 
 PROJECTORS = {
-    "identity": IdentityProjector,
+    None: IdentityProjector,
     "linear": LinearProjector,
     "orthogonal": partial(OrthogonalProjector),
 

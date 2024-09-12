@@ -61,6 +61,7 @@ class PerplexityEvalCallback(TrainerCallback):
         all_ppls = torch.cat(ppls)
         mean_perplexity = torch.mean(all_ppls)
 
+        print(mean_perplexity.item())
         return mean_perplexity.item()
 
 
