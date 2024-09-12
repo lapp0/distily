@@ -176,6 +176,8 @@ class DistillationObjective(nn.Module):
             attn_norm,
             attn_projector,
     ):
+        super().__init__()
+
         self.logits_loss_component = LossComponent(
             "logits",
             weight=logits_weight,
