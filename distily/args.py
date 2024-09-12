@@ -61,8 +61,8 @@ class DatasetArguments:
     dataset_subset: str = "20231101.en"
     dataset_split: str = "train"
     dataset_column_name: str = "text"
-    dataset_sample_size: int = 250000
-    dataset_test_size: float = 0.01
+    dataset_sample_size: int = 1_000_000
+    dataset_test_size: float = 0.002
     dataset_shuffle: bool = False
     dataset_shuffle_seed: int = 42
     dataset_trust_remote_code: bool = False
@@ -139,7 +139,8 @@ class DistillationTrainingArguments(TrainingArguments):
     learning_rate: float = 2e-4
     max_grad_norm: float = 1.0
     warmup_ratio: float = 0.0
-    lr_scheduler_type: str = "constant"
+    lr_scheduler_type: str = "polynomial"
+    lr_scheduler_kwargs = field(default_factory=lambda: {"lr_end": 2e-5})
     num_train_epochs: float = 1.0
     optim: str = "paged_lion_32bit"
 
@@ -150,6 +151,7 @@ class DistillationTrainingArguments(TrainingArguments):
     # optimize performance and memory
     per_device_eval_batch_size: int = 8  # TODO: auto-find?
     gradient_checkpointing: bool = True
+    bf16: bool = True
 
     # TODO: enable torch compile when this incompatibility with use_liger_kernel is fixed
     # -----------------------
@@ -165,6 +167,7 @@ class DistillationTrainingArguments(TrainingArguments):
     # logging / evaluation
     logging_steps: int = 16
     save_steps: int = 5000
+    save_total_limit = 4
     eval_strategy: str = "steps"
     eval_steps: int = 5000
     eval_on_start: bool = True
