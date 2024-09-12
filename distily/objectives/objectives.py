@@ -57,7 +57,7 @@ class LossComponent:
         return f"{self.__class__.__name__}({field_values}\n)"
 
 
-class LazyDistillationLossPipeline(nn.Module):
+class LazyDistillationLoss(nn.Module):
     def __init__(self, loss_component):
         super().__init__()
 
@@ -102,6 +102,19 @@ class LazyDistillationLossPipeline(nn.Module):
         elif isinstance(feat_s, tuple):
             feat_s, feat_t = torch.vstack(feat_s), torch.vstack(feat_t)
 
+        # TODO: use this instead
+        """
+        if isinstance(feat_s, tuple):
+            return torch.mean(torch.stack([
+                self._get_loss(feat_s, feat_t)
+                for layer_s, layer_t in zip(feat_s, feat_t)
+            ]))
+        else:
+            return self._get_loss(feat_s, feat_t)
+        """
+
+
+    def _get_loss(self, feat_s, feat_t):
         feat_s, feat_t = self.projector(feat_s, feat_t)
         feat_s, feat_t = self.norm(feat_s, feat_t)
         loss = self.loss_fn(feat_s, feat_t)
@@ -185,11 +198,11 @@ class DistillationObjective:
             projector=attn_projector,
         )
 
-        self.logits_loss_fn = LazyDistillationLossPipeline(self.logits_loss_component)
-        self.hs_loss_fn = LazyDistillationLossPipeline(self.hs_loss_component)
-        self.attn_loss_fn = LazyDistillationLossPipeline(self.attn_loss_component)
+        self.logits_loss_fn = LazyDistillationLoss(self.logits_loss_component)
+        self.hs_loss_fn = LazyDistillationLoss(self.hs_loss_component)
+        self.attn_loss_fn = LazyDistillationLoss(self.attn_loss_component)
 
-    def __call__(self, teacher_model, student_model, inputs) -> Dict[str, float]:
+    def forward(self, teacher_model, student_model, inputs) -> Dict[str, float]:
         forward_kwargs = {
             **inputs,
             "output_hidden_states": self.hs_loss_component.is_measured,

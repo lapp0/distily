@@ -70,6 +70,8 @@ class MLPProjector(nn.Module):
         )
 
     def forward(self, student_features, teacher_features):
+        for name, param in self.proj.named_parameters():
+            print(f"module hash: {hash(self)} | parameter: {name} | Grad: {param.requires_grad} | Shape: {param.shape} | Min {param.min()} | Median {param.median()}")
         return self.proj(student_features), teacher_features
 
 

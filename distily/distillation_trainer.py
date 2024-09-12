@@ -131,12 +131,18 @@ class DistillationTrainer(transformers.Trainer):
             {**train_output.metrics, **bench_metrics_out}
         )
 
+    def create_optimizer(self):
+        """Update optimizer with distillation_objective parameters"""
+        optimizer = super().create_optimizer()
+        import pdb;pdb.set_trace()
+        return optimizer
+
     def compute_loss(self, model, inputs, return_outputs=False, return_stats=False):
         # TODO: remove this hack because liger doesn't support labels revert labels deletion once resolved:
         # https://github.com/linkedin/Liger-Kernel/issues/242#issuecomment-2341891320
         del inputs["labels"]
 
-        loss_dict = self.distillation_objective(self.teacher_model, model, inputs)
+        loss_dict = self.distillation_objective.forward(self.teacher_model, model, inputs)
         loss = loss_dict.pop("loss")
 
         stats = {k: float(v) for k, v in loss_dict.items()}
