@@ -149,15 +149,15 @@ class DistillationTrainingArguments(TrainingArguments):
     # optimize performance and memory
     per_device_eval_batch_size: int = 8  # TODO: auto-find?
     gradient_checkpointing: bool = True
-    torch_compile: bool = True  # TODO: Field
+    use_liger_kernel: bool = True  # TODO: Field
 
-    # TODO: enable liger kernel when this is fixed
+    # TODO: enable torch compile when this incompatibility with use_liger_kernel is fixed
+    # -----------------------
     # /opt/conda/lib/python3.10/site-packages/torch/autograd/graph.py:825:
     # UserWarning: cuDNN SDPA backward got grad_output.strides() != output.strides(),
     # attempting to materialize a grad_output with matching strides...
     # (Triggered internally at ../aten/src/ATen/native/cudnn/MHA.cpp:674.)
-    # use_liger_kernel: bool = True  # TODO: Field
-
+    # torch_compile: bool = True  # TODO: Field
 
     # Fixes
     gradient_checkpointing_kwargs = {"use_reentrant": False}
