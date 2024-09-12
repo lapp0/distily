@@ -134,6 +134,11 @@ class DistillationTrainer(transformers.Trainer):
     def create_optimizer(self):
         """Update optimizer with distillation_objective parameters"""
         optimizer = super().create_optimizer()
+
+        # perform a dry run to initialize the lazy module
+        with torch.no_grad():
+            dryrun_input_ids = torch.tensor([1]).to(self.model.device)
+            self.distillation_objective.forward(self.model, self.teacher_model, dryrun_input_ids)
         import pdb;pdb.set_trace()
         return optimizer
 
@@ -142,7 +147,7 @@ class DistillationTrainer(transformers.Trainer):
         # https://github.com/linkedin/Liger-Kernel/issues/242#issuecomment-2341891320
         del inputs["labels"]
 
-        loss_dict = self.distillation_objective.forward(self.teacher_model, model, inputs)
+        loss_dict = self.distillation_objective.forward(model, self.teacher_model, inputs)
         loss = loss_dict.pop("loss")
 
         stats = {k: float(v) for k, v in loss_dict.items()}

@@ -204,7 +204,7 @@ class DistillationObjective(nn.Module):
         self.hs_loss_fn = LazyDistillationLoss(self.hs_loss_component)
         self.attn_loss_fn = LazyDistillationLoss(self.attn_loss_component)
 
-    def forward(self, teacher_model, student_model, inputs) -> Dict[str, float]:
+    def forward(self, student_model, teacher_model, inputs) -> Dict[str, float]:
         forward_kwargs = {
             **inputs,
             "output_hidden_states": self.hs_loss_component.is_measured,
