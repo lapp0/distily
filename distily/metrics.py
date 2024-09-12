@@ -38,12 +38,11 @@ class PerplexityEvalCallback(TrainerCallback):
             for start_index in range(0, len(input_ids), batch_size):
                 end_index = min(start_index + batch_size, len(input_ids))
                 batch_input_ids = input_ids[start_index:end_index]
-                print(batch_input_ids.shape)
                 batch_attention_mask = attention_mask[start_index:end_index]
 
                 # Generate model outputs
                 outputs = model(batch_input_ids, attention_mask=batch_attention_mask)
-                logits = outputs.logits
+                logits = outputs.logits.float()
 
                 # Shift logits and labels to calculate loss
                 shift_logits = logits[..., :-1, :].contiguous()
@@ -57,6 +56,8 @@ class PerplexityEvalCallback(TrainerCallback):
                 # Calculate perplexity for the batch
                 perplexity_batch = torch.exp(loss)
                 ppls.append(perplexity_batch)
+
+            print(batch_input_ids.shape)
 
         # Concatenate all batch perplexities and calculate the mean perplexity
         all_ppls = torch.cat(ppls)
