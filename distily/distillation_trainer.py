@@ -137,8 +137,8 @@ class DistillationTrainer(transformers.Trainer):
 
         # dry run to initialize the lazy DistillationObjective modules
         with torch.no_grad():
-            row = self._remove_unused_columns(self.train_dataset.select(range(1)))[0]
-            inputs = {k: torch.tensor([v]).to(self.model.device) for k, v in row.items()}
+            row = self._remove_unused_columns(self.train_dataset.select(range(1)))[:]
+            inputs = {k: torch.tensor(v).to(self.model.device) for k, v in row.items()}
             self.distillation_objective.forward(self.model, self.teacher_model, inputs)
 
         # add the named parameters - a bit hacky, involves creating a temporary optimizer
@@ -255,8 +255,8 @@ class DistillationTrainer(transformers.Trainer):
                 stats["grad_prev_cos_sim"] = dot_product / (norm1**0.5 * norm2**0.5)
             self._prev_grad_4bit = flat_grad_4bit
             """
-            #gc.collect()
-            #torch.cuda.empty_cache()
+            gc.collect()
+            torch.cuda.empty_cache()
 
         self._extra_stats.append(stats)
 
@@ -346,6 +346,8 @@ class DistillationTrainer(transformers.Trainer):
         )
 
         self.model.train()
+        gc.collect()
+        torch.cuda.empty_cache()
         return metrics
 
     def create_model_card(self, *args, **kwargs):

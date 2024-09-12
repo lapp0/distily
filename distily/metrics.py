@@ -38,6 +38,7 @@ class PerplexityEvalCallback(TrainerCallback):
             for start_index in range(0, len(input_ids), batch_size):
                 end_index = min(start_index + batch_size, len(input_ids))
                 batch_input_ids = input_ids[start_index:end_index]
+                print(batch_input_ids.shape)
                 batch_attention_mask = attention_mask[start_index:end_index]
 
                 # Generate model outputs
