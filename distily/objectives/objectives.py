@@ -25,7 +25,7 @@ class LossComponent:
     @property
     def get_loss(self):
         # TODO: rewrite loss.py to use nn.Module, not functional
-        return self._get_callable(self.loss_fn, loss.LOSS_FUNCTIONS)(*a, **kw)
+        return self._get_callable(self.loss_fn, loss.LOSS_FUNCTIONS)
 
     @property
     def apply_layer_mapper(self):
