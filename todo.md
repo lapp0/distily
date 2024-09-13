@@ -12,23 +12,26 @@ Complete these necessary steps for v1.0.0 and initial official models
 
 ## Train Models
 - [x] `gpt2` -> `distilgpt2`
-- [ ] `smollm-130M` -> bitnet
-- [ ] `smollm-360M` -> bitnet
-- [ ] `smollm-1.3B` -> bitnet
-- [ ] `phi-2` -> ?
-- [ ] `Phi-3.5-mini-instruct` -> ?
-- [ ] `Phi-3-small-8k-instruct` ->
-- [ ] llama-3.1_bitnet, report metrics
+- [ ] `smollm-130M` -> `distily_smollm-snug` (30 layers -> 15 layers)
+- [ ] `smollm-360M` -> `distily_smollm-tight` (same student size as `_snug`)
+- [ ] `smollm-1.3B` -> `distily_smollm-packed` (same student size as `_snug`)
+- [ ] `phi-2` (2.8B) -> `distily-phi-2`
+- [ ] `Phi-3.5-mini-instruct` (3.8B) -> ?
+- [ ] `Phi-3-small-8k-instruct` (7.4B) -> ?
 - [ ] share models, new models can mode later
-
 
 # TODO
 
-- [ ] https://www.alphaxiv.org/abs/2408.11796v1
+- [x] rewrite DistillationObjective as an nn.Module
+- [x] ensure optimizer considers DistillationLoss parameters as well
+- [ ] arg for model max seq length
+- [ ] profiling script, use https://github.com/pytorch/kineto/tree/main?tab=readme-ov-file#holistic-trace-analysis
+
 - [ ] https://arxiv.org/pdf/2306.13649
 - [ ] https://arxiv.org/pdf/2402.03898
 - [ ] add contact details to readme?
 - [ ] verify dataset.map only happens once, doesn't create redundant mapped datasets increasing disk usage
+- [ ] clean up objectives.py by using lazy modules and initialize projectors / norms immediately https://pytorch.org/docs/stable/generated/torch.nn.modules.lazy.LazyModuleMixin.html
 
 ## Big Benches
 - [x] attn big bench, determine default params
@@ -71,6 +74,7 @@ Distily Models:
 ### Misc
 - [ ] loading the same dataset multiple times increases disk usage: same seed shuffle with same dataset should result in no additional disk usage
 - [ ] Complete simple docs
+  - ask https://towardsdatascience.com/tinybert-1a928ba3082b for permission to use images
 
 ### Optimizations
 - [ ] ability to distill bitnet models using 8-bit backward pass, or if there are precision issues, autocast?
@@ -101,6 +105,12 @@ Didn't want to tackle these right now, but should create an issue
 - [ ] log version of package, including commit in model card
 - [ ] include full reproduction steps in model card, including `pip install distily@version` and run command based on params
 
+### Clean Up
+- [ ] combine projector and norm, they are deeply intertwined
+- [ ] implement `def detailed_forward(outputs)` which calculates arbitrary features (not just those allowed in `model()`)
+  - features: `q`, `k`, `v`, `hidden_states`, `attentions`, `attn_output`
+  - format: instead of tuples of tuples of tensors, return named tuples of named tensors
+
 ## Post-v1.0.0 Medium Priority
 
 ### Improved Auditability
@@ -111,6 +121,7 @@ Didn't want to tackle these right now, but should create an issue
 - [ ] [minitron](https://www.alphaxiv.org/abs/2408.11796v1)
 
 ### Optimizations
+- [ ] [fuse operations in DistillationLoss](https://pytorch.org/tutorials/recipes/fuse.html)
 - [ ] use vllm for teacher output, serialize
 - [ ] fix whitening functions in ortho projection https://arxiv.org/pdf/2403.06213
   - precompute whitened value across runs since teacher is static
@@ -119,7 +130,7 @@ Didn't want to tackle these right now, but should create an issue
 ### Synthetic Data
 - [ ] currently synthetic data involves full sequence generation. We need to create a synthetic QA / instruct dataset
   - e.g. https://aws.amazon.com/blogs/machine-learning/use-llama-3-1-405b-to-generate-synthetic-data-for-fine-tuning-tasks/
-
+- [ ] [Focus on generating sequences that are likely under the teachers distribution](https://www.semanticscholar.org/paper/GKD%3A-Generalized-Knowledge-Distillation-for-Models-Agarwal-Vieillard/51cda783aa6a97e0b3b5915a2bb5a35f31f3c083)
 ### Reproduce
 - [ ] https://www.alphaxiv.org/abs/2408.11796v1
 
@@ -139,6 +150,9 @@ Didn't want to tackle these right now, but should create an issue
 ### Using Adapters
 - [ ] train randomly initialized model with ReLoRA
 - [ ] Train adapters or existing model with LoRA / DoRA
+
+### Pytorch Lighting
+- [ ] Look into rewriting in pytorch lightning - lightning has a lot of the missing features and structure I was seeking in torch + transformers
 
 ## Low Priority
 - [ ] fix sinkhorn RuntimeError: "cdist_cuda" not implemented for 'BFloat16
