@@ -75,8 +75,15 @@ class DistillationTrainer(transformers.Trainer):
             eval_args
     ):
 
-        teacher_model, tokenizer = distily.models.get_teacher_model_tokenizer(teacher_model_args)
-        student_model = distily.models.get_student_model(student_model_args, teacher_model)
+        if training_args.bf16:
+            model_kwargs = dict(model_dtype=torch.bfloat16)
+        elif training_args.fp16:
+            model_kwargs = dict(model_dtype=torch.float16)
+        else:
+            model_kwargs = dict()
+
+        teacher_model, tokenizer = distily.models.get_teacher_model_tokenizer(teacher_model_args, **model_kwargs)
+        student_model = distily.models.get_student_model(student_model_args, teacher_model, **model_kwargs)
 
         evaluators = {
             metric["name"]: distily.metrics.get_ppl_metric(tokenizer=tokenizer, **metric)

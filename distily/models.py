@@ -45,13 +45,14 @@ def _transfer_module_to_student(student_model, teacher_model, module_name, freez
             param.requires_grad = False
 
 
-def get_teacher_model_tokenizer(teacher_model_args):
+def get_teacher_model_tokenizer(teacher_model_args, **model_kwargs):
     model = transformers.AutoModelForCausalLM.from_pretrained(
         teacher_model_args.teacher_model_name_or_path,
         torch_dtype=torch.bfloat16,
         load_in_8bit=teacher_model_args.teacher_load_in_8bit,
         load_in_4bit=teacher_model_args.teacher_load_in_4bit,
-        device_map="cuda"
+        device_map="cuda",
+        **model_kwargs
     )
 
     # freeze (maybe redundant)
@@ -66,7 +67,7 @@ def get_teacher_model_tokenizer(teacher_model_args):
     return model, tokenizer
 
 
-def get_student_model(student_model_args, teacher_model):
+def get_student_model(student_model_args, teacher_model, **model_kwargs):
     if student_model_args.student_use_liger_kernel:
         from liger_kernel.transformers import AutoLigerKernelForCausalLM
         # automodel_cls = AutoLigerKernelForCausalLM
@@ -85,7 +86,8 @@ def get_student_model(student_model_args, teacher_model):
         student_model = automodel_cls.from_pretrained(
             student_model_args.student_model_name_or_path,
             torch_dtype=torch.bfloat16,
-            device_map="cuda"
+            device_map="cuda",
+            **model_kwargs
         )
 
     else:
@@ -104,7 +106,7 @@ def get_student_model(student_model_args, teacher_model):
         config.use_cache = False
         student_model = automodel_cls.from_config(
             config=config,
-            torch_dtype=torch.bfloat16,
+            **model_kwargs
         ).to("cuda")
 
     if student_model_args.reinitialize_weights:
