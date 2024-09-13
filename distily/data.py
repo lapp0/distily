@@ -41,7 +41,7 @@ def do_tokenize(examples, tokenizer, column_name, **tokenize_kwargs):
     return tokenizer(examples[column_name], **tokenize_kwargs)
 
 
-def get_dataset(dataset_args, tokenizer, max_seq_len: int):
+def get_dataset(dataset_args, tokenizer):
     dataset = datasets.load_dataset(
         dataset_args.dataset_uri,
         dataset_args.dataset_subset,
