@@ -74,27 +74,27 @@ class DistillationTrainer(transformers.Trainer):
             dataset_args,
             eval_args
     ):
-
+        model_kwargs = {}
         if training_args.bf16:
-            model_kwargs = dict(torch_dtype=torch.bfloat16)
+            model_kwargs["torch_dtype"] = torch.bfloat16
         elif training_args.fp16:
-            model_kwargs = dict(torch_dtype=torch.float16)
-        else:
-            model_kwargs = dict()
+            model_kwargs["torch_dtype"] = torch.float16
 
         teacher_model, tokenizer = distily.models.get_teacher_model_tokenizer(teacher_model_args, **model_kwargs)
         student_model = distily.models.get_student_model(student_model_args, teacher_model, **model_kwargs)
+
+        # ensure train data doesn't extend beyond the bounds of the model
+        if not dataset_args.dataset_max_seq_length:
+            dataset_args.dataset_max_seq_length = tokenizer.model_max_length
+        else:
+            dataset_args.dataset_max_seq_length = min(dataset_args.dataset_max_seq_length, tokenizer.model_max_length)
 
         evaluators = {
             metric["name"]: distily.metrics.get_ppl_metric(tokenizer=tokenizer, **metric)
             for metric in (eval_args.ppl_evaluators + eval_args.ppl_extra_evaluators)
         }
 
-        max_seq_len = min(
-            student_model.config.max_position_embeddings,
-            teacher_model.config.max_position_embeddings
-        )
-        train_dataset, test_dataset = distily.data.get_dataset(dataset_args, tokenizer, max_seq_len)
+        train_dataset, test_dataset = distily.data.get_dataset(dataset_args, tokenizer)
 
         distillation_objective = distily.objectives.DistillationObjective(**asdict(distillation_objective_args))
 

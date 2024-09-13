@@ -53,7 +53,6 @@ class TeacherModelArguments:
         default=False,
         metadata={"help": "Load the teacher model in 4 bits precision"}
     )
-    model_max_length: typing.Optional[int] = None
 
 
 @dataclass
@@ -63,6 +62,7 @@ class DatasetArguments:
     dataset_split: str = "train"
     dataset_column_name: str = "text"
     dataset_sample_size: int = 1_000_000
+    dataset_max_seq_length: typing.Optional[None] = None
     dataset_test_size: float = 0.002
     dataset_shuffle: bool = False
     dataset_shuffle_seed: int = 42

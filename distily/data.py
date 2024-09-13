@@ -67,7 +67,7 @@ def get_dataset(dataset_args, tokenizer, max_seq_len: int):
             tokenizer=tokenizer,
             truncation=True,
             padding="max_length",
-            max_length=max_seq_len,
+            max_length=dataset_args.dataset_max_seq_length,
             column_name=dataset_args.dataset_column_name,
         ),
         batched=True,
