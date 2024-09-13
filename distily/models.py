@@ -48,7 +48,6 @@ def _transfer_module_to_student(student_model, teacher_model, module_name, freez
 def get_teacher_model_tokenizer(teacher_model_args, **model_kwargs):
     model = transformers.AutoModelForCausalLM.from_pretrained(
         teacher_model_args.teacher_model_name_or_path,
-        torch_dtype=torch.bfloat16,
         load_in_8bit=teacher_model_args.teacher_load_in_8bit,
         load_in_4bit=teacher_model_args.teacher_load_in_4bit,
         device_map="cuda",
@@ -85,7 +84,6 @@ def get_student_model(student_model_args, teacher_model, **model_kwargs):
     if student_model_args.student_model_name_or_path:
         student_model = automodel_cls.from_pretrained(
             student_model_args.student_model_name_or_path,
-            torch_dtype=torch.bfloat16,
             device_map="cuda",
             **model_kwargs
         )
