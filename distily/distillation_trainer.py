@@ -146,8 +146,12 @@ class DistillationTrainer(transformers.Trainer):
         with torch.no_grad():
             row = self._remove_unused_columns(self.train_dataset.select(range(1)))[:]
             inputs = {
-                k: torch.tensor(v).to(self.model.device, dtype=self.model.dtype)
+                k: torch.tensor(v).to(self.model.device)
                 for k, v in row.items()
+            }
+            inputs = {
+                k: v.to(dtype=self.model.dtype) if torch.is_floating_point(v) else v
+                for k, v in inputs.items()
             }
             self.distillation_objective.forward(self.model, self.teacher_model, inputs)
 
