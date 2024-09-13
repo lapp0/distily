@@ -114,7 +114,8 @@ class DistillationObjectiveArguments:
     hs_norm: typing.Optional[str] = None
     hs_projector: typing.Optional[str] = None
 
-    attn_weight: float = 5.0
+    # TODO: enable once more when its params are fixed for attn matrices
+    attn_weight: float = 0.0
     attn_loss_fn: str = "raw_mse"
     attn_layer_mapper: str = "layer-2"
     attn_norm: typing.Optional[str] = "layernorm_teacher_only_affine"
