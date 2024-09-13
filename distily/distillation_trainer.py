@@ -76,9 +76,9 @@ class DistillationTrainer(transformers.Trainer):
     ):
 
         if training_args.bf16:
-            model_kwargs = dict(model_dtype=torch.bfloat16)
+            model_kwargs = dict(torch_dtype=torch.bfloat16)
         elif training_args.fp16:
-            model_kwargs = dict(model_dtype=torch.float16)
+            model_kwargs = dict(torch_dtype=torch.float16)
         else:
             model_kwargs = dict()
 

@@ -102,11 +102,12 @@ def get_student_model(student_model_args, teacher_model, **model_kwargs):
         # Force student to have vocabulary size as teacher
         config.vocab_size = teacher_model.config.vocab_size
 
+        config.update(model_kwargs)
+
         # TODO: remove .to(...) hack, use autocast
         config.use_cache = False
         student_model = automodel_cls.from_config(
             config=config,
-            **model_kwargs
         ).to("cuda")
 
     if student_model_args.reinitialize_weights:
