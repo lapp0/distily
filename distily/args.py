@@ -53,6 +53,7 @@ class TeacherModelArguments:
         default=False,
         metadata={"help": "Load the teacher model in 4 bits precision"}
     )
+    model_max_length: typing.Optional[int] = None
 
 
 @dataclass
