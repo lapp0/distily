@@ -64,7 +64,7 @@ class DatasetArguments:
     dataset_sample_size: int = 1_000_000
     dataset_max_seq_length: typing.Optional[None] = None
     dataset_test_size: float = 0.002
-    dataset_shuffle: bool = False
+    dataset_shuffle: bool = True
     dataset_shuffle_seed: int = 42
     dataset_trust_remote_code: bool = False
 
