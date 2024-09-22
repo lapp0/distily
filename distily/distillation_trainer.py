@@ -139,7 +139,7 @@ class DistillationTrainer(transformers.Trainer):
 
         return optimizer
 
-    def compute_loss(self, model, inputs, return_outputs=False, return_stats=False):
+    def compute_loss(self, model, inputs, return_outputs=False):
         # TODO: remove this hack because liger doesn't support labels revert labels deletion once resolved:
         # https://github.com/linkedin/Liger-Kernel/issues/242#issuecomment-2341891320
         del inputs["labels"]
@@ -149,11 +149,11 @@ class DistillationTrainer(transformers.Trainer):
 
         stats = {k: float(v) for k, v in loss_dict.items()}
 
+        self._extra_stats.append(stats)
+
         if return_outputs:
             # TODO: real output, this is nothing of use
             return loss, torch.tensor([1.0])
-        elif stats:
-            return loss, stats
         else:
             return loss
 
@@ -163,6 +163,7 @@ class DistillationTrainer(transformers.Trainer):
 
         With additional behavior:
         - Enable gradient variance logging
+        - add self._extra_stats to logs and clear if log step
         """
 
         ##############
@@ -183,6 +184,12 @@ class DistillationTrainer(transformers.Trainer):
             ##############
             # NEW CODE
             ##############
+
+            transposed_stats = collections.defaultdict(list)
+            [transposed_stats[key].append(d.get(key)) for d in self._extra_stats for key in d]
+            for k in transposed_stats:
+                if k[0] != "_":
+                    logs[k] = sum(transposed_stats[k]) / len(transposed_stats[k])
 
             if len(self._rolling_grad_norms) == 16 and self.all_args["eval_args"].grad_var_stats:
                 logs["grad_norm_var"] = statistics.variance(self._rolling_grad_norms)
@@ -279,7 +286,7 @@ class DistillationTrainer(transformers.Trainer):
             from tensorboardX import SummaryWriter
             for logging_dir, metrics in db.items():
                 writer = SummaryWriter(log_dir=self.args.logging_dir)
-                for metric_name, metric_value in db[logging_dir].items():
+                for metric_name, metric_value in db[logging_dir]["results"].items():
                     writer.add_scalar(f"benchmarks/{metric_name}", metric_value, 0)
                 writer.close()
 
