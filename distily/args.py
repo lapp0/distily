@@ -138,20 +138,20 @@ class DistillationTrainingArguments(TrainingArguments):
     #####################################################
 
     # optimize convergence to final model
-    learning_rate: float = 2e-4
+    learning_rate: float = 1e-4
     max_grad_norm: float = 1.0
-    warmup_ratio: float = 0.0
+    warmup_ratio: float = 0.1
     lr_scheduler_type: str = "polynomial"
-    lr_scheduler_kwargs: dict = field(default_factory=lambda: {"lr_end": 2e-5})
+    lr_scheduler_kwargs: dict = field(default_factory=lambda: {"lr_end": 2e-5, "power": 0.7})
     num_train_epochs: float = 1.0
     optim: str = "paged_lion_32bit"
 
     # larger batches appear to train better?
-    per_device_train_batch_size: int = 16
+    per_device_train_batch_size: int = 8
     gradient_accumulation_steps: int = 1
 
     # optimize performance and memory
-    per_device_eval_batch_size: int = 8  # TODO: auto-find?
+    per_device_eval_batch_size: int = 4  # TODO: auto-find?
     gradient_checkpointing: bool = True
     bf16: bool = True
 
