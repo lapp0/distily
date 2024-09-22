@@ -12,30 +12,6 @@ from huggingface_hub import ModelCard
 import distily
 
 
-def _pack_bit_tensor(bool_tensor):
-    """Packs a boolean tensor into an int64 tensor using bitwise operations and summation."""
-    assert len(bool_tensor.shape) == 1
-    padding = (64 - bool_tensor.shape[0] % 64) % 64
-    if padding > 0:
-        bool_tensor = torch.cat([bool_tensor, torch.zeros(padding, dtype=bool)])
-
-    bit_groups = bool_tensor.view(-1, 64)
-    shifts = torch.arange(64, device=bool_tensor.device, dtype=torch.int64)
-
-    packed_tensor = torch.sum(bit_groups * (1 << shifts), dim=-1, dtype=torch.int64)
-    return packed_tensor
-
-
-def _bit_tensor_sum(packed_tensor):
-    """Counts the number of 1-bits in a packed int64 tensor using the Hamming weight algorithm."""
-    count = packed_tensor
-    count = (count - ((count >> 1) & 0x5555555555555555))
-    count = (count & 0x3333333333333333) + ((count >> 2) & 0x3333333333333333)
-    count = (count + (count >> 4)) & 0x0F0F0F0F0F0F0F0F
-    count = (count * 0x0101010101010101) >> 56
-    return torch.sum(count)
-
-
 class DistillationTrainer(transformers.Trainer):
     def __init__(
         self,
@@ -57,11 +33,6 @@ class DistillationTrainer(transformers.Trainer):
 
         self.evaluators = evaluators
 
-        self._prev_grad = None
-        self._prev_grad_8bit = None
-        self._prev_grad_4bit = None
-        self._prev_grad_sign = None
-        self._extra_stats = []
         self._rolling_grad_norms = collections.deque(maxlen=16)
 
     @classmethod
@@ -186,97 +157,23 @@ class DistillationTrainer(transformers.Trainer):
         else:
             return loss
 
-    def training_step(self, model, inputs) -> torch.Tensor:
-        """
-        Copy of https://github.com/huggingface/transformers/blob/52a021375/src/transformers/trainer.py#L3394
-
-        With additional behavior:
-        - Enable comparative gradient logging
-        """
-        model.train()
-        inputs = self._prepare_inputs(inputs)
-        if transformers.trainer.is_sagemaker_mp_enabled():
-            loss_mb = transformers.trainer.smp_forward_backward(model, inputs, self.args.gradient_accumulation_steps)
-            return loss_mb.reduce_mean().detach().to(self.args.device)
-
-        with self.compute_loss_context_manager():
-            loss, stats = self.compute_loss(model, inputs, return_stats=True)
-
-        del inputs
-        if (
-            self.args.torch_empty_cache_steps is not None
-            and self.state.global_step % self.args.torch_empty_cache_steps == 0
-        ):
-            if transformers.trainer.is_torch_xpu_available():
-                torch.xpu.empty_cache()
-            elif transformers.trainer.is_torch_mlu_available():
-                torch.mlu.empty_cache()
-            elif transformers.trainer.is_torch_musa_available():
-                torch.musa.empty_cache()
-            elif transformers.trainer.is_torch_npu_available():
-                torch.npu.empty_cache()
-            elif transformers.trainer.is_torch_mps_available(min_version="2.0"):
-                torch.mps.empty_cache()
-            else:
-                torch.cuda.empty_cache()
-
-        kwargs = {}
-
-        # For LOMO optimizers you need to explicitly use the learnign rate
-        if self.args.optim in [transformers.trainer.OptimizerNames.LOMO, transformers.trainer.OptimizerNames.ADALOMO]:
-            kwargs["learning_rate"] = self._get_learning_rate()
-
-        if self.args.n_gpu > 1:
-            loss = loss.mean()  # mean() to average on multi-gpu parallel training
-
-        if self.use_apex:
-            with transformers.trainer.amp.scale_loss(loss, self.optimizer) as scaled_loss:
-                scaled_loss.backward()
-        else:
-            self.accelerator.backward(loss, **kwargs)
-
-        ##############
-        # NEW CODE
-        ##############
-
-        # add stats
-        # add gradient details to
-        if self.all_args["eval_args"].binary_grad_similarity_stats:
-            grad_sign = torch.cat([_pack_bit_tensor(p.grad.flatten() > 0) for p in model.parameters()])
-            if self._prev_grad_sign is not None:
-                sign_xor = grad_sign ^ self._prev_grad_sign
-                stats["grad_bin_prev_similarity"] = 1 - (_bit_tensor_sum(sign_xor).item() / (sign_xor.numel() * 64))
-            self._prev_grad_sign = grad_sign
-        if self.all_args["eval_args"].full_grad_similarity_stats:
-            flat_grad = [p.grad.to(torch.float16).view(-1) for p in model.parameters()]
-            if self._prev_grad is not None:
-                with torch.amp.autocast("cuda", dtype=torch.float16):
-                    dot_product = sum(torch.dot(curr, prev) for curr, prev in zip(flat_grad, self._prev_grad))
-                    norm1 = sum(curr.norm() ** 2 for curr in flat_grad)
-                    norm2 = sum(prev.norm() ** 2 for prev in self._prev_grad)
-                stats["grad_prev_cos_sim"] = (dot_product / (norm1**0.5 * norm2**0.5)).item()
-            self._prev_grad = flat_grad
-
-            gc.collect()
-            torch.cuda.empty_cache()
-
-        self._extra_stats.append(stats)
-
-        ##############
-        # END NEW CODE
-        ##############
-
-        return loss.detach() / self.args.gradient_accumulation_steps
-
     def _maybe_log_save_evaluate(self, tr_loss, grad_norm, model, trial, epoch, ignore_keys_for_eval):
         """
         Copy of https://github.com/huggingface/transformers/blob/52a021375/src/transformers/trainer.py#L3394
 
         With additional behavior:
         - Enable gradient variance logging
-        - clear self._extra_stats once queued for logging
         """
-        self._rolling_grad_norms.append(grad_norm.item())
+
+        ##############
+        # NEW CODE
+        ##############
+        if self.all_args["eval_args"].grad_var_stats:
+            self._rolling_grad_norms.append(grad_norm.item())
+        ##############
+        # END NEW CODE
+        ##############
+
         if self.control.should_log and self.state.global_step > self._globalstep_last_logged:
             if transformers.trainer.is_torch_xla_available():
                 transformers.trainer.xm.mark_step()
@@ -286,12 +183,6 @@ class DistillationTrainer(transformers.Trainer):
             ##############
             # NEW CODE
             ##############
-
-            transposed_stats = collections.defaultdict(list)
-            [transposed_stats[key].append(d.get(key)) for d in self._extra_stats for key in d]
-            for k in transposed_stats:
-                if k[0] != "_":
-                    logs[k] = sum(transposed_stats[k]) / len(transposed_stats[k])
 
             if len(self._rolling_grad_norms) == 16 and self.all_args["eval_args"].grad_var_stats:
                 logs["grad_norm_var"] = statistics.variance(self._rolling_grad_norms)
@@ -350,6 +241,7 @@ class DistillationTrainer(transformers.Trainer):
         self.model.train()
         gc.collect()
         torch.cuda.empty_cache()
+
         return metrics
 
     def create_model_card(self, *args, **kwargs):
