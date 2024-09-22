@@ -83,11 +83,15 @@ class DistillationTrainer(transformers.Trainer):
         teacher_model, tokenizer = distily.models.get_teacher_model_tokenizer(teacher_model_args, **model_kwargs)
         student_model = distily.models.get_student_model(student_model_args, teacher_model, **model_kwargs)
 
-        # ensure train data doesn't extend beyond the bounds of the model
-        if not dataset_args.dataset_max_seq_length:
-            dataset_args.dataset_max_seq_length = tokenizer.model_max_length
-        else:
-            dataset_args.dataset_max_seq_length = min(dataset_args.dataset_max_seq_length, tokenizer.model_max_length)
+        # align the max_seq_length to the minimum of the teacher tokenizer / model config and dataset_max_seq_length
+        max_seq_len = min(
+            tokenizer.model_max_length,
+            teacher_model.config.max_position_embeddings,
+            dataset_args.dataset_max_seq_length or float("inf")
+        )
+        tokenizer.model_max_length = max_seq_len
+        student_model.config.max_position_embeddings = max_seq_len
+        dataset_args.dataset_max_seq_length = max_seq_len
 
         evaluators = {
             metric["name"]: distily.metrics.get_ppl_metric(tokenizer=tokenizer, **metric)
