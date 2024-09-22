@@ -266,14 +266,22 @@ class DistillationTrainer(transformers.Trainer):
         torch.cuda.empty_cache()
 
         with shelve.open(self.benchmarks_shelf) as db:
-            if "teacher" not in db:
-                db["teacher"] = distily.metrics.run_benchmarks(
+            if "logs/teacher" not in db:
+                db["logis/teacher"] = distily.metrics.run_benchmarks(
                     self.teacher_model, self.tokenizer, benchmarks, limit, bootstrap_iters
                 )
             student_metrics = distily.metrics.run_benchmarks(
                 self.model, self.tokenizer, benchmarks, limit, bootstrap_iters
             )
-            db[self.args.run_name] = student_metrics
+            db[self.args.logging_dir] = student_metrics
+
+            # write current run logs
+            from tensorboardX import SummaryWriter
+            for logging_dir, metrics in db.items():
+                writer = SummaryWriter(log_dir=self.args.logging_dir)
+                for metric_name, metric_value in db[logging_dir].items():
+                    writer.add_scalar(f"benchmarks/{metric_name}", metric_value, 0)
+                writer.close()
 
         return student_metrics
 

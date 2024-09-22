@@ -3,6 +3,7 @@ from datasets import load_dataset
 import torch
 from torch.nn import CrossEntropyLoss
 import logging
+import warnings
 
 
 class PerplexityEvalCallback(TrainerCallback):
@@ -84,12 +85,14 @@ def run_benchmarks(model, tokenizer, benchmarks, limit=None, bootstrap_iters=Non
     """
     logging.debug(f"Running benchmarks: {benchmarks}")
     import lm_eval
+    warnings.filterwarnings("ignore", message="Failed to get model SHA")
+    warnings.filterwarnings("ignore", message="lm-eval:`pretrained` model kwarg is not of type `str`")
     lm_eval_model = lm_eval.models.huggingface.HFLM(
         pretrained=model,
         tokenizer=tokenizer,
         trust_remote_code=True,
     )
-    return lm_eval.simple_evaluate(
+    results_dict = lm_eval.simple_evaluate(
         model=lm_eval_model,
         tasks=benchmarks,
         max_batch_size=1024,
@@ -97,3 +100,8 @@ def run_benchmarks(model, tokenizer, benchmarks, limit=None, bootstrap_iters=Non
         bootstrap_iters=bootstrap_iters,
         log_samples=False
     )
+    return {
+        f"{dataset}.{key}": value
+        for dataset, values in results_dict["results"].items()
+        for key, value in (values or {}).items() if isinstance(value, float)
+    }
