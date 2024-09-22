@@ -33,6 +33,7 @@ class DistillationTrainer(transformers.Trainer):
 
         self.evaluators = evaluators
 
+        self._extra_stats = []
         self._rolling_grad_norms = collections.deque(maxlen=16)
 
     @classmethod
