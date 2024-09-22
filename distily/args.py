@@ -147,7 +147,7 @@ class DistillationTrainingArguments(TrainingArguments):
     optim: str = "paged_lion_32bit"
 
     # larger batches appear to train better?
-    per_device_train_batch_size: int = 8
+    per_device_train_batch_size: int = 16
     gradient_accumulation_steps: int = 1
 
     # optimize performance and memory
