@@ -286,8 +286,8 @@ class DistillationTrainer(transformers.Trainer):
             # write current run logs
             from tensorboardX import SummaryWriter
             for logging_dir, metrics in db.items():
-                writer = SummaryWriter(log_dir=self.args.logging_dir)
-                for metric_name, metric_value in db[logging_dir]["results"].items():
+                writer = SummaryWriter(log_dir=logging_dir)
+                for metric_name, metric_value in db[logging_dir].items():
                     writer.add_scalar(f"benchmarks/{metric_name}", metric_value, 0)
                 writer.close()
 
