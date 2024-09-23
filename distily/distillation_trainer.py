@@ -275,7 +275,7 @@ class DistillationTrainer(transformers.Trainer):
 
         with shelve.open(self.benchmarks_shelf) as db:
             if "logs/teacher" not in db:
-                db["logis/teacher"] = distily.metrics.run_benchmarks(
+                db["logs/teacher"] = distily.metrics.run_benchmarks(
                     self.teacher_model, self.tokenizer, benchmarks, limit, bootstrap_iters
                 )
             student_metrics = distily.metrics.run_benchmarks(
