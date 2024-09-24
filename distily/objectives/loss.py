@@ -48,6 +48,11 @@ def kl_divergence_loss(feat_s, feat_t, epsilon=1e-10):
     return _stable_kl_div(student_log_prob, teacher_prob)
 
 
+def liger_kl_divergence_loss(feat_s, feat_t, epsilon=1e-10):
+    from liger_kernel.transformers.functional import liger_kl_div
+    return liger_kl_div(feat_s, feat_t, log_target=True)
+
+
 def reverse_kl_divergence_loss(feat_s, feat_t):
     teacher_log_prob = F.log_softmax(feat_t, dim=-1)
     student_prob = F.softmax(feat_s, dim=-1)
@@ -161,6 +166,7 @@ def sinkhorn_loss(feat_s, feat_t, epsilon=0.1, n_iters=20):
 
 LOSS_FUNCTIONS = {
     "kl": kl_divergence_loss,
+    "liger_kl": liger_kl_divergence_loss,
     "raw_mse": F.mse_loss,
     "soft_mse": soft_mse_loss,
     "reverse_kl": reverse_kl_divergence_loss,
