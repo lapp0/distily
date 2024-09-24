@@ -102,15 +102,6 @@ The following hyperparameters were used during training:
 """
 
 
-def _flatten_harness_results(model_results):
-    return {
-        f"{key} ({metric_key.split(',')[0]})": float(value)
-        for key, metrics in model_results.items()
-        for metric_key, value in metrics.items()
-        if isinstance(value, (int, float))  # ignore aliases
-    }
-
-
 def _to_markdown_table(data: typing.Dict[str, typing.Dict], sigfig=4) -> str:
 
     def format_value(value):
@@ -196,7 +187,7 @@ def create_model_card_text(trainer):
 
     with shelve.open(trainer.benchmarks_shelf) as db:
         benchmark_results = {
-            model_label: _flatten_harness_results(db[model_label])
+            model_label: db[model_label]
             for model_label in db.keys()
         }
         benchmark_table = _to_markdown_table(benchmark_results)
