@@ -102,20 +102,41 @@ The following hyperparameters were used during training:
 """
 
 
-def _to_markdown_table(data: typing.Dict[str, typing.Dict], sigfig=4) -> str:
+def _benchmarks_to_markdown_table(data: typing.Dict[str, typing.Dict], sigfig=4) -> str:
 
     def format_value(value):
         return f"{round(value, sigfig - len(str(int(value))))}" if isinstance(value, (int, float)) else value
 
-    columns = sorted(data)
+    # Strip everything to the left of "logs/" including "logs/"
+    keys = list(data.keys())
+    if all("logs/" in k for k in keys):
+        stripped_keys = [k.split("logs/")[-1] for k in keys]
+    else:
+        stripped_keys = keys
+
+    teacher_key = stripped_keys[keys.index('logs/teacher')]
+    student_keys = [k for k in stripped_keys if k != teacher_key]
+
+    # Create bullet point list for students
+    bullet_list = "\n".join([f"- student {i}: `{name}`" for i, name in enumerate(student_keys)])
+
+    # Prepare metrics and table
     metrics = sorted({m for v in data.values() for m in v})
-    header = f"| Metric | {' | '.join(columns)} |"
-    separator = "| :--- |" + " :--- |" * len(columns)
-    rows = [
-        f"| {m} | " + " | ".join(format_value(data[c].get(m, "")) for c in columns) + " |"
-        for m in metrics
-    ]
-    return "\n".join([header, separator] + rows)
+    header = f"| Metric | teacher | {' | '.join([f'student {i}' for i in range(len(student_keys))])} |"
+    separator = "| :--- | :--- |" + " :--- |" * len(student_keys)
+    rows = []
+    for m in metrics:
+        teacher_value = format_value(data[keys[keys.index('logs/teacher')]].get(m, ''))
+        student_values = [format_value(data[keys[i]].get(m, "")) for i in range(len(keys)) if stripped_keys[i] != teacher_key]
+        # Find the max value among students and bold it
+        max_value = max(float(v) for v in student_values if v)
+        student_values = [f"**{v}**" if float(v) == max_value else v for v in student_values]
+        row = f"| {m} | {teacher_value} | " + " | ".join(student_values) + " |"
+        rows.append(row)
+
+    table = "\n".join([header, separator] + rows)
+
+    return f"{bullet_list}\n\n{table}"
 
 
 @contextmanager
@@ -190,7 +211,7 @@ def create_model_card_text(trainer):
             model_label: db[model_label]
             for model_label in db.keys()
         }
-        benchmark_table = _to_markdown_table(benchmark_results)
+        benchmark_table = _benchmarks_to_markdown_table(benchmark_results)
     if benchmark_results:
         benchmark_table_section = f"# Benchmark Metrics Comparison\n\n{benchmark_table}"
     else:
