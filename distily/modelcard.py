@@ -196,7 +196,7 @@ def create_model_card_text(trainer):
 
     with shelve.open(trainer.benchmarks_shelf) as db:
         benchmark_results = {
-            model_label: _flatten_harness_results(db[model_label]["results"])
+            model_label: _flatten_harness_results(db[model_label])
             for model_label in db.keys()
         }
         benchmark_table = _to_markdown_table(benchmark_results)
