@@ -1,5 +1,6 @@
 import torch
 from torch.nn import functional as F
+from liger_kernel.transformers.functional import liger_kl_div
 
 
 def _stable_kl_div(P_log_prob, Q_prob, epsilon=1e-10):
@@ -42,15 +43,18 @@ def soft_cross_entropy_loss(feat_s, feat_t):
     return F.cross_entropy(student_prob, teacher_prob)
 
 
-def kl_divergence_loss(feat_s, feat_t, epsilon=1e-10):
+def torch_kl_divergence_loss(feat_s, feat_t, epsilon=1e-10):
+    """No liger, just torch"""
     student_log_prob = F.log_softmax(feat_s, dim=-1)
     teacher_prob = F.softmax(feat_t, dim=-1)
     return _stable_kl_div(student_log_prob, teacher_prob)
 
 
-def liger_kl_divergence_loss(feat_s, feat_t, epsilon=1e-10):
-    from liger_kernel.transformers.functional import liger_kl_div
-    return liger_kl_div(feat_s, feat_t, log_target=True)
+def kl_divergence_loss(feat_s, feat_t, epsilon=1e-10):
+    """Uses liger kernel for faster, more memory efficient kldiv calc"""
+    student_log_prob = F.log_softmax(feat_s, dim=-1).view(-1, feat_t.shape[-1])
+    teacher_prob = F.softmax(feat_t, dim=-1).view(-1, feat_t.shape[-1])
+    return liger_kl_div(student_log_prob, teacher_prob)
 
 
 def reverse_kl_divergence_loss(feat_s, feat_t):
@@ -166,7 +170,7 @@ def sinkhorn_loss(feat_s, feat_t, epsilon=0.1, n_iters=20):
 
 LOSS_FUNCTIONS = {
     "kl": kl_divergence_loss,
-    "liger_kl": liger_kl_divergence_loss,
+    "torch_kl": torch_kl_divergence_loss,
     "raw_mse": F.mse_loss,
     "soft_mse": soft_mse_loss,
     "reverse_kl": reverse_kl_divergence_loss,

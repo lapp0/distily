@@ -24,8 +24,9 @@ Complete these necessary steps for v1.0.0 and initial official models
 
 - [x] rewrite DistillationObjective as an nn.Module
 - [x] ensure optimizer considers DistillationLoss parameters as well
-- [ ] arg for model max seq length
-- [ ] profiling script, use https://github.com/pytorch/kineto/tree/main?tab=readme-ov-file#holistic-trace-analysis
+- [x] arg for model max seq length
+- [x] KLDiv using Liger
+- [ ] ensure attention mask = 0 results in model not being trained on token
 
 - [ ] https://arxiv.org/pdf/2306.13649
 - [ ] https://arxiv.org/pdf/2402.03898
@@ -121,6 +122,7 @@ Didn't want to tackle these right now, but should create an issue
 - [ ] [minitron](https://www.alphaxiv.org/abs/2408.11796v1)
 
 ### Optimizations
+- [ ] profiling script, use https://github.com/pytorch/kineto/tree/main?tab=readme-ov-file#holistic-trace-analysis
 - [ ] [fuse operations in DistillationLoss](https://pytorch.org/tutorials/recipes/fuse.html)
 - [ ] use vllm for teacher output, serialize
 - [ ] fix whitening functions in ortho projection https://arxiv.org/pdf/2403.06213

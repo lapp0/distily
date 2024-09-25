@@ -13,12 +13,12 @@ datasets = ">=2.0"
 tqdm = ">=4.0"
 torch = ">=2.4.0"
 accelerate = ">=0.21.0"
+tensorboardX = ">=2.6"
+lm_eval = ">=0.4.4"
+liger_kernel_nightly  = ">=0.3.0"
 
 # optional
 bitsandbytes = { version = ">=0.43.3", optional = true }
-flash-attn = { version = ">=2.6.3", optional = true}
-tensorboardX = { version = "*", optional = true }
-lm_eval = { version = "*", optional = true }
 
 [tool.poetry.extras]
 full = ["bitsandbytes", "flash-attn", "tensorboardX", "lm_eval"]

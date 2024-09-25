@@ -85,7 +85,7 @@ def run_benchmarks(model, tokenizer, benchmarks, limit=None, bootstrap_iters=Non
     """
     logging.debug(f"Running benchmarks: {benchmarks}")
     import lm_eval
-    warnings.filterwarnings("ignore", message="Failed to get model SHA")
+    warnings.filterwarnings("ignore", message="lm-eval:Failed to get model SHA")
     warnings.filterwarnings("ignore", message="lm-eval:`pretrained` model kwarg is not of type `str`")
     lm_eval_model = lm_eval.models.huggingface.HFLM(
         pretrained=model,
